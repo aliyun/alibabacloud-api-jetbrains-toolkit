@@ -1,5 +1,7 @@
 # Alibaba Cloud API Toolkit for JetBrains
 
+[![CI](https://github.com/aliyun/alibabacloud-api-jetbrains-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/aliyun/alibabacloud-api-jetbrains-toolkit/actions/workflows/ci.yml)
+
 Alibaba Cloud API Toolkit for JetBrains 让您访问阿里云服务更加便捷.
 
 ## 支持的 IDE
