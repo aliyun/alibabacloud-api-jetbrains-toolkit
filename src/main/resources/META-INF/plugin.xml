@@ -68,7 +68,7 @@
     </extensions>
 
     <change-notes><![CDATA[
-       <b>0.0.1</b>
+       <b>0.0.1 (2023-12-11)</b>
       <ul>
         <li>Alpha version.</li>
         <li>Provides static credentials for switch and edit user profiles.</li>

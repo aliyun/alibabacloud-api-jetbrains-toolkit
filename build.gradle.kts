@@ -38,6 +38,7 @@ tasks {
     }
 
     publishPlugin {
+        channels.set(listOf("alpha"))
         token.set(providers.environmentVariable("PUBLISH_TOKEN"))
     }
 }
