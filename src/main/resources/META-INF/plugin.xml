@@ -1,0 +1,81 @@
+<idea-plugin>
+    <id>alibabacloud.api.toolkit</id>
+    <name>Alibaba Cloud API Toolkit</name>
+    <vendor email="sdk-team@alibabacloud.com" url="https://www.aliyun.com">AlibabaCloud</vendor>
+
+    <description><![CDATA[
+<p>
+  The Alibaba Cloud API Toolkit for JetBrains makes it easier to access Alibaba Cloud services.
+</p>
+<h2><strong>Features:</strong></h2>
+<ul>
+  <li>
+    <strong>Profile Configuration:</strong> Support switch and edit user profile through static credentials, which
+    is consistent with Alibaba Cloud CLI. The status bar located at the bottom of the IDE displays the current
+    profile. <a href="https://help.aliyun.com/document_detail/123181.html?spm=a2c4g.121544.0.0.2d7e76e3XWMs4u">Learn
+    more about CLI Configuration</a>
+    <br>
+    <ul>
+      <li>
+        If you have already installed Alibaba Cloud CLI, you can switch your existing profiles. You can open the
+        config.json configuration file by clicking "Edit Profile" to further edit user profiles.
+      </li>
+      <li>
+        If you don't have Alibaba Cloud CLI installed, this plugin can automatically create a config file for
+        you and provide a default empty configuration.
+      </li>
+    </ul>
+  </li>
+  <li>
+    <strong>Product Explorer:</strong> A tree-view of cloud products. Clicking on a cloud product can navigate you
+    to the corresponding API list.
+  </li>
+  <li>
+    <strong>API Document View:</strong> Clicking on an API can navigate you to a new tab which displays the
+    corresponding API document, including descriptions, request parameters, response parameters and error codes.
+  </li>
+  <li>
+    More features are under development, please stay tuned.
+  </li>
+</ul>
+<h2><strong>Installation:</strong></h2>
+  You can download the Alibaba Cloud API Toolkit for JetBrains by searching for "Alibaba Cloud API Toolkit" in the
+  JetBrains Marketplace in your IDE, or download installation files from your web browser.
+</p>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+<!--        <applicationConfigurable-->
+<!--                instance="com.alibabacloud.credentials.settings.ToolkitSettingsConfigurable"-->
+<!--                id="com.alibaba.cloud.api.credentials.settings.ToolkitSettingsConfigurable"-->
+<!--                parentId="Settings"-->
+<!--                displayName="Alibaba Cloud API Accounts Settings"/>-->
+<!--        <applicationService-->
+<!--                serviceImplementation="com.alibabacloud.credentials.settings.ToolkitSettingsState"/>-->
+        <toolWindow id="Alibaba Cloud API Toolkit"
+                    anchor="left"
+                    factoryClass="com.alibabacloud.ui.BaseToolWindow"
+                    secondary="false"
+                    icon="/icons/toolwindow.svg"
+        />
+        <statusBarWidgetFactory id="AlibabaCloud" implementation="com.alibabacloud.ui.MyStatusBarWidgetFactory" order="after encodingWidget" />
+    </extensions>
+
+    <extensions defaultExtensionNs="alibabacloud.cli">
+
+    </extensions>
+
+    <idea-version since-build="222"/>
+
+<!--    <actions>-->
+<!--        <group id="login-menu" text="Alibaba Cloud" popup="true">-->
+<!--            <add-to-group group-id="MainMenu" anchor="last"/>-->
+<!--            <add-to-group anchor="first" group-id="ToolsMenu"/>-->
+<!--            <action id="SwitchProfileAction" class="com.alibabacloud.credentials.action.SwitchProfileAction" text="Please select profile">-->
+<!--            </action>-->
+<!--        </group>-->
+<!--    </actions>-->
+
+</idea-plugin>
