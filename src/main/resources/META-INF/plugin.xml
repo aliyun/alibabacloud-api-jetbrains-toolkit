@@ -68,6 +68,12 @@
     </extensions>
 
     <change-notes><![CDATA[
+      <b>0.0.1 (2023-12-12)</b>
+      <ul>
+        <li>Alpha version.</li>
+        <li>Provides static credentials for switch and edit user profiles.</li>
+        <li>Provides product explorer and API document view.</li>
+      </ul>
     ]]></change-notes>
 
     <idea-version since-build="222"/>
