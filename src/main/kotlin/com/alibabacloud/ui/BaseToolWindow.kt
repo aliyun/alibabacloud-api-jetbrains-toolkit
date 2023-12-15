@@ -110,13 +110,13 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                         ToolWindowManager.getInstance(project).getToolWindow(ApiConstants.TOOLWINDOW_APIS)
                     val toolWindow: ToolWindow
                     if (existToolWindow == null) {
-                        toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(
-                            RegisterToolWindowTask.closable(
-                                id = ApiConstants.TOOLWINDOW_APIS,
-                                icon = myIcon,
-                                anchor = ToolWindowAnchor.RIGHT
-                            )
-                        )
+                        val builder: RegisterToolWindowTaskBuilder.() -> Unit = {
+                            icon = myIcon
+                            anchor = ToolWindowAnchor.RIGHT
+                            canCloseContent = true
+                        }
+                        toolWindow = ToolWindowManager.getInstance(project)
+                            .registerToolWindow(ApiConstants.TOOLWINDOW_APIS, builder)
                         toolWindow.contentManager.removeAllContents(true)
                     } else {
                         toolWindow = existToolWindow

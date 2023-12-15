@@ -1,8 +1,8 @@
-# Alibaba Cloud API Toolkit for JetBrains
+# Alibaba Cloud Developer Toolkit for JetBrains
 
 [![CI](https://github.com/aliyun/alibabacloud-api-jetbrains-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/aliyun/alibabacloud-api-jetbrains-toolkit/actions/workflows/ci.yml)
 
-The Alibaba Cloud API Toolkit for JetBrains makes it easier to access Alibaba Cloud services.
+The Alibaba Cloud Developer Toolkit for JetBrains makes it easier to access Alibaba Cloud services.
 
 ## Supported IDEs
 IntelliJ IDEA Community 2022.2+
@@ -12,7 +12,7 @@ IntelliJ IDEA Ultimate 2022.2+
 ## Getting Start
 
 ### Installation
-You can download the Alibaba Cloud API Toolkit for JetBrains by searching for "Alibaba Cloud API Toolkit" in the JetBrains
+You can download the Alibaba Cloud Developer Toolkit for JetBrains by searching for "Alibaba Cloud Developer Toolkit" in the JetBrains
 Marketplace in your IDE, or download installation files from your web browser.
 
 ### Features
