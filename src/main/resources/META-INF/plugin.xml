@@ -1,11 +1,11 @@
 <idea-plugin>
-    <id>alibabacloud.api.toolkit</id>
-    <name>Alibaba Cloud API Toolkit</name>
+    <id>alibabacloud.developer.toolkit</id>
+    <name>Alibaba Cloud Developer Toolkit</name>
     <vendor email="sdk-team@alibabacloud.com" url="https://www.aliyun.com">AlibabaCloud</vendor>
 
     <description><![CDATA[
 <p>
-  The Alibaba Cloud API Toolkit for JetBrains makes it easier to access Alibaba Cloud services.
+  The Alibaba Cloud Developer Toolkit for JetBrains makes it easier to access Alibaba Cloud services.
 </p>
 <h2><strong>Features:</strong></h2>
 <ul>
@@ -39,7 +39,7 @@
   </li>
 </ul>
 <h2><strong>Installation:</strong></h2>
-  You can download the Alibaba Cloud API Toolkit for JetBrains by searching for "Alibaba Cloud API Toolkit" in the
+  You can download the Alibaba Cloud Developer Toolkit for JetBrains by searching for "Alibaba Cloud Developer Toolkit" in the
   JetBrains Marketplace in your IDE, or download installation files from your web browser.
 </p>
     ]]></description>
@@ -54,7 +54,7 @@
 <!--                displayName="Alibaba Cloud API Accounts Settings"/>-->
 <!--        <applicationService-->
 <!--                serviceImplementation="com.alibabacloud.credentials.settings.ToolkitSettingsState"/>-->
-        <toolWindow id="Alibaba Cloud API Toolkit"
+        <toolWindow id="Alibaba Cloud Developer Toolkit"
                     anchor="left"
                     factoryClass="com.alibabacloud.ui.BaseToolWindow"
                     secondary="false"

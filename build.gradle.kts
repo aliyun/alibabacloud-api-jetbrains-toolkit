@@ -5,7 +5,7 @@ plugins {
     id("org.jetbrains.kotlinx.kover") version "0.7.3"
 }
 
-group = "com.alibabacloud.api"
+group = "com.alibabacloud"
 version = "0.0.1"
 
 repositories {
