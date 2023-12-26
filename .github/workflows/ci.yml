@@ -17,7 +17,7 @@ jobs:
     steps:
 
       - name: Fetch Sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
       - name: Gradle Wrapper Validation
         uses: gradle/wrapper-validation-action@v1.1.0
       - name: Setup Java
@@ -25,10 +25,24 @@ jobs:
         with:
           distribution: zulu
           java-version: 17
+
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2.4.2
+        uses: gradle/gradle-build-action@v2.11.1
         with:
           gradle-home-cache-cleanup: true
+
+      - name: Export Properties
+        id: properties
+        shell: bash
+        run: |
+          PROPERTIES="$(./gradlew properties --console=plain -q)"
+          VERSION="$(echo "$PROPERTIES" | grep "^version:" | cut -f2- -d ' ')"
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "pluginVerifierHomeDir=~/.pluginVerifier" >> $GITHUB_OUTPUT
+          
+          ./gradlew listProductsReleases # prepare list of IDEs for Plugin Verifier
+
       - name: Build plugin
         run: ./gradlew buildPlugin
 
@@ -39,26 +53,26 @@ jobs:
     steps:
 
       - name: Fetch Sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: zulu
           java-version: 17
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2.4.2
+        uses: gradle/gradle-build-action@v2.11.1
         with:
           gradle-home-cache-cleanup: true
       - name: Run Tests
         run: ./gradlew check
       - name: Collect Tests Result
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tests-result
           path: ${{ github.workspace }}/build/reports/tests
       - name: Upload Code Coverage Report
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v3.1.4
         with:
           files: ${{ github.workspace }}/build/reports/kover/report.xml
 
@@ -74,18 +88,18 @@ jobs:
           tool-cache: false
           large-packages: false
       - name: Fetch Sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: zulu
           java-version: 17
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2.4.2
+        uses: gradle/gradle-build-action@v2.11.1
         with:
           gradle-home-cache-cleanup: true
       - name: Setup Plugin Verifier IDEs Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v3.3.2
         with:
           path: ${{ needs.build.outputs.pluginVerifierHomeDir }}/ides
           key: plugin-verifier-${{ hashFiles('build/listProductsReleases.txt') }}
@@ -93,7 +107,7 @@ jobs:
         run: ./gradlew runPluginVerifier -Dplugin.verifier.home.dir=${{ needs.build.outputs.pluginVerifierHomeDir }}
       - name: Collect Plugin Verifier Result
         if: ${{ always() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pluginVerifier-result
           path: ${{ github.workspace }}/build/reports/pluginVerifier
