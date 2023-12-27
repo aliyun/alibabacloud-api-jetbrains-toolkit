@@ -27,12 +27,16 @@
     </ul>
   </li>
   <li>
-    <strong>Product Explorer:</strong> A tree-view of cloud products. Clicking on a cloud product can navigate you
-    to the corresponding API list.
+    <strong>Product Explorer:</strong> A tree-view of cloud products with search: Quickly navigate you to the corresponding
+    products or APIs. You can refresh the product list or API detail page by clicking the refresh button in the window toolbar.
   </li>
   <li>
     <strong>API Document View:</strong> Clicking on an API can navigate you to a new tab which displays the
     corresponding API document, including descriptions, request parameters, response parameters and error codes.
+  </li>
+  <li>
+    <strong>API Debug (Beta):</strong> Support convenient API debugging within the IDE against the parameter list, and
+    also offers a "Go Debug" button for seamless transition to debug in browser.
   </li>
   <li>
     More features are under development, please stay tuned.
@@ -47,13 +51,13 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-<!--        <applicationConfigurable-->
-<!--                instance="com.alibabacloud.credentials.settings.ToolkitSettingsConfigurable"-->
-<!--                id="com.alibaba.cloud.api.credentials.settings.ToolkitSettingsConfigurable"-->
-<!--                parentId="Settings"-->
-<!--                displayName="Alibaba Cloud API Accounts Settings"/>-->
-<!--        <applicationService-->
-<!--                serviceImplementation="com.alibabacloud.credentials.settings.ToolkitSettingsState"/>-->
+        <!--        <applicationConfigurable-->
+        <!--                instance="com.alibabacloud.credentials.settings.ToolkitSettingsConfigurable"-->
+        <!--                id="com.alibaba.cloud.api.credentials.settings.ToolkitSettingsConfigurable"-->
+        <!--                parentId="Settings"-->
+        <!--                displayName="Alibaba Cloud API Accounts Settings"/>-->
+        <!--        <applicationService-->
+        <!--                serviceImplementation="com.alibabacloud.credentials.settings.ToolkitSettingsState"/>-->
         <toolWindow id="Alibaba Cloud Developer Toolkit"
                     anchor="left"
                     factoryClass="com.alibabacloud.ui.BaseToolWindow"
@@ -61,6 +65,7 @@
                     icon="/icons/toolwindow.svg"
         />
         <statusBarWidgetFactory id="AlibabaCloud" implementation="com.alibabacloud.ui.MyStatusBarWidgetFactory" order="after encodingWidget" />
+        <notificationGroup id="AlibabaCloud API: Error" displayType="BALLOON"/>
     </extensions>
 
     <extensions defaultExtensionNs="alibabacloud.cli">
@@ -68,7 +73,7 @@
     </extensions>
 
     <change-notes><![CDATA[
-      <b>0.0.1 (2023-12-12)</b>
+       <b>0.0.1 (2023-12-11)</b>
       <ul>
         <li>Alpha version.</li>
         <li>Provides static credentials for switch and edit user profiles.</li>
@@ -78,13 +83,13 @@
 
     <idea-version since-build="222"/>
 
-<!--    <actions>-->
-<!--        <group id="login-menu" text="Alibaba Cloud" popup="true">-->
-<!--            <add-to-group group-id="MainMenu" anchor="last"/>-->
-<!--            <add-to-group anchor="first" group-id="ToolsMenu"/>-->
-<!--            <action id="SwitchProfileAction" class="com.alibabacloud.credentials.action.SwitchProfileAction" text="Please select profile">-->
-<!--            </action>-->
-<!--        </group>-->
-<!--    </actions>-->
+    <!--    <actions>-->
+    <!--        <group id="login-menu" text="Alibaba Cloud" popup="true">-->
+    <!--            <add-to-group group-id="MainMenu" anchor="last"/>-->
+    <!--            <add-to-group anchor="first" group-id="ToolsMenu"/>-->
+    <!--            <action id="SwitchProfileAction" class="com.alibabacloud.credentials.action.SwitchProfileAction" text="Please select profile">-->
+    <!--            </action>-->
+    <!--        </group>-->
+    <!--    </actions>-->
 
 </idea-plugin>
