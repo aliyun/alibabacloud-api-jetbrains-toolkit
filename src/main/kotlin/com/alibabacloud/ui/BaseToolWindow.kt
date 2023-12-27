@@ -3,6 +3,7 @@ package com.alibabacloud.ui
 import com.alibabacloud.api.service.ApiExplorer
 import com.alibabacloud.api.service.ProcessMeta
 import com.alibabacloud.api.service.constants.ApiConstants
+import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.credentials.util.ConfigFileUtil
 import com.alibabacloud.models.credentials.ConfigureFile
@@ -37,6 +38,7 @@ import java.awt.event.FocusEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.io.File
+import java.io.IOException
 import java.net.URL
 import javax.swing.*
 import javax.swing.event.DocumentEvent
@@ -68,11 +70,42 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         searchField.maximumSize = Dimension(Integer.MAX_VALUE, 50)
         contentPanel.add(searchField)
 
-        val (nameAndVersionMap, apiDocContentTree) = ApiExplorer.apiDocContentTree()
-        val scrollPane = FormatUtil.getScrollPane(apiDocContentTree)
-        contentPanel.add(scrollPane)
-        productClickListener(project, apiDocContentTree, nameAndVersionMap)
-        searchProduct(nameAndVersionMap, apiDocContentTree, searchField, contentPanel)
+        val cacheNameAndVersionFile = File(ApiConstants.CACHE_PATH, "nameAndVersion")
+        val cacheTreeFile = File(ApiConstants.CACHE_PATH, "tree")
+        var cacheNameAndVersionMap: MutableMap<String, List<String>>? = null
+        var cacheTree: Tree? = null
+        try {
+            if (cacheNameAndVersionFile.exists() && cacheNameAndVersionFile.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis()) {
+                cacheNameAndVersionMap = CacheUtil.readMapCache(cacheNameAndVersionFile)
+            }
+            if (cacheTreeFile.exists() && cacheTreeFile.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis()) {
+                cacheTree = CacheUtil.readTreeCache(cacheTreeFile)
+            }
+        } catch (_: IOException) {
+        }
+
+        if (cacheNameAndVersionMap != null && cacheTree != null) {
+            val scrollPane = FormatUtil.getScrollPane(cacheTree)
+            contentPanel.add(scrollPane)
+            productClickListener(project, cacheTree, cacheNameAndVersionMap)
+            searchProduct(cacheNameAndVersionMap, cacheTree, searchField, contentPanel)
+        } else {
+            var nameAndVersionMap = mutableMapOf<String, List<String>>()
+            var apiDocContentTree = Tree()
+            ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Loading API List", true) {
+                override fun run(indicator: ProgressIndicator) {
+                    nameAndVersionMap = ApiExplorer.apiDocContentTree().first
+                    apiDocContentTree = ApiExplorer.apiDocContentTree().second
+                }
+
+                override fun onSuccess() {
+                    val scrollPane = FormatUtil.getScrollPane(apiDocContentTree)
+                    contentPanel.add(scrollPane)
+                    productClickListener(project, apiDocContentTree, nameAndVersionMap)
+                    searchProduct(nameAndVersionMap, apiDocContentTree, searchField, contentPanel)
+                }
+            })
+        }
 
         toolWindow.contentManager.apply {
             val content = factory.createContent(contentPanel, null, false)
@@ -131,7 +164,28 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                     val productName = nameAndVersionMap[productNameCN]?.get(0) ?: ""
                     val defaultVersion = nameAndVersionMap[productNameCN]?.get(3) ?: ""
                     val apiUrl = URL("${ApiConstants.API_DIR_URL}?product=$productName&version=$defaultVersion")
-                    val apiData = ProcessMeta.getApiListRequest(apiUrl)
+
+                    val cacheApiDataFile = File(ApiConstants.CACHE_PATH, "$productName-api-list")
+                    val cacheApiData: JsonArray?
+                    var apiData: JsonArray? = null
+
+                    if (cacheApiDataFile.exists() && cacheApiDataFile.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis()) {
+                        try {
+                            cacheApiData = CacheUtil.readApiListCache(cacheApiDataFile)
+                            apiData = cacheApiData
+                        } catch (_: IOException) {
+                        }
+                    }
+                    if (apiData == null) {
+                        apiData = ProcessMeta.getApiListRequest(apiUrl)
+                        val cacheApiListFile = File(ApiConstants.CACHE_PATH, "$productName-api-list")
+
+                        try {
+                            CacheUtil.writeApiListCache(cacheApiListFile, apiData)
+                        } catch (e: IOException) {
+                            cacheApiListFile.delete()
+                        }
+                    }
 
                     val myIcon: Icon = IconLoader.getIcon("/icons/toolwindow.svg", javaClass)
                     val existToolWindow =
@@ -176,7 +230,8 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                                     productName,
                                     apiName,
                                     defaultVersion,
-                                    project
+                                    project,
+                                    true,
                                 )
 
                                 val refreshRightToolWindowAction = RefreshRightToolWindowAction(
@@ -399,7 +454,8 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                 name,
                 apiName,
                 defaultVersion,
-                project
+                project,
+                false,
             )
         }
     }
