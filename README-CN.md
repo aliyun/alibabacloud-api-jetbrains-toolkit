@@ -16,8 +16,9 @@ IntelliJ IDEA Ultimate 2022.2+
 
 ### 功能
 <div style="overflow-x: scroll; white-space: nowrap;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/config.png" style="display: inline-block;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/switch.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/config.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/switch.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-list-with-search.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/api-doc1.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/api-doc2.png" style="display: inline-block;">
 </div>
@@ -28,7 +29,8 @@ IntelliJ IDEA Ultimate 2022.2+
     * 如果您还未安装阿里云 CLI，本插件会自动创建一个空的配置文件。
 
 
-* **产品导航** 云产品的树状视图。 单击某个云产品，可以跳转到对应的API列表。
+* **产品导航** 云产品的树状视图，搜索框可以快速导航到对应产品，或者单击某个云产品，可以跳转到对应的 API 列表，API 列表上方的搜索框可以快速导航到您指定的 API。
+  点击窗口工具栏中的刷新按钮可以刷新产品列表或 API 展示页面。
 
 
 * **API 文档展示** 单击某个 API 将打开一个新窗口，显示相应的 API 文档，包括接口描述、请求参数、响应参数和错误码。

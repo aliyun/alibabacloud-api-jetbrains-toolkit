@@ -10,6 +10,8 @@ import java.awt.Color
 import java.awt.Component
 import javax.swing.ScrollPaneConstants
 import javax.swing.UIManager
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.TreeNode
 
 class FormatUtil {
     companion object {
@@ -131,5 +133,20 @@ class FormatUtil {
             scrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
             return scrollPane
         }
+
+        fun findNode(root: TreeNode, nodeName: String): DefaultMutableTreeNode? {
+            if (root is DefaultMutableTreeNode && root.toString() == nodeName) {
+                return root
+            }
+            if (root.childCount > 0) {
+                for (i in 0 until root.childCount) {
+                    val node = root.getChildAt(i)
+                    val resultNode = findNode(node, nodeName)
+                    if (resultNode != null) return resultNode
+                }
+            }
+            return null
+        }
+
     }
 }
