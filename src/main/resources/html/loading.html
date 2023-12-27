@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      text-align: center;
+      padding-top: 50px;
+      background-color: var(--background-color);
+      color: var(--text-color)
+    }
+
+    .spinner {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="spinner">⏳</div>
+<p>Loading...</p>
+</body>
+</html>

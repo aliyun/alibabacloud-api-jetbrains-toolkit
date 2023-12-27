@@ -7,7 +7,13 @@ import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.credentials.util.ConfigFileUtil
 import com.alibabacloud.models.credentials.ConfigureFile
 import com.google.gson.JsonArray
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -16,6 +22,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.*
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.Content
+import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.treeStructure.Tree
@@ -30,6 +37,12 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
     private lateinit var comboBox: JComboBox<String>
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+        val refreshLeftToolWindowAction = RefreshLeftToolWindowAction()
+        val refreshAction = listOf(refreshLeftToolWindowAction)
+        refreshLeftToolWindowAction.templatePresentation.icon = AllIcons.Actions.Refresh
+        refreshLeftToolWindowAction.templatePresentation.text = "Refresh Product List"
+        toolWindow.setTitleActions(refreshAction)
+
         val contentPanel = JPanel(BorderLayout())
         val listRenderer = CustomListCellRenderer()
 
@@ -79,7 +92,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
     private fun productClickListener(
         project: Project,
         tree: JTree,
-        nameAndVersionMap: MutableMap<String, Pair<String, String>>,
+        nameAndVersionMap: MutableMap<String, List<String>>,
     ) {
         val selectionModel = tree.selectionModel
 //        var toolWindow: ToolWindow? = null
@@ -99,10 +112,10 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
             val selectedNode = tree.lastSelectedPathComponent as? DefaultMutableTreeNode
             if (selectedNode != null) {
                 if (selectedNode.isLeaf) {
-                    val productName = selectedNode.userObject as String
-                    val name = nameAndVersionMap[productName]!!.first
-                    val defaultVersion = nameAndVersionMap[productName]!!.second
-                    val apiUrl = URL("${ApiConstants.API_DIR_URL}?product=$name&version=$defaultVersion")
+                    val productNameCN = selectedNode.userObject as String
+                    val productName = nameAndVersionMap[productNameCN]?.get(0) ?: ""
+                    val defaultVersion = nameAndVersionMap[productNameCN]?.get(3) ?: ""
+                    val apiUrl = URL("${ApiConstants.API_DIR_URL}?product=$productName&version=$defaultVersion")
                     val apiData = ProcessMeta.getApiListRequest(apiUrl)
 
                     val myIcon: Icon = IconLoader.getIcon("/icons/toolwindow.svg", javaClass)
@@ -141,14 +154,28 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                                 } else {
                                     apiDocContent!!.displayName = "API: $apiName"
                                 }
-                                ProcessMeta.showApiDoc(
+                                ProcessMeta.showApiDetail(
                                     apiDocContent!!,
                                     contentManager,
                                     apiPanel,
-                                    name,
+                                    productName,
+                                    apiName,
+                                    defaultVersion,
+                                    project
+                                )
+
+                                val refreshRightToolWindowAction = RefreshRightToolWindowAction(
+                                    apiDocContent!!,
+                                    contentManager,
+                                    apiPanel,
+                                    productName,
                                     apiName,
                                     defaultVersion,
                                 )
+                                val refreshAction = listOf(refreshRightToolWindowAction)
+                                refreshRightToolWindowAction.templatePresentation.icon = AllIcons.Actions.Refresh
+                                refreshRightToolWindowAction.templatePresentation.text = "Refresh API Doc"
+                                toolWindow.setTitleActions(refreshAction)
                             }
                         }
                     }
@@ -198,5 +225,45 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         toolWindow.show()
         val selectionModel = tree.selectionModel
         return Pair(selectionModel, tree)
+    }
+
+    private class RefreshLeftToolWindowAction : AnAction() {
+        override fun actionPerformed(e: AnActionEvent) {
+            val project = e.project ?: return
+            var nameAndVersionMap = mutableMapOf<String, List<String>>()
+            var apiDocContentTree = Tree()
+            ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Loading API List", true) {
+                override fun run(indicator: ProgressIndicator) {
+                    nameAndVersionMap = ApiExplorer.apiDocContentTree().first
+                    apiDocContentTree = ApiExplorer.apiDocContentTree().second
+                }
+
+                override fun onSuccess() {
+                    BaseToolWindow().productClickListener(project, apiDocContentTree, nameAndVersionMap)
+                }
+            })
+        }
+    }
+
+    private class RefreshRightToolWindowAction(
+        val apiDocContent: Content,
+        val contentManager: ContentManager,
+        val apiPanel: JPanel,
+        val name: String,
+        val apiName: String,
+        val defaultVersion: String,
+    ) : AnAction() {
+        override fun actionPerformed(e: AnActionEvent) {
+            val project = e.project ?: return
+            ProcessMeta.showApiDetail(
+                apiDocContent,
+                contentManager,
+                apiPanel,
+                name,
+                apiName,
+                defaultVersion,
+                project
+            )
+        }
     }
 }
