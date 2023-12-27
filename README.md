@@ -18,10 +18,11 @@ Marketplace in your IDE, or download installation files from your web browser.
 ### Features
 
 <div style="overflow-x: scroll; white-space: nowrap;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/config.png" style="display: inline-block;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/switch.png" style="display: inline-block;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/api-doc1.png" style="display: inline-block;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/api-docw.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/config.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/switch.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-list-with-search.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-debug1.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-debug2.png" style="display: inline-block;">
 </div>
 
 * **Profile Configuration** Support switch and edit user profile through static credentials, which is consistent with Alibaba
@@ -32,11 +33,16 @@ Marketplace in your IDE, or download installation files from your web browser.
       a default empty configuration.
 
 
-* **Product Explorer** A tree-view of cloud products. Clicking on a cloud product can navigate you to the corresponding API list.
+* **Product Explorer** A tree-view of cloud products with search: Quickly navigate you to the corresponding products or APIs. 
+You can refresh the product list or API detail page by clicking the refresh button in the window toolbar.
 
 
 * **API Document View** Clicking on an API can navigate you to a new tab which displays the corresponding API document,
   including descriptions, request parameters, response parameters and error codes.
+
+
+* **API Debug (Beta)** Support convenient API debugging within the IDE against the parameter list, and also offers a 
+"Go Debug" button for seamless transition to debug in browser.
 
 
 * More features are under development, please stay tuned.
