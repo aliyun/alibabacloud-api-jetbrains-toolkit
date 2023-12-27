@@ -1,6 +1,8 @@
 # Alibaba Cloud Developer Toolkit for JetBrains
 
 [![CI](https://github.com/aliyun/alibabacloud-api-jetbrains-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/aliyun/alibabacloud-api-jetbrains-toolkit/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/jetbrains/plugin/v/23361-alibaba-cloud-developer-toolkit.svg)](https://plugins.jetbrains.com/plugin/23361-alibaba-cloud-developer-toolkit)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/23361-alibaba-cloud-developer-toolkit.svg)](https://plugins.jetbrains.com/plugin/23361-alibaba-cloud-developer-toolkit)
 
 The Alibaba Cloud Developer Toolkit for JetBrains makes it easier to access Alibaba Cloud services.
 
@@ -38,7 +40,8 @@ Marketplace in your IDE, or download installation files from your web browser.
 
 
 * **API Document View** Clicking on an API can navigate you to a new tab which displays the corresponding API document,
-  including descriptions, request parameters, response parameters and error codes.
+  including descriptions, request parameters, response parameters and error codes. With cache implemented, subsequent 
+  visits to the same API will be loaded swiftly.
 
 
 * **API Debug (Beta)** Support convenient API debugging within the IDE against the parameter list, and also offers a

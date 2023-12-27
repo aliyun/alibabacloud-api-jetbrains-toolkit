@@ -1,6 +1,8 @@
 # Alibaba Cloud Developer Toolkit for JetBrains
 
 [![CI](https://github.com/aliyun/alibabacloud-api-jetbrains-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/aliyun/alibabacloud-api-jetbrains-toolkit/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/jetbrains/plugin/v/23361-alibaba-cloud-developer-toolkit.svg)](https://plugins.jetbrains.com/plugin/23361-alibaba-cloud-developer-toolkit)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/23361-alibaba-cloud-developer-toolkit.svg)](https://plugins.jetbrains.com/plugin/23361-alibaba-cloud-developer-toolkit)
 
 Alibaba Cloud Developer Toolkit for JetBrains 让您访问阿里云服务更加便捷.
 
@@ -30,7 +32,7 @@ IntelliJ IDEA Ultimate 2022.2+
 
 
 * **产品导航** 云产品的树状视图，搜索框可以快速导航到对应产品，或者单击某个云产品，可以跳转到对应的 API 列表，API 列表上方的搜索框可以快速导航到您指定的 API。
-  点击窗口工具栏中的刷新按钮可以刷新产品列表或 API 展示页面。
+  点击窗口工具栏中的刷新按钮可以刷新产品列表或 API 展示页面。通过缓存机制，用户再次访问同一 API 时可实现快速加载展示页面。
 
 
 * **API 文档展示** 单击某个 API 将打开一个新窗口，显示相应的 API 文档，包括接口描述、请求参数、响应参数和错误码等。

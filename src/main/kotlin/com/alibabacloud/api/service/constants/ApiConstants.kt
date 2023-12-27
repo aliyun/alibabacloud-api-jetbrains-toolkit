@@ -1,9 +1,16 @@
 package com.alibabacloud.api.service.constants
 
+import java.io.File
+import java.time.Duration
+
 object ApiConstants {
     const val API_DIR_URL = "https://api.aliyun.com/api/product/apiDir"
     const val API_PARAM_URL = "https://api.aliyun.com/meta/v1"
     const val PRODUCT_LIST_URL = "https://api.aliyun.com/api/products?type=api"
+
+    val CACHE_PATH = System.getProperty("user.home") + File.separator + ".api-cache"
+    val ONE_DAY = Duration.ofDays(1)
+    val MAX_CACHE_NUM = 200
 
     const val TOOLWINDOW_APIS = "Alibaba Cloud APIs"
     const val TOOLWINDOW_API_TREE = "Alibaba Cloud API"
@@ -33,8 +40,6 @@ object ApiConstants {
     const val API_DIR_RESPONSE_NAME = "name"
     const val API_DIR_RESPONSE_NODE_TITLE = "node_title"
     const val API_DIR_RESPONSE_CHILDREN = "children"
-
-    const val PARAM_TABLE_SCHEMA_ENUM = "枚举值: "
 
     const val DEBUG_METHODS = "methods"
     const val DEBUG_APIS = "apis"

@@ -1,6 +1,7 @@
 package com.alibabacloud.api.service
 
 import com.alibabacloud.api.service.constants.ApiConstants
+import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.ui.CustomTreeCellRenderer
 import com.google.gson.Gson
@@ -17,6 +18,7 @@ import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -215,7 +217,6 @@ class ApiExplorer {
             }
         }
 
-
         private fun addChildrenToNode(children: JsonArray, parent: DefaultMutableTreeNode) {
             for (element in children) {
                 if (element is JsonObject && element.has(ApiConstants.API_DIR_RESPONSE_NAME)) {
@@ -313,6 +314,22 @@ class ApiExplorer {
             }
 
             val treeModel = DefaultTreeModel(root)
+
+            val cacheDir = File(ApiConstants.CACHE_PATH)
+            if (!cacheDir.exists()) {
+                cacheDir.mkdir()
+            }
+            val cacheNameAndVersionFile = File(ApiConstants.CACHE_PATH, "nameAndVersion")
+            val cacheTreeFile = File(ApiConstants.CACHE_PATH, "tree")
+            CacheUtil.cleanExceedCache()
+            try {
+                CacheUtil.writeMapCache(cacheNameAndVersionFile, nameAndVersionMap)
+                CacheUtil.writeTreeCache(cacheTreeFile, Tree(treeModel))
+            } catch (e: IOException) {
+                cacheNameAndVersionFile.delete()
+                cacheTreeFile.delete()
+            }
+
             return Pair(nameAndVersionMap, Tree(treeModel))
         }
     }
