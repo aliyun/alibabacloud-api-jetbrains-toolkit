@@ -10,6 +10,10 @@ import com.google.common.reflect.TypeToken
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.jcef.JBCefBrowser
@@ -21,107 +25,122 @@ import javax.swing.JPanel
 
 class ProcessMeta {
     companion object {
-
-        fun showApiDoc(
+        fun showApiDetail(
             apiDocContent: Content,
             contentManager: ContentManager,
             apiPanel: JPanel,
             productName: String,
             apiName: String,
             defaultVersion: String,
+            project: Project
         ) {
             contentManager.setSelectedContent(apiDocContent, true)
             val browser = JBCefBrowser()
-            val apiDocUrl = URL("${ApiConstants.API_PARAM_URL}/products/$productName/versions/$defaultVersion/api-docs")
 
-            try {
-                val apiDocConnection = apiDocUrl.openConnection() as HttpURLConnection
-                var refSchema = JsonObject()
+            var colorList = FormatUtil.adjustColor()
+            val loadingHtml =
+                ResourceUtil.load("/html/loading.html").replace("var(--background-color)", colorList[0])
+                    .replace("var(--text-color)", colorList[1])
 
-                if (apiDocConnection.responseCode == HttpURLConnection.HTTP_OK) {
-                    val apiDocResponse = apiDocConnection.inputStream.bufferedReader().use { it.readText() }
-                    val docJsonResponse = Gson().fromJson(apiDocResponse, JsonObject::class.java)
-                    refSchema =
-                        docJsonResponse.get(ApiConstants.API_DOC_RESP_DATA).asJsonObject.get(ApiConstants.API_DOC_RESP_COMPONENTS).asJsonObject.get(
-                            ApiConstants.API_DOC_RESP_SCHEMAS,
-                        ).asJsonObject
-                }
-                apiDocConnection.disconnect()
-
-                val apiUrl =
-                    URL("${ApiConstants.API_PARAM_URL}/products/$productName/versions/$defaultVersion/apis/$apiName/api")
-                val apiConnection = apiUrl.openConnection() as HttpURLConnection
-                apiConnection.requestMethod = ApiConstants.METHOD_GET
-                val description: String
-                val documentHtml: String
-                val modifiedHtml: String
-
-                if (apiConnection.responseCode == HttpURLConnection.HTTP_OK) {
-                    val apiResponse = apiConnection.inputStream.bufferedReader().use { it.readText() }
-                    apiConnection.disconnect()
-                    val apiJsonResponse = Gson().fromJson(apiResponse, JsonObject::class.java)
-                    val data = apiJsonResponse.get(ApiConstants.API_RESP_DATA).asJsonObject
-                    description =
-                        if (data.has(ApiConstants.API_RESP_DESCRIPTION)) data.get(ApiConstants.API_RESP_DESCRIPTION).asString else ApiConstants.EMPTY
-                    val params = data.get(ApiConstants.API_RESP_PARAMETERS).asJsonArray
-                    val responseSchema =
-                        data.get(ApiConstants.API_RESP_RESPONSES).asJsonObject.get(ApiConstants.RESP_SUCCESS_CODE).asJsonObject
-                    val errorCodes =
-                        if (data.has(ApiConstants.API_RESP_ERROR_CODES)) data.get(ApiConstants.API_RESP_ERROR_CODES).asJsonObject else JsonObject()
-                    val title =
-                        if (data.has(ApiConstants.API_RESP_TITLE)) data.get(ApiConstants.API_RESP_TITLE).asString else ApiConstants.EMPTY
-
-                    documentHtml = FormatUtil.parseMdToHtml(FormatUtil.editDescription(description))
-                    // 处理code标签中的超链接问题，前端TODO
-                    val editHtml = FormatUtil.regexHref(FormatUtil.editHtml(documentHtml))
-
-                    // 展示请求参数表
-                    val paramsEntries = convertParamsToTable(params, refSchema)
-                    val paramsTableHtml = FormatUtil.regexHref(buildHtmlTable(paramsEntries, "req"))
-
-                    // 展示返回参数表
-                    val containerType = object : TypeToken<Map<String, Parameter.Schema>>() {}.type
-                    val respTableHtml: String = if (!responseSchema.has(ApiConstants.API_RESP_RESPONSES_SCHEMA)) {
-                        StringBuilder().append("<h2>${ApiConstants.PARAM_TABLE_TITLE_RESP_EMPTY}</h2>").toString()
-                    } else {
-                        val responseSchemaContainer =
-                            Gson().fromJson<Map<String, Parameter.Schema>>(responseSchema, containerType)
-                        val schema = responseSchemaContainer[ApiConstants.API_RESP_RESPONSES_SCHEMA]!!
-                        FormatUtil.regexHref(responseConvert(schema, refSchema))
-                    }
-
-                    // 展示错误码参数表
-                    val tableEntries = processErrorCodes(errorCodes)
-                    val errorTableHtml = buildErrorTable(tableEntries)
-
-                    // TODO API Debug
-//                val debugParams = Gson().fromJson(ResourceUtil.load("/testdebug.json"), JsonObject::class.java)
-//                val debugHtml = buildDebugHtml(debugParams, apiName)
-
-                    val colorList = FormatUtil.adjustColor()
-                    val toolWindowCssTemp = ResourceUtil.load("/css/apiTab.css")
-                    val toolWindowCss = toolWindowCssTemp.replace("var(--background-color)", colorList[0])
-                        .replace("var(--text-color)", colorList[1])
-                        .replace("var(--button-background-color)", colorList[2])
-                    val templateHtml = ResourceUtil.load("/apiDoc.html")
-
-                    modifiedHtml = templateHtml.replace("\$toolWindowCss", toolWindowCss)
-                        .replace("\$editHtml", editHtml)
-                        .replace("\$paramsTableHtml", paramsTableHtml)
-                        .replace("\$respTableHtml", respTableHtml)
-                        .replace("\$errorTableHtml", errorTableHtml)
-//                    .replace("\$debugHtml", "敬请期待")
-//                    .replace("\$title", title)
-
-                    browser.loadHTML(modifiedHtml)
-                }
-            } catch (_: IOException) {
-            }
+            browser.loadHTML(loadingHtml)
 
             apiPanel.removeAll()
             apiPanel.add(browser.component)
             apiPanel.revalidate()
             apiPanel.repaint()
+            var modifiedHtml = String()
+            try {
+                ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Loading API Doc", true) {
+                    override fun run(indicator: ProgressIndicator) {
+                        val apiDocUrl =
+                            URL("${ApiConstants.API_PARAM_URL}/products/$productName/versions/$defaultVersion/api-docs")
+
+
+                        val apiDocConnection = apiDocUrl.openConnection() as HttpURLConnection
+                        var refSchema = JsonObject()
+
+                        if (apiDocConnection.responseCode == HttpURLConnection.HTTP_OK) {
+                            val apiDocResponse = apiDocConnection.inputStream.bufferedReader().use { it.readText() }
+                            val docJsonResponse = Gson().fromJson(apiDocResponse, JsonObject::class.java)
+                            refSchema =
+                                docJsonResponse.get(ApiConstants.API_DOC_RESP_DATA).asJsonObject.get(ApiConstants.API_DOC_RESP_COMPONENTS).asJsonObject.get(
+                                    ApiConstants.API_DOC_RESP_SCHEMAS,
+                                ).asJsonObject
+                        }
+                        apiDocConnection.disconnect()
+
+                        val apiUrl =
+                            URL("${ApiConstants.API_PARAM_URL}/products/$productName/versions/$defaultVersion/apis/$apiName/api")
+                        val apiConnection = apiUrl.openConnection() as HttpURLConnection
+                        apiConnection.requestMethod = ApiConstants.METHOD_GET
+                        val description: String
+                        val documentHtml: String
+
+                        if (apiConnection.responseCode == HttpURLConnection.HTTP_OK) {
+                            val apiResponse = apiConnection.inputStream.bufferedReader().use { it.readText() }
+                            apiConnection.disconnect()
+                            val apiJsonResponse = Gson().fromJson(apiResponse, JsonObject::class.java)
+                            val data = apiJsonResponse.get(ApiConstants.API_RESP_DATA).asJsonObject
+                            description =
+                                if (data.has(ApiConstants.API_RESP_DESCRIPTION)) data.get(ApiConstants.API_RESP_DESCRIPTION).asString else ApiConstants.EMPTY
+                            val params = data.get(ApiConstants.API_RESP_PARAMETERS).asJsonArray
+                            val responseSchema =
+                                data.get(ApiConstants.API_RESP_RESPONSES).asJsonObject.get(ApiConstants.RESP_SUCCESS_CODE).asJsonObject
+                            val errorCodes =
+                                if (data.has(ApiConstants.API_RESP_ERROR_CODES)) data.get(ApiConstants.API_RESP_ERROR_CODES).asJsonObject else JsonObject()
+                            val title =
+                                if (data.has(ApiConstants.API_RESP_TITLE)) data.get(ApiConstants.API_RESP_TITLE).asString else ApiConstants.EMPTY
+
+                            documentHtml = FormatUtil.parseMdToHtml(FormatUtil.editDescription(description))
+                            // 处理code标签中的超链接问题，前端TODO
+                            val editHtml = FormatUtil.regexHref(FormatUtil.editHtml(documentHtml))
+
+                            // 展示请求参数表
+                            val paramsEntries = convertParamsToTable(params, refSchema)
+                            val paramsTableHtml = FormatUtil.regexHref(buildHtmlTable(paramsEntries, "req"))
+
+                            // 展示返回参数表
+                            val containerType = object : TypeToken<Map<String, Parameter.Schema>>() {}.type
+                            val respTableHtml: String =
+                                if (!responseSchema.has(ApiConstants.API_RESP_RESPONSES_SCHEMA)) {
+                                    StringBuilder().append("<h2>${ApiConstants.PARAM_TABLE_TITLE_RESP_EMPTY}</h2>")
+                                        .toString()
+                                } else {
+                                    val responseSchemaContainer =
+                                        Gson().fromJson<Map<String, Parameter.Schema>>(responseSchema, containerType)
+                                    val schema = responseSchemaContainer[ApiConstants.API_RESP_RESPONSES_SCHEMA]!!
+                                    FormatUtil.regexHref(responseConvert(schema, refSchema))
+                                }
+
+                            // 展示错误码参数表
+                            val tableEntries = processErrorCodes(errorCodes)
+                            val errorTableHtml = buildErrorTable(tableEntries)
+
+                            colorList = FormatUtil.adjustColor()
+                            val toolWindowCssTemp = ResourceUtil.load("/css/apiTab.css")
+                            val toolWindowCss = toolWindowCssTemp.replace("var(--background-color)", colorList[0])
+                                .replace("var(--text-color)", colorList[1])
+                                .replace("var(--button-background-color)", colorList[2])
+                            val templateHtml = ResourceUtil.load("/html/apiDoc.html")
+
+                            modifiedHtml = templateHtml.replace("\$toolWindowCss", toolWindowCss)
+                                .replace("\$editHtml", editHtml)
+                                .replace("\$paramsTableHtml", paramsTableHtml)
+                                .replace("\$respTableHtml", respTableHtml)
+                                .replace("\$errorTableHtml", errorTableHtml)
+                        }
+                    }
+
+                    override fun onSuccess() {
+                        browser.loadHTML(modifiedHtml)
+                        apiPanel.removeAll()
+                        apiPanel.add(browser.component)
+                        apiPanel.revalidate()
+                        apiPanel.repaint()
+                    }
+                })
+            } catch (_: IOException) {
+            }
         }
 
         fun getApiListRequest(url: URL): JsonArray {

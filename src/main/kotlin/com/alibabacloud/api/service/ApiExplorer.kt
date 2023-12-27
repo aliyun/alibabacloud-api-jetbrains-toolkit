@@ -69,9 +69,9 @@ class ApiExplorer {
             }
         }
 
-        fun apiDocContentTree(): Pair<MutableMap<String, Pair<String, String>>, Tree> {
+        fun apiDocContentTree(): Pair<MutableMap<String, List<String>>, Tree> {
             val root = DefaultMutableTreeNode(ApiConstants.TOOLWINDOW_PRODUCT_TREE)
-            val nameAndVersionMap = mutableMapOf<String, Pair<String, String>>()
+            val nameAndVersionMap = mutableMapOf<String, List<String>>()
             val url = URL(ApiConstants.PRODUCT_LIST_URL)
             try {
                 val connection = url.openConnection() as HttpURLConnection
@@ -86,36 +86,48 @@ class ApiExplorer {
                     connection.disconnect()
 
                     for (element in data) {
-                        val category2Name = element.asJsonObject.get(ApiConstants.PRODUCT_RESP_CATEGORY_2_NAME)
-                        val categoryName = element.asJsonObject.get(ApiConstants.PRODUCT_RESP_CATEGORY_NAME)
+                        val category2Name =
+                            element.asJsonObject.get(ApiConstants.PRODUCT_RESP_CATEGORY_2_NAME)?.asString ?: ""
+                        val categoryName =
+                            element.asJsonObject.get(ApiConstants.PRODUCT_RESP_CATEGORY_NAME)?.asString ?: ""
                         val showNameCn =
-                            element.asJsonObject.get(ApiConstants.PRODUCT_RESP_SHOW_NAME_CN).toString()
-                                .replace("\"", "")
+                            element.asJsonObject.get(ApiConstants.PRODUCT_RESP_SHOW_NAME_CN)?.asString ?: ""
                         val name =
-                            element.asJsonObject.get(ApiConstants.PRODUCT_RESP_PRODUCT_NAME).toString()
-                                .replace("\"", "")
+                            element.asJsonObject.get(ApiConstants.PRODUCT_RESP_PRODUCT_NAME)?.asString ?: ""
                         val defaultVersion =
-                            element.asJsonObject.get(ApiConstants.PRODUCT_RESP_DEFAULT_VERSION).toString()
-                                .replace("\"", "")
+                            element.asJsonObject.get(ApiConstants.PRODUCT_RESP_DEFAULT_VERSION)?.asString ?: ""
 
-                        if (category2Name == null) {
-                            val innerMap =
-                                resultMap.getOrPut(ApiConstants.PRODUCT_RESP_NOT_CLASSIFIED) { mutableMapOf() }
+                        if (category2Name == "") {
+                            val innerMap = resultMap.getOrPut("其他") { mutableMapOf() }
                             val showNameList =
                                 innerMap.getOrPut(ApiConstants.PRODUCT_RESP_NOT_CLASSIFIED) { mutableListOf() }
                             showNameList.add(showNameCn)
-                            nameAndVersionMap[showNameCn] = Pair(name, defaultVersion)
+                            val list = mutableListOf<String>()
+                            list.add(name)
+                            list.add("未分类")
+                            list.add("其他")
+                            list.add(defaultVersion)
+                            nameAndVersionMap[showNameCn] = list
                         } else {
                             val innerMap =
-                                resultMap.getOrPut(category2Name.toString().replace("\"", "")) { mutableMapOf() }
+                                resultMap.getOrPut(category2Name) { mutableMapOf() }
                             val showNameList =
-                                innerMap.getOrPut(categoryName.toString().replace("\"", "")) { mutableListOf() }
+                                innerMap.getOrPut(categoryName) { mutableListOf() }
                             showNameList.add(showNameCn)
-                            nameAndVersionMap[showNameCn] = Pair(name, defaultVersion)
+                            val list = mutableListOf<String>()
+                            list.add(name)
+                            list.add(category2Name)
+                            list.add(categoryName)
+                            list.add(defaultVersion)
+                            nameAndVersionMap[showNameCn] = list
                         }
                     }
 
-                    for ((category2Name, innerMap) in resultMap) {
+                    val sortedEntries = resultMap.entries.sortedBy { (category2Name, _) ->
+                        if (category2Name == "其他") Int.MAX_VALUE else 0
+                    }
+
+                    for ((category2Name, innerMap) in sortedEntries) {
                         val category2NameNode = DefaultMutableTreeNode(category2Name)
                         root.add(category2NameNode)
 
