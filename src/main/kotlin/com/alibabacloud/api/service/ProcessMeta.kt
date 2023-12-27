@@ -3,13 +3,13 @@ package com.alibabacloud.api.service
 import com.alibabacloud.api.service.constants.ApiConstants
 import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.api.service.util.ResourceUtil
-import com.alibabacloud.models.api.ErrorCodes
-import com.alibabacloud.models.api.ParamList
-import com.alibabacloud.models.api.Parameter
+import com.alibabacloud.models.credentials.ConfigureFile
+import com.aliyun.teautil.MapTypeAdapter
+import com.aliyun.teautil.models.TeaUtilException
 import com.google.common.reflect.TypeToken
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
+import com.google.gson.*
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -17,14 +17,25 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.jcef.JBCefBrowser
+import com.intellij.ui.jcef.JBCefBrowserBase
+import com.intellij.ui.jcef.JBCefClient
+import com.intellij.ui.jcef.JBCefJSQuery
+import com.intellij.util.castSafelyTo
+import org.cef.browser.CefBrowser
+import org.cef.browser.CefFrame
+import org.cef.handler.CefLoadHandler
+import org.cef.handler.CefLoadHandlerAdapter
+import org.cef.network.CefRequest
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.*
 import javax.swing.JPanel
 
 class ProcessMeta {
     companion object {
+        /**
+         * show api document and debug interface
+         */
         fun showApiDetail(
             apiDocContent: Content,
             contentManager: ContentManager,
@@ -32,103 +43,93 @@ class ProcessMeta {
             productName: String,
             apiName: String,
             defaultVersion: String,
-            project: Project
+            project: Project,
         ) {
             contentManager.setSelectedContent(apiDocContent, true)
             val browser = JBCefBrowser()
+            browser.jbCefClient.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 20)
 
-            var colorList = FormatUtil.adjustColor()
-            val loadingHtml =
-                ResourceUtil.load("/html/loading.html").replace("var(--background-color)", colorList[0])
-                    .replace("var(--text-color)", colorList[1])
-
-            browser.loadHTML(loadingHtml)
-
-            apiPanel.removeAll()
-            apiPanel.add(browser.component)
-            apiPanel.revalidate()
-            apiPanel.repaint()
-            var modifiedHtml = String()
             try {
+                val colorList = FormatUtil.adjustColor()
+                val loadingHtml =
+                    ResourceUtil.load("/html/loading.html").replace("var(--background-color)", colorList[0])
+                        .replace("var(--text-color)", colorList[1])
+
+                browser.loadHTML(loadingHtml)
+                apiPanel.removeAll()
+                apiPanel.add(browser.component)
+                apiPanel.revalidate()
+                apiPanel.repaint()
+
+                var modifiedHtml = String()
+
                 ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Loading API Doc", true) {
                     override fun run(indicator: ProgressIndicator) {
                         val apiDocUrl =
-                            URL("${ApiConstants.API_PARAM_URL}/products/$productName/versions/$defaultVersion/api-docs")
-
-
+                            URL("${ApiConstants.API_PARAM_URL}/products/$productName/versions/$defaultVersion/api-docs.json")
                         val apiDocConnection = apiDocUrl.openConnection() as HttpURLConnection
-                        var refSchema = JsonObject()
+                        var apiDocData = JsonObject()
+                        var endpoints = JsonArray()
+                        var apiDocResponse: String
 
                         if (apiDocConnection.responseCode == HttpURLConnection.HTTP_OK) {
-                            val apiDocResponse = apiDocConnection.inputStream.bufferedReader().use { it.readText() }
+                            apiDocResponse = apiDocConnection.inputStream.bufferedReader().use { it.readText() }
                             val docJsonResponse = Gson().fromJson(apiDocResponse, JsonObject::class.java)
-                            refSchema =
-                                docJsonResponse.get(ApiConstants.API_DOC_RESP_DATA).asJsonObject.get(ApiConstants.API_DOC_RESP_COMPONENTS).asJsonObject.get(
-                                    ApiConstants.API_DOC_RESP_SCHEMAS,
-                                ).asJsonObject
+                            apiDocData = docJsonResponse
+                            endpoints = docJsonResponse.get(ApiConstants.API_DOC_ENDPOINTS).asJsonArray
                         }
+
                         apiDocConnection.disconnect()
 
-                        val apiUrl =
-                            URL("${ApiConstants.API_PARAM_URL}/products/$productName/versions/$defaultVersion/apis/$apiName/api")
-                        val apiConnection = apiUrl.openConnection() as HttpURLConnection
-                        apiConnection.requestMethod = ApiConstants.METHOD_GET
-                        val description: String
-                        val documentHtml: String
+                        executeDebug(browser, apiDocData, apiName, endpoints, project)
 
-                        if (apiConnection.responseCode == HttpURLConnection.HTTP_OK) {
-                            val apiResponse = apiConnection.inputStream.bufferedReader().use { it.readText() }
-                            apiConnection.disconnect()
-                            val apiJsonResponse = Gson().fromJson(apiResponse, JsonObject::class.java)
-                            val data = apiJsonResponse.get(ApiConstants.API_RESP_DATA).asJsonObject
-                            description =
-                                if (data.has(ApiConstants.API_RESP_DESCRIPTION)) data.get(ApiConstants.API_RESP_DESCRIPTION).asString else ApiConstants.EMPTY
-                            val params = data.get(ApiConstants.API_RESP_PARAMETERS).asJsonArray
-                            val responseSchema =
-                                data.get(ApiConstants.API_RESP_RESPONSES).asJsonObject.get(ApiConstants.RESP_SUCCESS_CODE).asJsonObject
-                            val errorCodes =
-                                if (data.has(ApiConstants.API_RESP_ERROR_CODES)) data.get(ApiConstants.API_RESP_ERROR_CODES).asJsonObject else JsonObject()
-                            val title =
-                                if (data.has(ApiConstants.API_RESP_TITLE)) data.get(ApiConstants.API_RESP_TITLE).asString else ApiConstants.EMPTY
+                        val apiMeta =
+                            apiDocData.get(ApiConstants.DEBUG_APIS).asJsonObject.get(apiName).asJsonObject
 
-                            documentHtml = FormatUtil.parseMdToHtml(FormatUtil.editDescription(description))
-                            // 处理code标签中的超链接问题，前端TODO
-                            val editHtml = FormatUtil.regexHref(FormatUtil.editHtml(documentHtml))
+                        val ext = JsonObject()
+                        ext.add("errorCodes", apiMeta.get("errorCodes"))
+                        ext.add("extraInfo", apiMeta.get("extraInfo"))
+                        ext.add("methods", apiMeta.get("methods"))
+                        ext.add("requestParamsDescription", apiMeta.get("requestParamsDescription"))
+                        ext.add("responseParamsDescription", apiMeta.get("responseParamsDescription"))
+                        ext.add("responseDemo", apiMeta.get("responseDemo"))
+                        ext.add("schemes", apiMeta.get("schemes"))
+                        ext.add("security", apiMeta.get("security"))
+                        ext.add("summary", apiMeta.get("summary"))
+                        ext.add("title", apiMeta.get("title"))
 
-                            // 展示请求参数表
-                            val paramsEntries = convertParamsToTable(params, refSchema)
-                            val paramsTableHtml = FormatUtil.regexHref(buildHtmlTable(paramsEntries, "req"))
+                        val externalDocs = JsonObject()
+                        externalDocs.addProperty("description", "去调试")
+                        externalDocs.addProperty(
+                            "url",
+                            "https://api.aliyun.com/api/$productName/$defaultVersion/$apiName",
+                        )
 
-                            // 展示返回参数表
-                            val containerType = object : TypeToken<Map<String, Parameter.Schema>>() {}.type
-                            val respTableHtml: String =
-                                if (!responseSchema.has(ApiConstants.API_RESP_RESPONSES_SCHEMA)) {
-                                    StringBuilder().append("<h2>${ApiConstants.PARAM_TABLE_TITLE_RESP_EMPTY}</h2>")
-                                        .toString()
-                                } else {
-                                    val responseSchemaContainer =
-                                        Gson().fromJson<Map<String, Parameter.Schema>>(responseSchema, containerType)
-                                    val schema = responseSchemaContainer[ApiConstants.API_RESP_RESPONSES_SCHEMA]!!
-                                    FormatUtil.regexHref(responseConvert(schema, refSchema))
-                                }
+                        val spec = JsonObject()
+                        spec.addProperty("name", apiName)
+                        spec.add("description", apiMeta.get("description"))
+                        spec.add("method", apiMeta.get("method"))
+                        spec.add("parameters", apiMeta.get("parameters"))
+                        spec.add("responses", apiMeta.get("responses"))
+                        spec.add("summary", apiMeta.get("summary"))
+                        spec.add("title", apiMeta.get("title"))
+                        spec.add("ext", ext)
+                        spec.add("externalDocs", externalDocs)
 
-                            // 展示错误码参数表
-                            val tableEntries = processErrorCodes(errorCodes)
-                            val errorTableHtml = buildErrorTable(tableEntries)
+                        val apiParams = JsonObject()
+                        apiParams.addProperty("specName", "$productName::$defaultVersion")
+                        apiParams.addProperty("modName", "")
+                        apiParams.addProperty("name", apiName)
+                        apiParams.addProperty("pageType", "document")
+                        apiParams.addProperty("schemaType", "api")
+                        apiParams.addProperty("name", apiName)
+                        apiParams.add("spec", spec)
 
-                            colorList = FormatUtil.adjustColor()
-                            val toolWindowCssTemp = ResourceUtil.load("/css/apiTab.css")
-                            val toolWindowCss = toolWindowCssTemp.replace("var(--background-color)", colorList[0])
-                                .replace("var(--text-color)", colorList[1])
-                                .replace("var(--button-background-color)", colorList[2])
-                            val templateHtml = ResourceUtil.load("/html/apiDoc.html")
+                        val definitions =
+                            apiDocData.get(ApiConstants.API_DOC_RESP_COMPONENTS).asJsonObject.get(ApiConstants.API_DOC_RESP_SCHEMAS).asJsonObject
 
-                            modifiedHtml = templateHtml.replace("\$toolWindowCss", toolWindowCss)
-                                .replace("\$editHtml", editHtml)
-                                .replace("\$paramsTableHtml", paramsTableHtml)
-                                .replace("\$respTableHtml", respTableHtml)
-                                .replace("\$errorTableHtml", errorTableHtml)
-                        }
+                        val templateHtml = ResourceUtil.load("/html/index.html")
+                        modifiedHtml = templateHtml.replace("\$APIMETA", "$apiParams").replace("\$DEFS", "$definitions")
                     }
 
                     override fun onSuccess() {
@@ -141,6 +142,130 @@ class ProcessMeta {
                 })
             } catch (_: IOException) {
             }
+
+        }
+
+        /**
+         * execute api debug
+         */
+        private fun executeDebug(
+            browser: JBCefBrowser,
+            apiDocData: JsonObject,
+            apiName: String,
+            endpoints: JsonArray,
+            project: Project,
+        ) {
+            val query = JBCefJSQuery.create(browser as JBCefBrowserBase)
+
+            query.addHandler { arg: String? ->
+                try {
+                    val argsType = object : TypeToken<Map<String, Any>>() {}.type
+                    val gson = GsonBuilder()
+                        .registerTypeAdapter(object : TypeToken<Map<String?, Any?>?>() {}.type, MapTypeAdapter())
+                        .create()
+                    val debugParams: Map<String, Any> = gson.fromJson(arg, argsType)
+                    val paramsValue = debugParams["paramsValue"].castSafelyTo<Map<String, Any>>()
+                    val regionId = debugParams["regionId"].toString()
+                    var debugHtml = ""
+                    val config = ConfigureFile.loadConfigureFile()
+                    val profile = config.profiles.find { it.name == config.current }
+                    val accessKeyId = profile?.access_key_id
+                    val accessKeySecret = profile?.access_key_secret
+                    if (accessKeyId == null || accessKeySecret == null || accessKeyId == "" || accessKeySecret == "") {
+                        NotificationGroupManager.getInstance()
+                            .getNotificationGroup("AlibabaCloud API: Warning")
+                            .createNotification(
+                                "需要登录：如需调试请先在 Edit Profile 处配置用户信息",
+                                NotificationType.WARNING,
+                            )
+                            .notify(project)
+                    } else {
+                        debugHtml =
+                            getDebugResponse(
+                                paramsValue,
+                                apiDocData,
+                                apiName,
+                                endpoints,
+                                regionId,
+                                accessKeyId,
+                                accessKeySecret,
+                                project
+                            ).replace(
+                                "\\\"",
+                                "",
+                            )
+                    }
+
+                    browser.cefBrowser.executeJavaScript(
+                        "transmitDebugResponse('$debugHtml')",
+                        browser.cefBrowser.url,
+                        0,
+                    )
+                    return@addHandler JBCefJSQuery.Response("ok")
+                } catch (e: JsonSyntaxException) {
+                    val message = "Params format error, please check."
+                    NotificationGroupManager.getInstance()
+                        .getNotificationGroup("AlibabaCloud API: Warning")
+                        .createNotification(message, NotificationType.WARNING)
+                        .notify(project)
+                    return@addHandler JBCefJSQuery.Response(null, 0, "errorMsg")
+                }
+            }
+
+            browser.jbCefClient.addLoadHandler(
+                object : CefLoadHandlerAdapter() {
+                    override fun onLoadingStateChange(
+                        cefBrowser: CefBrowser,
+                        isLoading: Boolean,
+                        canGoBack: Boolean,
+                        canGoForward: Boolean,
+                    ) {
+                    }
+
+                    override fun onLoadStart(
+                        cefBrowser: CefBrowser,
+                        frame: CefFrame,
+                        transitionType: CefRequest.TransitionType,
+                    ) {
+                    }
+
+                    override fun onLoadEnd(cefBrowser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
+                        val regionIds = JsonArray()
+                        for (i in 0 until endpoints.size()) {
+                            val regionIdToSelect = endpoints[i].asJsonObject.get("regionId").asString
+                            regionIds.add(regionIdToSelect)
+                        }
+
+                        cefBrowser.executeJavaScript(
+                            """
+                        populateDropdown($regionIds);
+                        window.callLogicLayer = function(arg, cb) {
+                        ${
+                                query.inject(
+                                    "arg",
+                                    "response => console.log('读取参数成功', (response))",
+                                    "(error_code, error_message) => console.log('读取参数失败', error_code, error_message)",
+                                )
+                            }
+                        };
+                        
+                            """.trimIndent(),
+                            browser.cefBrowser.url,
+                            0,
+                        )
+                    }
+
+                    override fun onLoadError(
+                        cefBrowser: CefBrowser,
+                        frame: CefFrame,
+                        errorCode: CefLoadHandler.ErrorCode,
+                        errorText: String,
+                        failedUrl: String,
+                    ) {
+                    }
+                },
+                browser.cefBrowser,
+            )
         }
 
         fun getApiListRequest(url: URL): JsonArray {
@@ -161,366 +286,260 @@ class ProcessMeta {
             }
         }
 
-        private fun responseConvert(schema: Parameter.Schema, refSchema: JsonObject): String {
-            // 调用处理顶层 schema 的函数，传入整个 schema 以及开始的层级（顶层为0）
-            val tableEntries = processRespSchema(schema, refSchema, 0)
-            return buildHtmlTable(tableEntries, "resp")
-        }
+        private fun getDebugResponse(
+            args: Map<String, Any>?,
+            apiDocData: JsonObject,
+            apiName: String,
+            endpoints: JsonArray,
+            regionId: String?,
+            accessKeyId: String,
+            accessKeySecret: String,
+            project: Project,
+        ): String {
+            val apisObject = apiDocData.get(ApiConstants.DEBUG_APIS).asJsonObject.get(apiName).asJsonObject
+            val methods = apisObject.get(ApiConstants.DEBUG_METHODS).asJsonArray
+            val method = FormatUtil.getMethod(methods)
+            val schemes = apisObject.get(ApiConstants.DEBUG_SCHEMES).asJsonArray
+            val protocol = FormatUtil.getProtocol(schemes)
+            var pathName = apisObject.get(ApiConstants.DEBUG_PATH)?.asString ?: "/"
+            val produces = apisObject.get(ApiConstants.DEBUG_PRODUCES)?.asJsonArray
+            val apiParameters = apisObject.get(ApiConstants.DEBUG_PARAMETERS).asJsonArray
+            val newParams = mutableMapOf<String, JsonObject>()
+            val info = apiDocData.get("info").asJsonObject
+            val product = info.get("product").asString
+            val apiVersion = info.get("version").asString
 
-        private fun processParam(
-            param: Parameter,
-            refSchema: JsonObject,
-            level: Int = 0,
-            originName: String? = null,
-        ): List<ParamList> {
-            val entries = mutableListOf<ParamList>()
-            val name = param.name
-            val schema = param.schema
-            val type = schema.type.orEmpty()
-            val required = schema.required ?: false
-            val maximum = schema.maximum?.let { "${ApiConstants.PARAM_TABLE_SCHEMA_MAX}$it" }.orEmpty()
-            val minimum =
-                if (maximum == "") schema.minimum?.let { "${ApiConstants.PARAM_TABLE_SCHEMA_MIN}$it" }.orEmpty() else ""
-            val maxItems = schema.maxItems?.let { "${ApiConstants.PARAM_TABLE_SCHEMA_MAX_ITEMS}$it" }.orEmpty()
-            val format = schema.format.orEmpty()
-            val ref = schema.ref.orEmpty()
-
-            val commonInfo = commonProcess(type, ref, schema, refSchema)
-            val refType = commonInfo.first
-            val fieldDetail = commonInfo.second
-
-            val hasChildren =
-                type == ApiConstants.PARAM_TYPE_ARRAY || (type == ApiConstants.PARAM_TYPE_OBJECT && ((schema.properties != null) || (schema.additionalProperties != null)))
-            val className = if (level == 0 && hasChildren) "childContent-${UUID.randomUUID()}" else originName
-            val buttonId = "$className-button" // 新增按钮的ID，与类名相关联
-
-            val toggleButton = if (level == 0 && hasChildren) {
-                "<button id=\"$buttonId\" onclick=\"toggleVisibility('$className', '$buttonId')\">+</button> "
-            } else {
-                ""
-            }
-
-            entries.add(
-                ParamList(
-                    "${toggleButton}${"&nbsp".repeat(level * 4)}${if (required) "*" else ""}$name<br>${
-                        "&nbsp".repeat(
-                            level * 4,
-                        )
-                    }${if (type == ApiConstants.PARAM_TYPE_ARRAY) "[$type ${"&lt;${schema.items!!.type}&gt;"}]" else if (type != "") "[$type${if (format != "") "&lt;$format&gt;" else ""}]" else if (ref !== "") "[$refType]" else ""}",
-                    "$fieldDetail $maximum $minimum $maxItems",
-                    level,
-                    className,
-                ),
-            )
-
-            when (type) {
-                ApiConstants.PARAM_TYPE_ARRAY -> {
-                    schema.items?.let { items ->
-                        entries.addAll(processParam(Parameter("", param.`in`, items), refSchema, level + 1, className))
-                    }
-                }
-
-                ApiConstants.PARAM_TYPE_OBJECT -> {
-                    if (!schema.properties.isNullOrEmpty()) {
-                        schema.properties.forEach { (propName, propSchema) ->
-                            entries.addAll(
-                                processParam(
-                                    Parameter(propName, param.`in`, propSchema),
-                                    refSchema,
-                                    level + 1,
-                                    className,
-                                ),
-                            )
-                        }
-                    } else if (schema.additionalProperties != null) {
-                        schema.additionalProperties.let { additionalProperty ->
-                            entries.addAll(
-                                processParam(
-                                    Parameter("", param.`in`, additionalProperty),
-                                    refSchema,
-                                    level + 1,
-                                    className,
-                                ),
-                            )
-                        }
-                    }
-                }
-            }
-            return entries
-        }
-
-        private fun processRespSchema(
-            schema: Parameter.Schema,
-            refSchema: JsonObject,
-            level: Int = 0,
-            className: String? = null,
-        ): List<ParamList> {
-            val entries = mutableListOf<ParamList>()
-            val type = schema.type.orEmpty()
-            val format = schema.format.orEmpty()
-            val ref = schema.ref.orEmpty()
-
-            val commonInfo = commonProcess(type, ref, schema, refSchema)
-            val refType = commonInfo.first
-            val fieldDetail = commonInfo.second
-
-            // 处理基本类型（包括$ref）
-            if (level == 0 && type != ApiConstants.PARAM_TYPE_ARRAY && type != ApiConstants.PARAM_TYPE_OBJECT) {
-                entries.add(
-                    ParamList(
-                        if (type != "") "[${type}${if (format != "") "&lt;$format&gt;" else ""}]" else if (ref !== "") "[$refType]" else "",
-                        fieldDetail,
-                        0,
-                    ),
-                )
-            }
-
-            when (type) {
-                ApiConstants.PARAM_TYPE_ARRAY -> {
-                    schema.items?.let { items ->
-                        subprocessRespSchema(items, entries, refSchema, level, ApiConstants.PARAM_TYPE_ARRAY, className)
-                    }
-                }
-
-                ApiConstants.PARAM_TYPE_OBJECT -> {
-                    if (!schema.properties.isNullOrEmpty()) {
-                        schema.properties.forEach { (propName, propSchema) ->
-                            subprocessRespSchema(propSchema, entries, refSchema, level, propName, className)
-                        }
-                    } else if (schema.additionalProperties != null) {
-                        // TODO 手动测试一下map的情况
-                        subprocessRespSchema(
-                            schema.additionalProperties,
-                            entries,
-                            refSchema,
-                            level,
-                            ApiConstants.PARAM_TYPE_MAP,
-                            className,
-                        )
-                    }
-                }
-            }
-            return entries
-        }
-
-        private fun subprocessRespSchema(
-            schema: Parameter.Schema,
-            entries: MutableList<ParamList>,
-            refSchema: JsonObject,
-            level: Int,
-            arrayOrObject: String,
-            parentId: String? = null,
-        ) {
-            val format = schema.format.orEmpty()
-            val type = schema.type.orEmpty()
-            val ref = schema.ref.orEmpty()
-
-            val commonInfo = commonProcess(type, ref, schema, refSchema)
-            val refType = commonInfo.first
-            val fieldDetail = commonInfo.second
-
-            val hasChildren =
-                schema.type == ApiConstants.PARAM_TYPE_ARRAY || (schema.type == ApiConstants.PARAM_TYPE_OBJECT && (schema.properties != null) && (schema.additionalProperties != null))
-            val className = if (level == 0 && hasChildren) "childContent-${UUID.randomUUID()}" else parentId
-            val buttonId = "$className-button"
-
-            val toggleButton = if (level == 0 && hasChildren) {
-                "<button id=\"$buttonId\" onclick=\"toggleVisibility('$className', '$buttonId')\">+</button> "
-            } else {
-                ""
-            }
-
-            val fieldName = when (arrayOrObject) {
-                ApiConstants.PARAM_TYPE_ARRAY -> {
-                    "${"&nbsp;".repeat(level * 4)}${if (type != "") "[${schema.type}${if (schema.type == "array") "&lt;${schema.items!!.type}&gt;" else ""}${if (format != "") "&lt;$format&gt;" else ""}]" else if (schema.ref !== "") "[$refType]" else ""}"
-                }
-
-                ApiConstants.PARAM_TYPE_MAP -> {
-                    "${"&nbsp;".repeat(level * 4)}${"map"}"
-                }
-
-                else -> {
-                    "${"&nbsp;".repeat(level * 4)}$arrayOrObject <br>${"&nbsp".repeat(level * 4)}${if (type != "") "[${schema.type}${if (schema.type == "array") "&lt;${schema.items!!.type}&gt;" else ""}${if (format != "") "&lt;$format&gt;" else ""}]" else if (schema.ref !== "") "[$refType]" else ""}"
+            var requestType = "json"
+            apiParameters.forEach { apiParam ->
+                val paramName = apiParam.asJsonObject.get(ApiConstants.DEBUG_PARAMETERS_NAME).asString
+                newParams[paramName] = apiParam.asJsonObject
+                if (apiParam.asJsonObject.get("in").asString == "formData") {
+                    requestType = "formData"
                 }
             }
 
-            entries.add(
-                ParamList(
-                    "${toggleButton}$fieldName",
-                    fieldDetail,
-                    level,
-                    className,
-                ),
-            )
-
-            entries.addAll(processRespSchema(schema, refSchema, level + 1, className))
-        }
-
-        private fun processErrorCodes(errorCodes: JsonObject): List<ErrorCodes> {
-            val entries = mutableListOf<ErrorCodes>()
-
-            errorCodes.entrySet().forEach { (httpStatusCode, errorListJsonElement) ->
-                val errorList = errorListJsonElement.asJsonArray
-                errorList.forEach { errorJsonElement ->
-                    val errorCode = errorJsonElement.asJsonObject.get(ApiConstants.ERROR_CODES_ERROR_CODE).asString
-                    val errorMessage =
-                        errorJsonElement.asJsonObject.get(ApiConstants.ERROR_CODES_ERROR_MESSAGE).asString
-                    entries.add(ErrorCodes(httpStatusCode, errorCode, errorMessage))
+            var endpoint = String()
+            for (element in endpoints) {
+                if (element.asJsonObject.get("regionId").asString == regionId) {
+                    endpoint = element.asJsonObject.get("endpoint").asString
                 }
             }
 
-            return entries
-        }
-
-        private fun commonProcess(
-            type: String,
-            ref: String,
-            schema: Parameter.Schema,
-            refSchema: JsonObject
-        ): Pair<String, String> {
-            val description = FormatUtil.parseMdToHtml(FormatUtil.editProps(schema.description.orEmpty(), "table"))
-            val example =
-                FormatUtil.parseMdToHtml(
-                    FormatUtil.editProps(
-                        schema.example?.let { "${ApiConstants.PARAM_TABLE_SCHEMA_EXAMPLE}$it" }
-                            .orEmpty(),
-                        "table",
-                    ),
-                )
-
-            val refTypeAndEnum = FormatUtil.getRefTypeAndEnum(type, ref, refSchema, schema.enum)
-            val refType = refTypeAndEnum.first
-            val enum = refTypeAndEnum.second
-            val fieldDetail = "$description $example $enum"
-            return Pair(refType, fieldDetail)
-        }
-
-        private fun convertParamsToTable(paramsJsonArray: JsonArray, refSchema: JsonObject): List<ParamList> {
-            val params = Gson().fromJson(paramsJsonArray, Array<Parameter>::class.java).toList()
-            val uniqueNames = mutableSetOf<String>()
-
-            val uniqueParams = params.filter { parameter ->
-                if (parameter.name in uniqueNames) {
-                    false
-                } else {
-                    uniqueNames.add(parameter.name)
-                    true
+            val openApiRequest = OpenAPIClient.OpenApiRequest()
+            openApiRequest.headers = mutableMapOf<String, String>()
+            if (args != null) {
+                if (product == "ROS" && args.containsKey(ApiConstants.DEBUG_PARAMS_REGION_ID)) {
+                    (openApiRequest.headers as MutableMap<String, String>)["x-acs-region-id"] =
+                        args.get(ApiConstants.DEBUG_PARAMS_REGION_ID).toString()
                 }
             }
-            return uniqueParams.flatMap { param -> processParam(param, refSchema) }
-        }
 
-        private fun buildHtmlTable(tableEntries: List<ParamList>, reqOrResp: String): String {
-            val tableHtmlBuilder = StringBuilder()
+            val queries = mutableMapOf<String, Any>()
+            var body = Any()
+            val headers = mutableMapOf<String, String>()
 
-            if (tableEntries.isEmpty()) {
-                tableHtmlBuilder.append(if (reqOrResp == "req") "<h2>${ApiConstants.PARAM_TABLE_TITLE_REQ_EMPTY}</h2>" else "<h2>${ApiConstants.PARAM_TABLE_TITLE_RESP_EMPTY}</h2>")
-            } else {
-                tableHtmlBuilder.append(if (reqOrResp == "req") "<h2>${ApiConstants.PARAM_TABLE_TITLE_REQ}</h2>" else "<h2>${ApiConstants.PARAM_TABLE_TITLE_RESP}</h2>")
-                tableHtmlBuilder.append("<table>\n")
-                tableHtmlBuilder.append(
-                    """
-            |<tr>
-            |    <th>${ApiConstants.PARAM_TABLE_HEADER_FILED_NAME}</th>
-            |    <th>${ApiConstants.PARAM_TABLE_HEADER_FILED_DETAIL}</th>
-            |</tr>
-                    """.trimMargin(),
-                )
-
-                for (entry in tableEntries) {
-                    val isChildContent = entry.level > 0 // 判断是否是子内容: 通过level判断
-                    val displayStyle = if (isChildContent) " style=\"display: none;\"" else ""
-                    val idAttribute = if (isChildContent) " class=\"${entry.className}\"" else ""
-                    tableHtmlBuilder.append(
-                        """
-        |<tr$idAttribute$displayStyle>
-        |    <td>${entry.fieldName}</td>
-        |    <td>${entry.fieldDetail.replace("\n", "")}</td>
-        |</tr>
-                        """.trimMargin(),
-                    )
-                }
-
-                // 结束HTML表格
-                tableHtmlBuilder.append("</table>\n")
-            }
-            return tableHtmlBuilder.toString()
-        }
-
-        private fun buildErrorTable(tableEntries: List<ErrorCodes>): String {
-            val tableHtmlBuilder = StringBuilder()
-
-            if (tableEntries.isEmpty()) {
-                tableHtmlBuilder.append("<h2>${ApiConstants.ERROR_TABLE_TITLE_EMPTY}</h2>")
-            } else {
-                tableHtmlBuilder.append("<h2>${ApiConstants.ERROR_TABLE_TITLE}</h2>")
-                // 开始HTML表格
-                tableHtmlBuilder.append("<table>\n")
-                tableHtmlBuilder.append(
-                    """
-        |<tr>
-        |    <th>${ApiConstants.ERROR_TABLE_HEADER_HTTP_CODE}</th>
-        |    <th>${ApiConstants.ERROR_TABLE_HEADER_ERROR_CODE}</th>
-        |    <th>${ApiConstants.ERROR_TABLE_HEADER_ERROR_MESSAGE}</th>
-        |</tr>
-                    """.trimMargin(),
-                )
-
-                for (entry in tableEntries) {
-                    tableHtmlBuilder.append(
-                        """
-        |    <td>${entry.httpStatusCode}</td>
-        |    <td>${entry.errorCode}</td>
-        |    <td>${entry.errorMessage}</td>
-        |</tr>
-                        """.trimMargin(),
-                    )
-                }
-                tableHtmlBuilder.append("</table>\n")
-            }
-
-            return tableHtmlBuilder.toString()
-        }
-
-        fun buildDebugHtml(debugParams: JsonObject, apiName: String): String {
-            val method =
-                FormatUtil.getMethod(
-                    debugParams.get(ApiConstants.DEBUG_PARAMS_PARAM_OBJECT).asJsonObject.get(
-                        ApiConstants.DEBUG_PARAMS_PARAM_OBJECT_METHOD,
-                    ).asString,
-                )
-            val protocol =
-                if (debugParams.get(ApiConstants.DEBUG_PARAMS_PARAM_OBJECT).asJsonObject.get(ApiConstants.DEBUG_PARAMS_PARAM_OBJECT_PROTOCOL).asString.split(
-                        "|",
-                    )
-                        .contains(ApiConstants.PROTOCOL_HTTPS)
-                ) {
-                    ApiConstants.PROTOCOL_HTTPS
-                } else {
-                    ApiConstants.PROTOCOL_HTTP
-                }
-            val paramObject = debugParams.get(ApiConstants.DEBUG_PARAMS_PARAM_OBJECT).asJsonObject
-            val endpoint = debugParams.get(ApiConstants.DEBUG_PARAMS_PARAM_ENDPOINT).asString
-            val pathName = paramObject.get(ApiConstants.DEBUG_PARAMS_PARAM_PATH).asString
-            val requestType =
-                if (!debugParams.get(ApiConstants.DEBUG_PARAMS_PARAM_BODY_STYLE).isJsonNull) {
-                    debugParams.get(
-                        ApiConstants.DEBUG_PARAMS_PARAM_BODY_STYLE,
+            val responseSchema =
+                apisObject.get("responses").asJsonObject?.get("200")?.asJsonObject?.get("schema")?.asJsonObject
+            val responseType = if (responseSchema == null) {
+                FormatUtil._bodyType(produces)
+            } else if (responseSchema.has(ApiConstants.API_RESP_RESPONSES_SCHEMA_XML)) {
+                "xml"
+            } else if (responseSchema.get(ApiConstants.API_RESP_RESPONSES_SCHEMA_TYPE)?.asString != ApiConstants.API_RESP_RESPONSES_SCHEMA_TYPE_OBJECT) {
+                if (responseSchema.has(ApiConstants.API_RESP_RESPONSES_SCHEMA_FORMAT)) {
+                    responseSchema.get(
+                        ApiConstants.API_RESP_RESPONSES_SCHEMA_FORMAT,
                     ).asString
                 } else {
-                    null
+                    responseSchema.get(ApiConstants.API_RESP_RESPONSES_SCHEMA_TYPE).asString
                 }
+            } else {
+                "json"
+            }
 
-            val regionId = debugParams.get(ApiConstants.DEBUG_PARAMS_PARAM_REGION_ID).asString
-            val oldParams = Gson().fromJson(
-                paramObject.get(ApiConstants.DEBUG_PARAMS_PARAM_OBJECT_PARAMS).asString,
-                JsonArray::class.java,
-            )
-            val newParams = mutableMapOf<String, String>()
+            if (args != null) {
+                for ((name, value) in args.entries) {
+                    val paramInfo = newParams[name]?.asJsonObject
+                    if (paramInfo != null) {
+                        val position = paramInfo.get(ApiConstants.DEBUG_NEW_PARAMS_IN).asString
+                        val style = paramInfo.get(ApiConstants.DEBUG_NEW_PARAMS_STYLE)?.asString
+                        when (position) {
+                            ApiConstants.DEBUG_NEW_PARAMS_POSITION_PATH -> {
+                                var newValue = String()
+                                if (style == "json" && value !is String) {
+                                    newValue = Gson().toJson(value)
+                                }
+                                if (pathName.indexOf('*') != -1 && name == "requestPath") {
+                                    pathName = newValue
+                                } else if (pathName.contains(name)) {
+                                    pathName = pathName.replace("{$name}", value.toString())
+                                }
+                            }
 
-            val tableHtmlBuilder = StringBuilder()
+                            ApiConstants.DEBUG_NEW_PARAMS_POSITION_HOST -> {
+                            }
 
-            return tableHtmlBuilder.toString()
+                            ApiConstants.DEBUG_NEW_PARAMS_POSITION_QUERY -> {
+                                if (style == "json" && value !is String) {
+                                    val jsonString = Gson().toJson(value)
+                                    queries[name] = jsonString
+                                }
+                                if (style != null && value is List<*>) {
+                                    val valuesList = mutableListOf<Any>()
+                                    when (style) {
+                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_SIMPLE -> {
+                                            queries[name] = FormatUtil.joinValueArray(valuesList, value, ",")
+                                        }
+
+                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_SPACE -> {
+                                            queries[name] = FormatUtil.joinValueArray(valuesList, value, " ")
+                                        }
+
+                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_PIPE -> {
+                                            queries[name] = FormatUtil.joinValueArray(valuesList, value, "|")
+                                        }
+
+                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_REPEAT_LIST -> {
+                                            queries[name] = value
+                                        }
+
+                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_FLAT -> {
+                                            queries[name] = value
+                                        }
+                                    }
+                                } else {
+                                    queries[name] = value
+                                }
+                            }
+
+                            ApiConstants.DEBUG_NEW_PARAMS_POSITION_BODY,
+                            ApiConstants.DEBUG_NEW_PARAMS_POSITION_FORM_DATA,
+                            -> {
+                                val type = paramInfo.get("schema")?.asJsonObject?.get("type")?.asString
+                                if (name == "RequestBody" && type == "RequestBody") {
+                                    body = value
+                                }
+
+                                if (style == "json" && value !is String) {
+                                    body = Gson().toJson(value)
+                                }
+                                if (style != null && value is List<*>) {
+                                    val valuesList = mutableListOf<Any>()
+                                    when (style) {
+                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_SIMPLE -> {
+                                            body = FormatUtil.joinValueArray(valuesList, value, ",")
+                                        }
+
+                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_SPACE -> {
+                                            body = FormatUtil.joinValueArray(valuesList, value, " ")
+                                        }
+
+                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_PIPE -> {
+                                            body = FormatUtil.joinValueArray(valuesList, value, "|")
+                                        }
+
+                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_REPEAT_LIST -> {
+                                            body = value
+                                        }
+
+                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_FLAT -> {
+                                            body = value
+                                        }
+                                    }
+                                } else {
+                                    body = value
+                                }
+                                openApiRequest.body = body
+                            }
+
+                            ApiConstants.DEBUG_NEW_PARAMS_POSITION_HEADER -> {
+                                if (style == "json" && value !is String) {
+                                    headers[name] = Gson().toJson(value)
+                                }
+                                if (style != null && value is List<*>) {
+                                    val valuesList = mutableListOf<Any>()
+                                    when (style) {
+                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_SIMPLE -> {
+                                            headers[name] = FormatUtil.joinValueArray(valuesList, value, ",")
+                                        }
+
+                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_SPACE -> {
+                                            headers[name] = FormatUtil.joinValueArray(valuesList, value, " ")
+                                        }
+
+                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_PIPE -> {
+                                            headers[name] = FormatUtil.joinValueArray(valuesList, value, "|")
+                                        }
+
+                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_REPEAT_LIST -> {
+                                            headers[name] = value.toString()
+                                        }
+
+                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_FLAT -> {
+                                            headers[name] = value.toString()
+                                        }
+                                    }
+                                } else {
+                                    headers[name] = value.toString()
+                                }
+                                openApiRequest.headers = headers
+                            }
+                        }
+                    }
+                }
+            }
+
+            openApiRequest.query = com.aliyun.openapiutil.Client.query(queries)
+            val runtimeOptions = com.aliyun.teautil.models.RuntimeOptions()
+            val teaConfig = OpenAPIClient.Config()
+            teaConfig.endpoint = endpoint
+            teaConfig.accessKeyId = accessKeyId
+            teaConfig.accessKeySecret = accessKeySecret
+            teaConfig.protocol = protocol
+            // TODO Credentials
+//            teaConfig.credential = _credential
+            teaConfig.readTimeout = 50000
+            teaConfig.connectTimeout = 50000
+            teaConfig.globalParameters = OpenAPIClient.GlobalParameters().setHeaders(openApiRequest.headers)
+
+            val data = OpenAPIClient.Params()
+            data.version = apiVersion
+            data.method = method
+            data.pathname = pathName
+            data.action = apiName
+            data.reqBodyType = requestType
+            data.bodyType = responseType
+            data.authType = "AK"
+            data.protocol = protocol
+
+            val client = OpenAPIClient(teaConfig)
+            var response = mutableMapOf<String, Any?>()
+            var duration = 0
+
+            try {
+                val startTime = System.currentTimeMillis()
+                response = client.doRequest(data, openApiRequest, runtimeOptions).toMutableMap()
+                duration = (System.currentTimeMillis() - startTime).toInt()
+            } catch (teaUnretryableException: com.aliyun.tea.TeaUnretryableException) {
+                val message =
+                    if (teaUnretryableException.message == "Invalid URL host: \"\"") {
+                        "请选择正确的服务地址"
+                    } else {
+                        teaUnretryableException.message
+                            ?: ""
+                    }
+                NotificationGroupManager.getInstance()
+                    .getNotificationGroup("AlibabaCloud API: Warning")
+                    .createNotification(message, NotificationType.WARNING)
+                    .notify(project)
+            } catch (teaUtilException: TeaUtilException) {
+                val message = "Some format exception, welcome to feedback"
+                NotificationGroupManager.getInstance()
+                    .getNotificationGroup("AlibabaCloud API: Error")
+                    .createNotification(message, NotificationType.ERROR)
+                    .notify(project)
+            }
+            response["cost"] = duration
+            return Gson().toJson(response)
         }
     }
 }

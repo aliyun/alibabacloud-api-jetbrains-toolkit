@@ -113,9 +113,6 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         nameAndVersionMap: MutableMap<String, List<String>>,
     ) {
         val selectionModel = tree.selectionModel
-//        var toolWindow: ToolWindow? = null
-
-        // 必须放在外层，否则切换产品会打开不同的tab
         val apiPanel = JPanel()
         apiPanel.layout = BoxLayout(apiPanel, BoxLayout.Y_AXIS)
         val scrollPane = JBScrollPane()

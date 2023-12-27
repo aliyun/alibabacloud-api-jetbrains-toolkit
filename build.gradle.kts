@@ -10,11 +10,24 @@ version = "0.0.1"
 
 repositories {
     mavenCentral()
+    maven("https://repo1.maven.org/maven2/com/aliyun/")
+}
+
+dependencies {
+    implementation("com.aliyun:tea:1.2.8") {
+        exclude(group = "org.slf4j")
+    }
+    implementation("com.aliyun:credentials-java:0.3.0")
+    implementation("com.aliyun:tea-xml:0.0.1") {
+        exclude(group = "org.slf4j")
+    }
+    implementation("com.aliyun:tea-util:0.2.21")
+    implementation("com.aliyun:openapiutil:0.2.1")
 }
 
 intellij {
-    version.set(System.getenv("INTELLIJ_VERSION")?: "2022.2.5")
-    type.set(System.getenv("INTELLIJ_TYPE")?: "IC")
+    version.set(System.getenv("INTELLIJ_VERSION") ?: "2022.2.5")
+    type.set(System.getenv("INTELLIJ_TYPE") ?: "IC")
 }
 
 tasks {
@@ -38,7 +51,6 @@ tasks {
     }
 
     publishPlugin {
-        channels.set(listOf("alpha"))
         token.set(providers.environmentVariable("PUBLISH_TOKEN"))
     }
 }
