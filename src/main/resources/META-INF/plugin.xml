@@ -75,6 +75,13 @@
         <li>Provides static credentials for switch and edit user profiles.</li>
         <li>Provides product explorer and API document view.</li>
       </ul>
+      <b>0.0.2 (2023-12-27)</b>
+      <ul>
+        <li>Support refresh operation and loading page.</li>
+        <li>Support search products and apis.</li>
+        <li>Support api debug capability and optimize api display interface.</li>
+        <li>Add cache.</li>
+      </ul>
     ]]></change-notes>
 
     <idea-version since-build="222"/>
