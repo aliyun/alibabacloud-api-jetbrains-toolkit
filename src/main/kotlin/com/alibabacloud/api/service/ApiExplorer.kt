@@ -2,38 +2,27 @@ package com.alibabacloud.api.service
 
 import com.alibabacloud.api.service.constants.ApiConstants
 import com.alibabacloud.api.service.util.CacheUtil
-import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.ui.CustomTreeCellRenderer
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.ui.JBColor
-import com.intellij.ui.components.JBList
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.treeStructure.Tree
 import java.awt.BorderLayout
 import java.awt.Dimension
-import java.awt.Point
-import java.awt.event.FocusAdapter
-import java.awt.event.FocusEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
-import javax.swing.*
-import javax.swing.event.DocumentEvent
-import javax.swing.event.DocumentListener
+import javax.swing.JPanel
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
-import javax.swing.tree.TreeNode
-import javax.swing.tree.TreePath
 
 class ApiExplorer {
     companion object {
         fun explorerTree(data: JsonArray, panel: JPanel): Tree {
-            val searchField = JTextField("搜索 API：")
+            val searchField = SearchTextField()
+            searchField.textEditor.emptyText.text = "搜索 API："
             searchField.maximumSize = Dimension(Integer.MAX_VALUE, 50)
             panel.add(searchField, BorderLayout.NORTH)
 
@@ -67,154 +56,8 @@ class ApiExplorer {
             tree.expandRow(0)
             tree.isRootVisible = false
             panel.add(tree, BorderLayout.CENTER)
-            searchApi(tree, searchField, panel)
+            SearchHelper.search(null, tree, searchField, panel)
             return tree
-        }
-
-        private fun collectLeafNodes(root: TreeNode, leafNodes: MutableList<String>) {
-            if (root.isLeaf) {
-                val node = root as DefaultMutableTreeNode
-                val ancestors = generateSequence(node.parent) { it.parent }
-                    .toList()
-                    .asReversed()
-                    .filterIsInstance<DefaultMutableTreeNode>()
-                    .filter { it.userObject.toString() != "API LIST" }
-                    .joinToString(" / ") { it.userObject.toString() }
-
-                val nodeText =
-                    if (ancestors.isNotEmpty()) "${node.userObject}（$ancestors）" else node.userObject.toString()
-                leafNodes.add(nodeText)
-            } else {
-                for (i in 0 until root.childCount) {
-                    collectLeafNodes(root.getChildAt(i), leafNodes)
-                }
-            }
-        }
-
-        private fun searchApi(
-            tree: Tree,
-            searchField: JTextField,
-            contentPanel: JPanel,
-        ) {
-            val searchResultsWindow = JWindow(SwingUtilities.getWindowAncestor(contentPanel))
-            val searchResultsModel = DefaultListModel<String>()
-            val searchResultsList = JBList(searchResultsModel).apply {
-                selectionMode = ListSelectionModel.SINGLE_SELECTION
-                addMouseListener(object : MouseAdapter() {
-                    override fun mouseClicked(e: MouseEvent?) {
-                        e?.let {
-                            if (it.clickCount == 1) {
-                                val selectedValue = selectedValue as String
-                                navigateToApi(tree, selectedValue)
-                                searchResultsWindow.isVisible = false
-                            }
-                        }
-                    }
-                })
-            }
-
-            searchResultsWindow.apply {
-                contentPane.add(JScrollPane(searchResultsList), BorderLayout.CENTER)
-                pack()
-            }
-
-            val textColor = searchField.foreground
-            searchField.addFocusListener(object : FocusAdapter() {
-                override fun focusGained(e: FocusEvent?) {
-                    if (searchField.text == "搜索 API：") {
-                        searchField.text = ""
-                        searchField.foreground = textColor
-                    }
-                }
-
-                override fun focusLost(e: FocusEvent?) {
-                    if (searchField.text.isEmpty()) {
-                        searchField.text = "搜索 API："
-                        searchField.foreground = JBColor.GRAY
-                    }
-                }
-            })
-
-            searchField.document.addDocumentListener(object : DocumentListener {
-                override fun insertUpdate(e: DocumentEvent?) {
-                    ensurePlaceholder()
-                    updateSearchResults()
-                }
-
-                override fun removeUpdate(e: DocumentEvent?) {
-                    ensurePlaceholder()
-                    updateSearchResults()
-                }
-
-                override fun changedUpdate(e: DocumentEvent?) {
-                    ensurePlaceholder()
-                    updateSearchResults()
-                }
-
-                private fun updateSearchResults() {
-                    ApplicationManager.getApplication().invokeLater {
-                        val searchText = searchField.text.trim()
-                        searchResultsModel.clear()
-
-                        if (searchText.isNotEmpty()) {
-                            val leafNodes = mutableListOf<String>()
-                            val root = tree.model.root as DefaultMutableTreeNode
-                            collectLeafNodes(root, leafNodes)
-
-                            val filteredNodes = leafNodes.filter { it.contains(searchText, ignoreCase = true) }
-                            for (nodeName in filteredNodes) {
-                                searchResultsModel.addElement(nodeName)
-                            }
-
-                            if (!searchResultsModel.isEmpty) {
-                                searchResultsWindow.size = Dimension(searchField.width, 100)
-                                val locationOnScreen = searchField.locationOnScreen
-                                searchResultsWindow.location =
-                                    Point(locationOnScreen.x, locationOnScreen.y + searchField.height)
-                                searchResultsWindow.isVisible = true
-                            } else {
-                                searchResultsWindow.isVisible = false
-                            }
-                        } else {
-                            searchResultsWindow.isVisible = false
-                        }
-                    }
-                }
-
-                private fun ensurePlaceholder() {
-                    ApplicationManager.getApplication().invokeLater {
-                        if (searchField.text.isEmpty() && !searchField.isFocusOwner) {
-                            searchField.text = "搜索产品："
-                            searchField.foreground = JBColor.GRAY
-                        }
-                    }
-                }
-            })
-        }
-
-        fun navigateToApi(tree: Tree, selectedResult: String) {
-            val pattern = "([^（]+)（([^）]+)）".toRegex()
-            val matchResult = pattern.matchEntire(selectedResult)
-
-            if (matchResult != null) {
-                val (nodeName, ancestors) = matchResult.destructured
-                val ancestorNames = ancestors.split(" / ")
-                val root = tree.model.root as DefaultMutableTreeNode
-                var currentNode: DefaultMutableTreeNode? = root
-
-                for (ancestorName in ancestorNames) {
-                    currentNode = currentNode?.let { FormatUtil.findNode(it, ancestorName) }
-                    if (currentNode == null) break
-                }
-
-                val targetNode = currentNode?.let { FormatUtil.findNode(it, nodeName) }
-                targetNode?.let {
-                    val path = TreePath(it.path)
-                    tree.selectionPath = path
-                    tree.expandPath(path)
-                    tree.scrollPathToVisible(path)
-                }
-            }
         }
 
         private fun addChildrenToNode(children: JsonArray, parent: DefaultMutableTreeNode) {

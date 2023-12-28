@@ -2,6 +2,7 @@ package com.alibabacloud.ui
 
 import com.alibabacloud.api.service.ApiExplorer
 import com.alibabacloud.api.service.ProcessMeta
+import com.alibabacloud.api.service.SearchHelper
 import com.alibabacloud.api.service.constants.ApiConstants
 import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.FormatUtil
@@ -11,7 +12,6 @@ import com.google.gson.JsonArray
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -22,8 +22,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.*
-import com.intellij.ui.JBColor
-import com.intellij.ui.components.JBList
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
@@ -32,19 +31,11 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.treeStructure.Tree
 import java.awt.BorderLayout
 import java.awt.Dimension
-import java.awt.Point
-import java.awt.event.FocusAdapter
-import java.awt.event.FocusEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import java.io.File
 import java.io.IOException
 import java.net.URL
 import javax.swing.*
-import javax.swing.event.DocumentEvent
-import javax.swing.event.DocumentListener
 import javax.swing.tree.DefaultMutableTreeNode
-import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 
 class BaseToolWindow : ToolWindowFactory, DumbAware {
@@ -66,7 +57,8 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         comboBox.maximumSize = Dimension(Integer.MAX_VALUE, 50)
         credentialsContentListener(project)
         contentPanel.add(comboBox)
-        val searchField = JTextField("搜索产品：")
+        val searchField = SearchTextField()
+        searchField.textEditor.emptyText.text = "搜索产品："
         searchField.maximumSize = Dimension(Integer.MAX_VALUE, 50)
         contentPanel.add(searchField)
 
@@ -88,7 +80,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
             val scrollPane = FormatUtil.getScrollPane(cacheTree)
             contentPanel.add(scrollPane)
             productClickListener(project, cacheTree, cacheNameAndVersionMap)
-            searchProduct(cacheNameAndVersionMap, cacheTree, searchField, contentPanel)
+            SearchHelper.search(cacheNameAndVersionMap, cacheTree, searchField, contentPanel)
         } else {
             var nameAndVersionMap = mutableMapOf<String, List<String>>()
             var apiDocContentTree = Tree()
@@ -102,7 +94,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                     val scrollPane = FormatUtil.getScrollPane(apiDocContentTree)
                     contentPanel.add(scrollPane)
                     productClickListener(project, apiDocContentTree, nameAndVersionMap)
-                    searchProduct(nameAndVersionMap, apiDocContentTree, searchField, contentPanel)
+                    SearchHelper.search(nameAndVersionMap, apiDocContentTree, searchField, contentPanel)
                 }
             })
         }
@@ -295,128 +287,6 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         toolWindow.show()
         val selectionModel = tree.selectionModel
         return Pair(selectionModel, tree)
-    }
-
-    private fun searchProduct(
-        nameAndVersionMap: MutableMap<String, List<String>>,
-        tree: Tree,
-        searchField: JTextField,
-        contentPanel: JPanel,
-    ) {
-        val searchResultsWindow = JWindow(SwingUtilities.getWindowAncestor(contentPanel))
-        val searchResultsModel = DefaultListModel<String>()
-        val searchResultsList = JBList(searchResultsModel).apply {
-            selectionMode = ListSelectionModel.SINGLE_SELECTION
-            addMouseListener(object : MouseAdapter() {
-                override fun mouseClicked(e: MouseEvent?) {
-                    e?.let {
-                        if (it.clickCount == 1) {
-                            val selectedValue = selectedValue as String
-                            navigateToProduct(tree, selectedValue)
-                            searchResultsWindow.isVisible = false
-                        }
-                    }
-                }
-            })
-        }
-
-        searchResultsWindow.apply {
-            contentPane.add(JScrollPane(searchResultsList), BorderLayout.CENTER)
-            pack()
-        }
-
-        val textColor = searchField.foreground
-        searchField.addFocusListener(object : FocusAdapter() {
-            override fun focusGained(e: FocusEvent?) {
-                if (searchField.text == "搜索产品：") {
-                    searchField.text = ""
-                    searchField.foreground = textColor
-                }
-            }
-
-            override fun focusLost(e: FocusEvent?) {
-                if (searchField.text.isEmpty()) {
-                    searchField.text = "搜索产品："
-                    searchField.foreground = JBColor.GRAY
-                }
-            }
-        })
-
-        searchField.document.addDocumentListener(object : DocumentListener {
-            override fun insertUpdate(e: DocumentEvent?) {
-                ensurePlaceholder()
-                updateSearchResults()
-            }
-
-            override fun removeUpdate(e: DocumentEvent?) {
-                ensurePlaceholder()
-                updateSearchResults()
-            }
-
-            override fun changedUpdate(e: DocumentEvent?) {
-                ensurePlaceholder()
-                updateSearchResults()
-            }
-
-            private fun updateSearchResults() {
-                ApplicationManager.getApplication().invokeLater {
-                    val searchText = searchField.text.trim()
-                    searchResultsModel.clear()
-
-                    if (searchText.isNotEmpty()) {
-                        nameAndVersionMap.forEach { (productName, nodePaths) ->
-                            if (productName.contains(searchText, ignoreCase = true) && nodePaths.size >= 4) {
-                                val secondLevel = nodePaths[1]
-                                val thirdLevel = nodePaths[2]
-                                val result = "$productName（$secondLevel / $thirdLevel）"
-                                searchResultsModel.addElement(result)
-                            }
-                        }
-
-                        if (!searchResultsModel.isEmpty) {
-                            searchResultsWindow.size = Dimension(searchField.width, 100)
-                            val locationOnScreen = searchField.locationOnScreen
-                            searchResultsWindow.location =
-                                Point(locationOnScreen.x, locationOnScreen.y + searchField.height)
-                            searchResultsWindow.isVisible = true
-                        } else {
-                            searchResultsWindow.isVisible = false
-                        }
-                    } else {
-                        searchResultsWindow.isVisible = false
-                    }
-                }
-            }
-
-            private fun ensurePlaceholder() {
-                ApplicationManager.getApplication().invokeLater {
-                    if (searchField.text.isEmpty() && !searchField.isFocusOwner) {
-                        searchField.text = "搜索产品："
-                        searchField.foreground = JBColor.GRAY
-                    }
-                }
-            }
-        })
-    }
-
-    private fun navigateToProduct(tree: Tree, selectedResult: String) {
-        val pattern = "(.*)（(.*) / (.*)）".toRegex()
-        val matchResult = pattern.find(selectedResult)
-
-        if (matchResult != null) {
-            val (productName, secondLevel, thirdLevel) = matchResult.destructured
-            val root = tree.model.root as DefaultMutableTreeNode
-            val category2NameNode = FormatUtil.findNode(root, secondLevel)
-            val categoryNameNode = category2NameNode?.let { FormatUtil.findNode(it, thirdLevel) }
-            val productNode = categoryNameNode?.let { FormatUtil.findNode(it, productName) }
-
-            productNode?.let {
-                val path = TreePath(it.path)
-                tree.selectionPath = path
-                tree.expandPath(path)
-                tree.scrollPathToVisible(path)
-            }
-        }
     }
 
     private class RefreshLeftToolWindowAction : AnAction() {

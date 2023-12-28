@@ -69,6 +69,7 @@ class ProcessMeta {
                     val endpoints = cacheApiDocData.get(ApiConstants.API_DOC_ENDPOINTS).asJsonArray
                     executeDebug(browser, cacheApiDocData, apiName, endpoints, project)
                 } catch (_: IOException) {
+                } catch (_: NullPointerException) {
                 }
                 apiPanel.removeAll()
                 apiPanel.add(browser.component)
@@ -76,106 +77,112 @@ class ProcessMeta {
                 apiPanel.repaint()
             }
 
-            if (cacheContent == null || cacheDocMeta == null) {
-                try {
-                    val colorList = FormatUtil.adjustColor()
-                    val loadingHtml =
-                        ResourceUtil.load("/html/loading.html").replace("var(--background-color)", colorList[0])
-                            .replace("var(--text-color)", colorList[1])
+            if (cacheContent == null || cacheDocMeta == null || cacheContent.isEmpty() || cacheDocMeta.isEmpty()) {
+                val colorList = FormatUtil.adjustColor()
+                val loadingHtml =
+                    ResourceUtil.load("/html/loading.html").replace("var(--background-color)", colorList[0])
+                        .replace("var(--text-color)", colorList[1])
 
-                    browser.loadHTML(loadingHtml)
-                    apiPanel.removeAll()
-                    apiPanel.add(browser.component)
-                    apiPanel.revalidate()
-                    apiPanel.repaint()
+                browser.loadHTML(loadingHtml)
+                apiPanel.removeAll()
+                apiPanel.add(browser.component)
+                apiPanel.revalidate()
+                apiPanel.repaint()
 
-                    var modifiedHtml = String()
+                var modifiedHtml = String()
+                ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Loading API Doc", true) {
+                    override fun run(indicator: ProgressIndicator) {
+                        val apiDocUrl =
+                            URL("${ApiConstants.API_PARAM_URL}/products/$productName/versions/$defaultVersion/api-docs.json")
+                        val apiDocConnection = apiDocUrl.openConnection() as HttpURLConnection
+                        var apiDocData = JsonObject()
+                        var endpoints = JsonArray()
+                        var apiDocResponse = String()
 
-                    ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Loading API Doc", true) {
-                        override fun run(indicator: ProgressIndicator) {
-                            val apiDocUrl =
-                                URL("${ApiConstants.API_PARAM_URL}/products/$productName/versions/$defaultVersion/api-docs.json")
-                            val apiDocConnection = apiDocUrl.openConnection() as HttpURLConnection
-                            var apiDocData = JsonObject()
-                            var endpoints = JsonArray()
-                            var apiDocResponse = String()
+                        if (apiDocConnection.responseCode == HttpURLConnection.HTTP_OK) {
+                            apiDocResponse = apiDocConnection.inputStream.bufferedReader().use { it.readText() }
+                            val docJsonResponse = Gson().fromJson(apiDocResponse, JsonObject::class.java)
+                            apiDocData = docJsonResponse
+                            endpoints = docJsonResponse.get(ApiConstants.API_DOC_ENDPOINTS).asJsonArray
+                        }
 
-                            if (apiDocConnection.responseCode == HttpURLConnection.HTTP_OK) {
-                                apiDocResponse = apiDocConnection.inputStream.bufferedReader().use { it.readText() }
-                                val docJsonResponse = Gson().fromJson(apiDocResponse, JsonObject::class.java)
-                                apiDocData = docJsonResponse
-                                endpoints = docJsonResponse.get(ApiConstants.API_DOC_ENDPOINTS).asJsonArray
-                            }
+                        apiDocConnection.disconnect()
 
-                            apiDocConnection.disconnect()
+                        executeDebug(browser, apiDocData, apiName, endpoints, project)
 
-                            executeDebug(browser, apiDocData, apiName, endpoints, project)
+                        val apiMeta =
+                            apiDocData.get(ApiConstants.DEBUG_APIS).asJsonObject.get(apiName).asJsonObject
 
-                            val apiMeta =
-                                apiDocData.get(ApiConstants.DEBUG_APIS).asJsonObject.get(apiName).asJsonObject
+                        val ext = JsonObject()
+                        ext.add("errorCodes", apiMeta.get("errorCodes"))
+                        ext.add("extraInfo", apiMeta.get("extraInfo"))
+                        ext.add("methods", apiMeta.get("methods"))
+                        ext.add("requestParamsDescription", apiMeta.get("requestParamsDescription"))
+                        ext.add("responseParamsDescription", apiMeta.get("responseParamsDescription"))
+                        ext.add("responseDemo", apiMeta.get("responseDemo"))
+                        ext.add("schemes", apiMeta.get("schemes"))
+                        ext.add("security", apiMeta.get("security"))
+                        ext.add("summary", apiMeta.get("summary"))
+                        ext.add("title", apiMeta.get("title"))
 
-                            val ext = JsonObject()
-                            ext.add("errorCodes", apiMeta.get("errorCodes"))
-                            ext.add("extraInfo", apiMeta.get("extraInfo"))
-                            ext.add("methods", apiMeta.get("methods"))
-                            ext.add("requestParamsDescription", apiMeta.get("requestParamsDescription"))
-                            ext.add("responseParamsDescription", apiMeta.get("responseParamsDescription"))
-                            ext.add("responseDemo", apiMeta.get("responseDemo"))
-                            ext.add("schemes", apiMeta.get("schemes"))
-                            ext.add("security", apiMeta.get("security"))
-                            ext.add("summary", apiMeta.get("summary"))
-                            ext.add("title", apiMeta.get("title"))
+                        val externalDocs = JsonObject()
+                        externalDocs.addProperty("description", "去调试")
+                        externalDocs.addProperty(
+                            "url",
+                            "https://api.aliyun.com/api/$productName/$defaultVersion/$apiName",
+                        )
 
-                            val externalDocs = JsonObject()
-                            externalDocs.addProperty("description", "去调试")
-                            externalDocs.addProperty(
-                                "url",
-                                "https://api.aliyun.com/api/$productName/$defaultVersion/$apiName",
-                            )
+                        val spec = JsonObject()
+                        spec.addProperty("name", apiName)
+                        spec.add("description", apiMeta.get("description"))
+                        spec.add("method", apiMeta.get("method"))
+                        spec.add("parameters", apiMeta.get("parameters"))
+                        spec.add("responses", apiMeta.get("responses"))
+                        spec.add("summary", apiMeta.get("summary"))
+                        spec.add("title", apiMeta.get("title"))
+                        spec.add("ext", ext)
+                        spec.add("externalDocs", externalDocs)
 
-                            val spec = JsonObject()
-                            spec.addProperty("name", apiName)
-                            spec.add("description", apiMeta.get("description"))
-                            spec.add("method", apiMeta.get("method"))
-                            spec.add("parameters", apiMeta.get("parameters"))
-                            spec.add("responses", apiMeta.get("responses"))
-                            spec.add("summary", apiMeta.get("summary"))
-                            spec.add("title", apiMeta.get("title"))
-                            spec.add("ext", ext)
-                            spec.add("externalDocs", externalDocs)
+                        val apiParams = JsonObject()
+                        apiParams.addProperty("specName", "$productName::$defaultVersion")
+                        apiParams.addProperty("modName", "")
+                        apiParams.addProperty("name", apiName)
+                        apiParams.addProperty("pageType", "document")
+                        apiParams.addProperty("schemaType", "api")
+                        apiParams.addProperty("name", apiName)
+                        apiParams.add("spec", spec)
 
-                            val apiParams = JsonObject()
-                            apiParams.addProperty("specName", "$productName::$defaultVersion")
-                            apiParams.addProperty("modName", "")
-                            apiParams.addProperty("name", apiName)
-                            apiParams.addProperty("pageType", "document")
-                            apiParams.addProperty("schemaType", "api")
-                            apiParams.addProperty("name", apiName)
-                            apiParams.add("spec", spec)
+                        val definitions =
+                            apiDocData.get(ApiConstants.API_DOC_RESP_COMPONENTS).asJsonObject.get(ApiConstants.API_DOC_RESP_SCHEMAS).asJsonObject
 
-                            val definitions =
-                                apiDocData.get(ApiConstants.API_DOC_RESP_COMPONENTS).asJsonObject.get(ApiConstants.API_DOC_RESP_SCHEMAS).asJsonObject
-
-                            val templateHtml = ResourceUtil.load("/html/index.html")
-                            modifiedHtml =
-                                templateHtml.replace("\$APIMETA", "$apiParams").replace("\$DEFS", "$definitions")
+                        val templateHtml = ResourceUtil.load("/html/index.html")
+                        modifiedHtml =
+                            templateHtml.replace("\$APIMETA", "$apiParams").replace("\$DEFS", "$definitions")
+                        try {
                             CacheUtil.cleanExceedCache()
                             cacheFile.writeText(modifiedHtml)
                             cacheMeta.writeText(apiDocResponse)
+                        } catch (e: IOException) {
+                            throw e
                         }
+                    }
 
-                        override fun onSuccess() {
-                            browser.loadHTML(modifiedHtml)
-                            apiPanel.removeAll()
-                            apiPanel.add(browser.component)
-                            apiPanel.revalidate()
-                            apiPanel.repaint()
+                    override fun onSuccess() {
+                        browser.loadHTML(modifiedHtml)
+                        apiPanel.removeAll()
+                        apiPanel.add(browser.component)
+                        apiPanel.revalidate()
+                        apiPanel.repaint()
+                    }
+
+                    override fun onThrowable(error: Throwable) {
+                        if (error is IOException) {
+                            cacheFile.delete()
+                            cacheMeta.delete()
                         }
-                    })
-                } catch (_: IOException) {
-                }
+                    }
+                })
             }
-
         }
 
         /**
