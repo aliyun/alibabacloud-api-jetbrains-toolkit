@@ -7,14 +7,17 @@
 Alibaba Cloud Developer Toolkit for JetBrains 让您访问阿里云服务更加便捷.
 
 ## 支持的 IDE
-IntelliJ IDEA Community 2022.2+
+IntelliJ IDEA(Ultimate, Community) 2022.2+
 
-IntelliJ IDEA Ultimate 2022.2+
+Pycharm (Professional, Community) 2022.2+
+
+GoLand 2022.2+
 
 ## 开始
 
 ### 安装
-您可以通过在 IDE 中的插件市场中搜索“Alibaba Cloud Developer Toolkit”来安装，或者通过浏览器跳转 JetBrains Marketplace 来获取下载文件。
+您可以通过在 IDE 中的插件市场中搜索“Alibaba Cloud Developer Toolkit”来安装，或者通过浏览器跳转 [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/23361-alibaba-cloud-developer-toolkit) 来获取下载文件。
+![Install](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/install.png)
 
 ### 功能
 <div style="overflow-x: scroll; white-space: nowrap;">
@@ -39,6 +42,16 @@ IntelliJ IDEA Ultimate 2022.2+
 
 
 * **API 调试（Beta）** 支持对照参数列表进行便捷的 IDE 内 API 调试，或点击“去调试”按钮可快速跳转浏览器进行调试。
+  > 参数填写 Tips
+
+  对于 `array` 类型的参数，请输入一个 JSON 文本。例如, 对于 `array<string>` 类型的参数，您可以输入：
+    ```json
+    ["str1", "str2"]
+    ```
+  对于 `array<object>` 类型的参数，您可以输入：
+    ```json
+    [{"property11": "value11", "property12": "value12"}, {"property21": "value21", "property22": "value22"}]
+    ```
 
 
 * 更多功能正在开发中，敬请期待。

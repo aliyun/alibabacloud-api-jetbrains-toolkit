@@ -7,15 +7,18 @@
 The Alibaba Cloud Developer Toolkit for JetBrains makes it easier to access Alibaba Cloud services.
 
 ## Supported IDEs
-IntelliJ IDEA Community 2022.2+
+IntelliJ IDEA(Ultimate, Community) 2022.2+
 
-IntelliJ IDEA Ultimate 2022.2+
+Pycharm (Professional, Community) 2022.2+
+
+GoLand 2022.2+
 
 ## Getting Start
 
 ### Installation
 You can download the Alibaba Cloud Developer Toolkit for JetBrains by searching for "Alibaba Cloud Developer Toolkit" in the JetBrains
-Marketplace in your IDE, or download installation files from your web browser.
+Marketplace in your IDE, or download installation files from your web browser through [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/23361-alibaba-cloud-developer-toolkit) .
+![Install](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/install.png)
 
 ### Features
 
@@ -40,12 +43,23 @@ Marketplace in your IDE, or download installation files from your web browser.
 
 
 * **API Document View** Clicking on an API can navigate you to a new tab which displays the corresponding API document,
-  including descriptions, request parameters, response parameters and error codes. With cache implemented, subsequent 
+  including descriptions, request parameters, response parameters and error codes. With cache implemented, subsequent
   visits to the same API will be loaded swiftly.
 
 
 * **API Debug (Beta)** Support convenient API debugging within the IDE against the parameter list, and also offers a
   "Go Debug" button for seamless transition to debug in browser.
+  >Parameter Filling Tips:
+
+  For parameters of the `array` type, please enter a JSON text. For instance, if the parameter type is `array<string>`,
+  you can input:
+    ```json
+    ["str1", "str2"]
+    ```
+  If the parameter type is `array<object>`, you can input:
+    ```json
+    [{"property11": "value11", "property12": "value12"}, {"property21": "value21", "property22": "value22"}]
+    ```
 
 
 * More features are under development, please stay tuned.
