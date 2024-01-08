@@ -11,10 +11,30 @@ import com.google.common.reflect.TypeToken
 import com.google.gson.*
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.EditorSettings
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFileFactory
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.ui.JBColor
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.jcef.JBCefBrowser
@@ -27,11 +47,20 @@ import org.cef.browser.CefFrame
 import org.cef.handler.CefLoadHandler
 import org.cef.handler.CefLoadHandlerAdapter
 import org.cef.network.CefRequest
+import java.awt.BorderLayout
+import java.awt.Desktop
+import java.awt.FlowLayout
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.SocketTimeoutException
+import java.net.URI
 import java.net.URL
-import javax.swing.JPanel
+import javax.swing.*
+import javax.swing.border.Border
+
 
 class ProcessMeta {
     companion object {
@@ -42,6 +71,7 @@ class ProcessMeta {
             apiDocContent: Content,
             contentManager: ContentManager,
             apiPanel: JPanel,
+//            apiPanel: JSplitPane,
             productName: String,
             apiName: String,
             defaultVersion: String,
@@ -61,6 +91,8 @@ class ProcessMeta {
             var cacheContent: String? = null
             var cacheDocMeta: String? = null
             if (useCache && cacheFile.exists() && cacheMeta.exists() && cacheFile.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis() && cacheMeta.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis()) {
+//                val panel1 = JPanel(BorderLayout())
+                val splitPane = JSplitPane(JSplitPane.VERTICAL_SPLIT)
                 try {
                     cacheContent = cacheFile.readText()
                     browser.loadHTML(cacheContent)
@@ -68,11 +100,63 @@ class ProcessMeta {
                     val cacheApiDocData = Gson().fromJson(cacheDocMeta, JsonObject::class.java)
                     val endpoints = cacheApiDocData.get(ApiConstants.API_DOC_ENDPOINTS).asJsonArray
                     executeDebug(browser, cacheApiDocData, apiName, endpoints, project)
+
+                    val bodyParams = JsonObject()
+                    bodyParams.addProperty("apiName", apiName)
+                    bodyParams.addProperty("apiVersion", defaultVersion)
+                    bodyParams.addProperty("product", productName)
+                    bodyParams.addProperty("sdkType", "dara")
+                    bodyParams.add("params", JsonObject())
+                    var demoSdk = getDemoSdk(project, bodyParams)
+                    val panel1 = JPanel(BorderLayout())
+//                    val splitPane = JSplitPane(JSplitPane.VERTICAL_SPLIT)
+                    executeSdk(browser, endpoints) { sdkParams ->
+//                            val argsType = object : TypeToken<Map<String, Any>>() {}.type
+//                            val gson = GsonBuilder()
+//                                .registerTypeAdapter(object : TypeToken<Map<String?, Any?>?>() {}.type, MapTypeAdapter())
+//                                .create()
+//                            val debugParams: Map<String, Any> = gson.fromJson(arg, argsType)
+                        val paramsValue = sdkParams?.get("paramsValue").castSafelyTo<Map<String, Any>>()
+                        val regionId = sdkParams?.get("regionId").toString()
+                        var endpoint = String()
+                        for (element in endpoints) {
+                            if (element.asJsonObject.get("regionId").asString == regionId) {
+                                endpoint = element.asJsonObject.get("endpoint").asString
+                            }
+                        }
+                        println("endpoint is $endpoint")
+                        println("paramsValue sssss$paramsValue")
+                        splitPane.setResizeWeight(0.6)
+                        ApplicationManager.getApplication().invokeLater {
+                            sdkSampleDefault(apiName, defaultVersion, productName, project, panel1, demoSdk)
+                        }
+                        bodyParams.add("params", Gson().toJsonTree(paramsValue) as JsonObject)
+                        bodyParams.addProperty("endpoint", endpoint)
+                        demoSdk = getDemoSdk(project, bodyParams)
+
+                        ApplicationManager.getApplication().invokeLater {
+                            sdkSample(apiName, defaultVersion, productName, project, panel1, demoSdk)
+                        }
+                        ApplicationManager.getApplication().invokeLater {
+                            splitPane.bottomComponent = panel1
+                        }
+                    }
                 } catch (_: IOException) {
                 } catch (_: NullPointerException) {
                 }
+
                 apiPanel.removeAll()
-                apiPanel.add(browser.component)
+//                apiPanel.add(browser.component)
+
+                splitPane.apply {
+                    isContinuousLayout = true
+                    dividerSize = 10
+                    topComponent = browser.component
+//                    bottomComponent = panel1
+                }
+
+                apiPanel.add(splitPane)
+
                 apiPanel.revalidate()
                 apiPanel.repaint()
             }
@@ -90,6 +174,17 @@ class ProcessMeta {
                 apiPanel.repaint()
 
                 var modifiedHtml = String()
+
+                val bodyParams = JsonObject()
+                bodyParams.addProperty("apiName", apiName)
+                bodyParams.addProperty("apiVersion", defaultVersion)
+                bodyParams.addProperty("product", productName)
+                bodyParams.addProperty("sdkType", "dara")
+                bodyParams.add("params", JsonObject())
+                var demoSdk = getDemoSdk(project, bodyParams)
+                val panel1 = JPanel(BorderLayout())
+                val splitPane = JSplitPane(JSplitPane.VERTICAL_SPLIT)
+
                 ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Loading API Doc", true) {
                     override fun run(indicator: ProgressIndicator) {
                         val apiDocUrl =
@@ -109,6 +204,33 @@ class ProcessMeta {
                         apiDocConnection.disconnect()
 
                         executeDebug(browser, apiDocData, apiName, endpoints, project)
+
+                        executeSdk(browser, endpoints) { sdkParams ->
+                            val paramsValue = sdkParams?.get("paramsValue").castSafelyTo<Map<String, Any>>()
+                            val regionId = sdkParams?.get("regionId").toString()
+                            var endpoint = String()
+                            for (element in endpoints) {
+                                if (element.asJsonObject.get("regionId").asString == regionId) {
+                                    endpoint = element.asJsonObject.get("endpoint").asString
+                                }
+                            }
+                            println("endpoint is $endpoint")
+                            println("paramsValue sssss$paramsValue")
+                            splitPane.setResizeWeight(0.6)
+                            ApplicationManager.getApplication().invokeLater {
+                                sdkSampleDefault(apiName, defaultVersion, productName, project, panel1, demoSdk)
+                            }
+                            bodyParams.add("params", Gson().toJsonTree(paramsValue) as JsonObject)
+                            bodyParams.addProperty("endpoint", endpoint)
+                            demoSdk = getDemoSdk(project, bodyParams)
+
+                            ApplicationManager.getApplication().invokeLater {
+                                sdkSample(apiName, defaultVersion, productName, project, panel1, demoSdk)
+                            }
+                            ApplicationManager.getApplication().invokeLater {
+                                splitPane.bottomComponent = panel1
+                            }
+                        }
 
                         val apiMeta =
                             apiDocData.get(ApiConstants.DEBUG_APIS).asJsonObject.get(apiName).asJsonObject
@@ -170,7 +292,29 @@ class ProcessMeta {
                     override fun onSuccess() {
                         browser.loadHTML(modifiedHtml)
                         apiPanel.removeAll()
-                        apiPanel.add(browser.component)
+
+//                        val splitPane = JSplitPane(JSplitPane.VERTICAL_SPLIT).apply {
+//                            isContinuousLayout = true
+//                            dividerSize = 10
+//                            topComponent = browser.component
+////                            bottomComponent = panel1
+//                        }
+//
+//                        splitPane.addComponentListener(object : ComponentAdapter() {
+//                            override fun componentResized(codemoSdkJavaponentEvent: ComponentEvent) {
+//                                splitPane.removeComponentListener(this)
+//                                splitPane.setDividerLocation(0.9)
+//                            }
+//                        })
+
+                        splitPane.apply {
+                            isContinuousLayout = true
+                            dividerSize = 10
+                            topComponent = browser.component
+//                            bottomComponent = panel1
+                        }
+
+                        apiPanel.add(splitPane)
                         apiPanel.revalidate()
                         apiPanel.repaint()
                     }
@@ -183,6 +327,501 @@ class ProcessMeta {
                     }
                 })
             }
+        }
+
+        private fun sdkSampleDefault(
+            apiName: String,
+            defaultVersion: String,
+            productName: String,
+            project: Project,
+            panel1: JPanel,
+            demoSdk: JsonObject
+        ) {
+            val headPanel = JPanel(FlowLayout(FlowLayout.LEFT))
+            val languages = arrayOf("Java-async", "Java", "Python", "TypeScript", "Go", "PHP")
+            val langComboBox = ComboBox(languages)
+
+            val installText = "安装方式"
+            var installUrl =
+                "https://api.aliyun.com/api-tools/sdk/$productName?version=$defaultVersion&language=java-tea"
+            val installButton = JButton(installText).apply {
+                foreground = JBColor.BLUE
+                addMouseListener(object : MouseAdapter() {
+                    val underlineBorder: Border = BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.BLUE)
+                    val emptyBorder: Border = BorderFactory.createEmptyBorder(1, 1, 1, 1)
+
+                    override fun mouseEntered(e: MouseEvent) {
+                        border = underlineBorder
+                    }
+
+                    override fun mouseExited(e: MouseEvent) {
+                        border = emptyBorder
+                    }
+                })
+
+                addActionListener {
+                    if (Desktop.isDesktopSupported()) {
+                        val desktop = Desktop.getDesktop()
+                        if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                            try {
+                                desktop.browse(URI(installUrl))
+                            } catch (e: Exception) {
+                                // TODO 错误通知
+                            }
+                        }
+                    }
+                }
+            }
+
+            val codeText = "查看源码"
+            var codeUrl =
+                "https://github.com/aliyun/alibabacloud-java-sdk/tree/master/${productName.lowercase()}-${
+                    defaultVersion.replace(
+                        "-",
+                        ""
+                    )
+                }"
+            val codeButton = JButton(codeText).apply {
+                foreground = JBColor.BLUE
+                addMouseListener(object : MouseAdapter() {
+                    val underlineBorder: Border = BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.BLUE)
+                    val emptyBorder: Border = BorderFactory.createEmptyBorder(1, 1, 1, 1)
+
+                    override fun mouseEntered(e: MouseEvent) {
+                        border = underlineBorder
+                    }
+
+                    override fun mouseExited(e: MouseEvent) {
+                        border = emptyBorder
+                    }
+                })
+
+                addActionListener {
+                    if (Desktop.isDesktopSupported()) {
+                        val desktop = Desktop.getDesktop()
+                        if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                            try {
+                                desktop.browse(URI(codeUrl))
+                            } catch (e: Exception) {
+                                // TODO 错误通知
+                            }
+                        }
+                    }
+                }
+            }
+
+            val applicationNamesInfo = ApplicationNamesInfo.getInstance()
+            val ideName = applicationNamesInfo.fullProductName
+
+            var editor: EditorEx?
+            val scrollPane = JBScrollPane()
+            scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
+            scrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
+
+            when (ideName) {
+                "PyCharm" -> {
+                    val demoSdkPy = demoSdk.get("python")?.asString ?: "暂不支持该语言"
+                    editor = createEditorWithPsiFile(project, apiName, demoSdkPy, "python")
+                    langComboBox.selectedItem = "Python"
+                }
+
+                "GoLand" -> {
+                    val demoSdkGo = demoSdk.get("go")?.asString ?: "暂不支持该语言"
+                    editor = createEditorWithPsiFile(project, apiName, demoSdkGo, "go")
+                    langComboBox.selectedItem = "Go"
+                }
+
+                "WebStorm" -> {
+                    val demoSdkTs = demoSdk.get("typescript")?.asString ?: "暂不支持该语言"
+                    editor = createEditorWithPsiFile(project, apiName, demoSdkTs, "typescript")
+                    langComboBox.selectedItem = "TypeScript"
+                }
+
+                else -> {
+                    val demoSdkJava = demoSdk.get("java")?.asString ?: "暂不支持该语言"
+                    editor = createEditorWithPsiFile(project, apiName, demoSdkJava, "java")
+                    langComboBox.selectedItem = "Java"
+                }
+            }
+
+            val openFileButton = JButton("在IDE中打开").apply {
+                addActionListener {
+                    val fileDocumentManager = FileDocumentManager.getInstance()
+                    val document = editor!!.document
+                    val virtualFile = fileDocumentManager.getFile(document)
+
+                    // 获取FileEditorManager的实例
+                    val fileEditorManager = FileEditorManager.getInstance(project)
+
+                    // 检查virtualFile是否非空，并且文件还未被打开
+                    if (virtualFile != null && !fileEditorManager.isFileOpen(virtualFile)) {
+                        // 创建一个新的OpenFileDescriptor
+                        val descriptor = OpenFileDescriptor(project, virtualFile)
+                        // 使用FileEditorManager打开它
+                        fileEditorManager.openTextEditor(descriptor, true)
+                    }
+                }
+            }
+
+            scrollPane.setViewportView(editor.component)
+            headPanel.add(langComboBox)
+            headPanel.add(installButton)
+            headPanel.add(codeButton)
+            headPanel.add(openFileButton)
+            panel1.add(headPanel, BorderLayout.NORTH)
+            panel1.add(scrollPane, BorderLayout.CENTER)
+
+            langComboBox.addActionListener {
+                ApplicationManager.getApplication().invokeLater {
+                    val selectedLang = langComboBox.selectedItem as String
+                    val lang = selectedLang.lowercase()
+                    installUrl =
+                        "https://api.aliyun.com/api-tools/sdk/$productName?version=$defaultVersion&language=$lang-tea"
+                    codeUrl =
+                        "https://github.com/aliyun/alibabacloud-$lang-sdk/tree/master/${productName.lowercase()}-${
+                            defaultVersion.replace(
+                                "-",
+                                ""
+                            )
+                        }"
+                    val demoSdkLang = demoSdk.get(selectedLang.lowercase())?.asString ?: "暂不支持该语言"
+
+                    if (editor?.isDisposed == false) {
+                        EditorFactory.getInstance().releaseEditor(editor!!)
+                    }
+                    editor = createEditorWithPsiFile(project, apiName, demoSdkLang, lang)
+                    scrollPane.setViewportView(editor?.component)
+                    panel1.revalidate()
+                    panel1.repaint()
+                }
+            }
+        }
+
+        private fun sdkSample(
+            apiName: String,
+            defaultVersion: String,
+            productName: String,
+            project: Project,
+            panel1: JPanel,
+            demoSdk: JsonObject
+        ) {
+            panel1.removeAll()
+            panel1.revalidate()
+            panel1.repaint()
+            val headPanel = JPanel(FlowLayout(FlowLayout.LEFT))
+            val languages = arrayOf("Java-async", "Java", "Python", "TypeScript", "Go", "PHP")
+            val langComboBox = ComboBox(languages)
+
+            val installText = "安装方式"
+            var installUrl =
+                "https://api.aliyun.com/api-tools/sdk/$productName?version=$defaultVersion&language=java-tea"
+            val installButton = JButton(installText).apply {
+                foreground = JBColor.BLUE
+                addMouseListener(object : MouseAdapter() {
+                    val underlineBorder: Border = BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.BLUE)
+                    val emptyBorder: Border = BorderFactory.createEmptyBorder(1, 1, 1, 1)
+
+                    override fun mouseEntered(e: MouseEvent) {
+                        border = underlineBorder
+                    }
+
+                    override fun mouseExited(e: MouseEvent) {
+                        border = emptyBorder
+                    }
+                })
+
+                addActionListener {
+                    if (Desktop.isDesktopSupported()) {
+                        val desktop = Desktop.getDesktop()
+                        if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                            try {
+                                desktop.browse(URI(installUrl))
+                            } catch (e: Exception) {
+                                // TODO 错误通知
+                            }
+                        }
+                    }
+                }
+            }
+
+            val codeText = "查看源码"
+            var codeUrl =
+                "https://github.com/aliyun/alibabacloud-java-sdk/tree/master/${productName.lowercase()}-${
+                    defaultVersion.replace(
+                        "-",
+                        ""
+                    )
+                }"
+            val codeButton = JButton(codeText).apply {
+                foreground = JBColor.BLUE
+                addMouseListener(object : MouseAdapter() {
+                    val underlineBorder: Border = BorderFactory.createMatteBorder(0, 0, 1, 0, JBColor.BLUE)
+                    val emptyBorder: Border = BorderFactory.createEmptyBorder(1, 1, 1, 1)
+
+                    override fun mouseEntered(e: MouseEvent) {
+                        border = underlineBorder
+                    }
+
+                    override fun mouseExited(e: MouseEvent) {
+                        border = emptyBorder
+                    }
+                })
+
+                addActionListener {
+                    if (Desktop.isDesktopSupported()) {
+                        val desktop = Desktop.getDesktop()
+                        if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                            try {
+                                desktop.browse(URI(codeUrl))
+                            } catch (e: Exception) {
+                                // TODO 错误通知
+                            }
+                        }
+                    }
+                }
+            }
+
+            val applicationNamesInfo = ApplicationNamesInfo.getInstance()
+            val ideName = applicationNamesInfo.fullProductName
+
+            var editor: EditorEx?
+            val scrollPane = JBScrollPane()
+            scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
+            scrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
+
+            when (ideName) {
+                "PyCharm" -> {
+                    val demoSdkPy = demoSdk.get("python")?.asString ?: "暂不支持该语言"
+                    editor = createEditorWithPsiFile(project, apiName, demoSdkPy, "python")
+                    langComboBox.selectedItem = "Python"
+                }
+
+                "GoLand" -> {
+                    val demoSdkGo = demoSdk.get("go")?.asString ?: "暂不支持该语言"
+                    editor = createEditorWithPsiFile(project, apiName, demoSdkGo, "go")
+                    langComboBox.selectedItem = "Go"
+                }
+
+                "WebStorm" -> {
+                    val demoSdkTs = demoSdk.get("typescript")?.asString ?: "暂不支持该语言"
+                    editor = createEditorWithPsiFile(project, apiName, demoSdkTs, "typescript")
+                    langComboBox.selectedItem = "TypeScript"
+                }
+
+                else -> {
+                    val demoSdkJava = demoSdk.get("java")?.asString ?: "暂不支持该语言"
+                    editor = createEditorWithPsiFile(project, apiName, demoSdkJava, "java")
+                    langComboBox.selectedItem = "Java"
+                }
+            }
+
+            val openFileButton = JButton("在IDE中打开").apply {
+                addActionListener {
+                    val fileDocumentManager = FileDocumentManager.getInstance()
+                    val document = editor!!.document
+                    val virtualFile = fileDocumentManager.getFile(document)
+
+                    // 获取FileEditorManager的实例
+                    val fileEditorManager = FileEditorManager.getInstance(project)
+
+                    // 检查virtualFile是否非空，并且文件还未被打开
+                    if (virtualFile != null && !fileEditorManager.isFileOpen(virtualFile)) {
+                        // 创建一个新的OpenFileDescriptor
+                        val descriptor = OpenFileDescriptor(project, virtualFile)
+                        // 使用FileEditorManager打开它
+                        fileEditorManager.openTextEditor(descriptor, true)
+                    }
+                }
+            }
+
+            scrollPane.setViewportView(editor.component)
+            headPanel.add(langComboBox)
+            headPanel.add(installButton)
+            headPanel.add(codeButton)
+            headPanel.add(openFileButton)
+            panel1.add(headPanel, BorderLayout.NORTH)
+            panel1.add(scrollPane, BorderLayout.CENTER)
+
+            langComboBox.addActionListener {
+                ApplicationManager.getApplication().invokeLater {
+                    val selectedLang = langComboBox.selectedItem as String
+                    val lang = selectedLang.lowercase()
+                    installUrl =
+                        "https://api.aliyun.com/api-tools/sdk/$productName?version=$defaultVersion&language=$lang-tea"
+                    codeUrl =
+                        "https://github.com/aliyun/alibabacloud-$lang-sdk/tree/master/${productName.lowercase()}-${
+                            defaultVersion.replace(
+                                "-",
+                                ""
+                            )
+                        }"
+                    val demoSdkLang = demoSdk.get(selectedLang.lowercase())?.asString ?: "暂不支持该语言"
+
+                    if (editor?.isDisposed == false) {
+                        EditorFactory.getInstance().releaseEditor(editor!!)
+                    }
+                    editor = createEditorWithPsiFile(project, apiName, demoSdkLang, lang)
+                    scrollPane.setViewportView(editor?.component)
+                    panel1.revalidate()
+                    panel1.repaint()
+                }
+            }
+        }
+
+        private fun getDemoSdk(project: Project, bodyParams: JsonObject): JsonObject {
+            val url = URL("https://api.aliyun.com/api/product/makeCode")
+            var demoSdkObject = JsonObject()
+            val bodyStr = Gson().toJson(bodyParams)
+            val connection = url.openConnection() as HttpURLConnection
+            try {
+                connection.requestMethod = "POST"
+                connection.connectTimeout = 15000
+                connection.readTimeout = 15000
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.doOutput = true
+                connection.doInput = true
+
+                // 获取输出流并写入参数
+                connection.outputStream.use { os ->
+                    val input = bodyStr.toByteArray(charset("utf-8"))
+                    os.write(input, 0, input.size)
+                }
+                val responseCode = connection.responseCode
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    connection.inputStream.use { `is` ->
+                        val response = `is`.reader(charset("utf-8")).readText()
+                        demoSdkObject = Gson().fromJson(response, JsonObject::class.java)
+                            .get("data").asJsonObject.get("demoSdk").asJsonObject
+                    }
+                } else {
+                    println("POST request not worked")
+                }
+            } catch (e: SocketTimeoutException) {
+                val message = "Timed out, please refresh."
+                NotificationGroupManager.getInstance()
+                    .getNotificationGroup("AlibabaCloud API: Error")
+                    .createNotification(message, NotificationType.WARNING)
+                    .notify(project)
+            } finally {
+                connection.disconnect()
+            }
+            return demoSdkObject
+        }
+
+        private fun createEditorWithPsiFile(project: Project, apiName: String, code: String, lang: String): EditorEx {
+//            val language = if (lang == "java-async") "java" else lang
+            val language = ApiConstants.SUFFIX_MAP[lang]!!
+            val lightVirtualFile: LightVirtualFile
+            var fileType = FileTypeManager.getInstance().getFileTypeByExtension(language)
+
+            if (fileType is LanguageFileType) {
+                lightVirtualFile = if (lang == "java-async") {
+                    LightVirtualFile("$apiName.java", fileType, code)
+                } else {
+                    LightVirtualFile(ApiConstants.FILE_MAP[lang]!!, fileType, code)
+                }
+
+            } else {
+                fileType = PlainTextFileType.INSTANCE as LanguageFileType
+//                lightVirtualFile = LightVirtualFile("Sample.txt", fileType, code)
+                lightVirtualFile = LightVirtualFile(ApiConstants.FILE_MAP[lang]!!, fileType, code)
+            }
+
+            val psiFileFactory = PsiFileFactory.getInstance(project)
+//            var psiFile : PsiFile?=null
+//            ApplicationManager.getApplication().runReadAction {
+            val psiFile = psiFileFactory.createFileFromText(
+                lightVirtualFile.name,
+                fileType.language,
+                lightVirtualFile.content,
+            )
+//            }
+
+            // 为 PsiFile 创建 Document
+            val documentManager = PsiDocumentManager.getInstance(project)
+            val document = documentManager.getDocument(psiFile)
+
+            // 创建编辑器
+            val editorFactory = EditorFactory.getInstance()
+            val editor = editorFactory.createEditor(document!!, project) as EditorEx
+
+            val editorSettings: EditorSettings = editor.settings
+            editorSettings.isLineNumbersShown = true
+            editorSettings.isLineMarkerAreaShown = false
+            editorSettings.isFoldingOutlineShown = false
+            editorSettings.isVirtualSpace = false
+            editorSettings.isAdditionalPageAtBottom = false
+            editorSettings.isCaretRowShown = false
+            editor.isViewer = true // 设置为只读模式
+
+            // 获取并设置编辑器的颜色方案，以使用默认的语法高亮颜色
+//            val editorColorsScheme: EditorColorsScheme = EditorColorsManager.getInstance().globalScheme
+
+//            editor.colorsScheme = editorColorsScheme
+
+            // 如果需要，可以逐个设置关键字的样式
+//            val attributesKey = TextAttributesKey.find("JAVA_KEYWORD")
+//            val defaultAttributes = editorColorsScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES)
+//            editorColorsScheme.setAttributes(attributesKey, defaultAttributes)
+
+//            editorColorsScheme.setAttributes(
+//                com.intellij.openapi.editor.DefaultLanguageHighlighterColors.KEYWORD,
+//                editorColorsScheme.getAttributes(com.intellij.openapi.editor.DefaultLanguageHighlighterColors.KEYWORD),
+//            )
+
+//            editor.putUserData(com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager.FORCE_HIGHLIGHTING_PASS_ID, -1)
+
+            val editorHighlighter =
+                EditorHighlighterFactory.getInstance().createEditorHighlighter(project, lightVirtualFile)
+            editor.highlighter = editorHighlighter
+            return editor
+        }
+
+        private fun createEditorWithPsiFile(project: Project, code: String): EditorEx {
+            val fileType = FileTypeManager.getInstance().getFileTypeByExtension("java") as LanguageFileType
+            val lightVirtualFile = LightVirtualFile("Sample.java", fileType, code)
+
+            val psiFileFactory = PsiFileFactory.getInstance(project)
+            val psiFile = psiFileFactory.createFileFromText(
+                lightVirtualFile.name,
+                fileType.language,
+                lightVirtualFile.content,
+            )
+
+            // 为 PsiFile 创建 Document
+            val documentManager = PsiDocumentManager.getInstance(project)
+            val document = documentManager.getDocument(psiFile)
+
+            // 创建编辑器
+            val editorFactory = EditorFactory.getInstance()
+            val editor = editorFactory.createEditor(document!!, project) as EditorEx
+
+            val editorSettings: EditorSettings = editor.settings
+            editorSettings.isLineNumbersShown = true
+            editorSettings.isLineMarkerAreaShown = false
+            editorSettings.isFoldingOutlineShown = false
+            editorSettings.isVirtualSpace = false
+            editorSettings.isAdditionalPageAtBottom = false
+            editorSettings.isCaretRowShown = false
+            editor.isViewer = true // 设置为只读模式
+
+            // 获取并设置编辑器的颜色方案，以使用默认的语法高亮颜色
+            val editorColorsScheme: EditorColorsScheme = EditorColorsManager.getInstance().globalScheme
+            editor.colorsScheme = editorColorsScheme
+
+            // 如果需要，可以逐个设置关键字的样式
+//            val attributesKey = TextAttributesKey.find("JAVA_KEYWORD")
+//            val defaultAttributes = editorColorsScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES)
+//            editorColorsScheme.setAttributes(attributesKey, defaultAttributes)
+
+            editorColorsScheme.setAttributes(
+                com.intellij.openapi.editor.DefaultLanguageHighlighterColors.KEYWORD,
+                editorColorsScheme.getAttributes(com.intellij.openapi.editor.DefaultLanguageHighlighterColors.KEYWORD),
+            )
+
+//            editor.putUserData(com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager.FORCE_HIGHLIGHTING_PASS_ID, -1)
+
+            return editor
         }
 
         /**
@@ -306,7 +945,89 @@ class ProcessMeta {
                 },
                 browser.cefBrowser,
             )
+//            println("paramsValue is $paramsValue")
+//            return paramsValue
         }
+
+        private fun executeSdk(
+            browser: JBCefBrowser,
+            endpoints: JsonArray,
+            callback: (Map<String, Any>?) -> Unit
+        ) {
+            val query = JBCefJSQuery.create(browser as JBCefBrowserBase)
+
+            query.addHandler { arg: String? ->
+                try {
+                    val argsType = object : TypeToken<Map<String, Any>>() {}.type
+                    val gson = GsonBuilder()
+                        .registerTypeAdapter(object : TypeToken<Map<String?, Any?>?>() {}.type, MapTypeAdapter())
+                        .create()
+                    val sdkParams: Map<String, Any> = gson.fromJson(arg, argsType)
+                    println("debugParams is $sdkParams")
+//                    val paramsValue = debugParams["paramsValue"].castSafelyTo<Map<String, Any>>()
+//                    paramsValue = debugParams["paramsValue"].castSafelyTo<Map<String, Any>>()
+                    callback(sdkParams)
+                    return@addHandler JBCefJSQuery.Response("ok")
+                } catch (e: JsonSyntaxException) {
+                    return@addHandler JBCefJSQuery.Response(null, 0, "errorMsg")
+                }
+            }
+
+            browser.jbCefClient.addLoadHandler(
+                object : CefLoadHandlerAdapter() {
+                    override fun onLoadingStateChange(
+                        cefBrowser: CefBrowser,
+                        isLoading: Boolean,
+                        canGoBack: Boolean,
+                        canGoForward: Boolean,
+                    ) {
+                    }
+
+                    override fun onLoadStart(
+                        cefBrowser: CefBrowser,
+                        frame: CefFrame,
+                        transitionType: CefRequest.TransitionType,
+                    ) {
+                    }
+
+                    override fun onLoadEnd(cefBrowser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
+                        val regionIds = JsonArray()
+                        for (i in 0 until endpoints.size()) {
+                            val regionIdToSelect = endpoints[i].asJsonObject.get("regionId").asString
+                            regionIds.add(regionIdToSelect)
+                        }
+
+                        cefBrowser.executeJavaScript(
+                            """
+                        window.callJava = function(arg) {
+                        ${
+                                query.inject(
+                                    "arg",
+                                    "response => console.log('读取参数成功', (response))",
+                                    "(error_code, error_message) => console.log('读取参数失败', error_code, error_message)",
+                                )
+                            }
+                        };
+                        
+                            """.trimIndent(),
+                            browser.cefBrowser.url,
+                            0,
+                        )
+                    }
+
+                    override fun onLoadError(
+                        cefBrowser: CefBrowser,
+                        frame: CefFrame,
+                        errorCode: CefLoadHandler.ErrorCode,
+                        errorText: String,
+                        failedUrl: String,
+                    ) {
+                    }
+                },
+                browser.cefBrowser,
+            )
+        }
+
 
         fun getApiListRequest(url: URL): JsonArray {
             try {
