@@ -12,6 +12,24 @@ object ApiConstants {
     val ONE_DAY = Duration.ofDays(1)
     val MAX_CACHE_NUM = 200
 
+    val FILE_MAP: Map<String, String> = mapOf(
+        "java" to "Sample.java",
+        "java-async" to "Sample.java",
+        "python" to "Sample.py",
+        "typescript" to "client.ts",
+        "go" to "main.go",
+        "php" to "Sample.php"
+    )
+
+    val SUFFIX_MAP: Map<String, String> = mapOf(
+        "java" to "java",
+        "java-async" to "java",
+        "python" to "py",
+        "typescript" to "ts",
+        "go" to "go",
+        "php" to "php"
+    )
+
     const val TOOLWINDOW_APIS = "Alibaba Cloud APIs"
     const val TOOLWINDOW_API_TREE = "Alibaba Cloud API"
     const val TOOLWINDOW_PRODUCT_TREE = "Alibaba Cloud API"

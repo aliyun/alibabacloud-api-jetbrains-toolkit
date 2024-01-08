@@ -1,7 +1,7 @@
 package com.alibabacloud.ui
 
+import com.alibabacloud.api.service.ApiPage
 import com.alibabacloud.api.service.ApiExplorer
-import com.alibabacloud.api.service.ProcessMeta
 import com.alibabacloud.api.service.SearchHelper
 import com.alibabacloud.api.service.constants.ApiConstants
 import com.alibabacloud.api.service.util.CacheUtil
@@ -23,7 +23,6 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.*
 import com.intellij.ui.SearchTextField
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
@@ -140,10 +139,6 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         val selectionModel = tree.selectionModel
         val apiPanel = JPanel()
         apiPanel.layout = BoxLayout(apiPanel, BoxLayout.Y_AXIS)
-        val scrollPane = JBScrollPane()
-        scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
-        scrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
-        apiPanel.add(scrollPane)
 
         var apiDocContent: Content? = null
         var apiName: String
@@ -169,7 +164,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                         }
                     }
                     if (apiData == null) {
-                        apiData = ProcessMeta.getApiListRequest(apiUrl)
+                        apiData = ApiExplorer.getApiListRequest(apiUrl)
                         val cacheApiListFile = File(ApiConstants.CACHE_PATH, "$productName-api-list")
 
                         try {
@@ -215,7 +210,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                                 } else {
                                     apiDocContent!!.displayName = "API: $apiName"
                                 }
-                                ProcessMeta.showApiDetail(
+                                ApiPage.showApiDetail(
                                     apiDocContent!!,
                                     contentManager,
                                     apiPanel,
@@ -317,7 +312,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
     ) : AnAction() {
         override fun actionPerformed(e: AnActionEvent) {
             val project = e.project ?: return
-            ProcessMeta.showApiDetail(
+            ApiPage.showApiDetail(
                 apiDocContent,
                 contentManager,
                 apiPanel,

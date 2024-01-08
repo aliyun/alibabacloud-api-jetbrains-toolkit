@@ -1,7 +1,11 @@
 package com.alibabacloud.api.service.util
 
+import com.aliyun.teautil.MapTypeAdapter
+import com.google.common.reflect.TypeToken
+import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.util.castSafelyTo
 import java.awt.Color
 import java.awt.Component
 import java.util.*
@@ -104,6 +108,17 @@ class FormatUtil {
                 }
             }
             return valuesList.joinToString(separator)
+        }
+
+        fun getArg(arg: String?): Pair<Map<String, Any>?, String> {
+            val argsType = object : TypeToken<Map<String, Any>>() {}.type
+            val gson = GsonBuilder()
+                .registerTypeAdapter(object : TypeToken<Map<String?, Any?>?>() {}.type, MapTypeAdapter())
+                .create()
+            val params: Map<String, Any> = gson.fromJson(arg, argsType)
+            val paramsValue = params["paramsValue"].castSafelyTo<Map<String, Any>>()
+            val regionId = params["regionId"].toString()
+            return Pair(paramsValue, regionId)
         }
     }
 }

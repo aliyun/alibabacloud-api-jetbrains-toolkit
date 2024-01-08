@@ -36,8 +36,13 @@
   visits to the same API will be loaded swiftly.
   </li>
   <li>
-    <strong>API Debug (Beta):</strong> Support convenient API debugging within the IDE against the parameter list, and
+    <strong>API Debug:</strong> Support convenient API debugging within the IDE against the parameter list, and
     also offers a "Go Debug" button for seamless transition to debug in browser.
+  </li>
+    <li>
+    <strong>SDK Code Sample View:</strong> Support viewing SDK code samples within the IDE, with synchronous generation
+    of corresponding instance code after filling in parameters. Supports jumping to the browser for obtaining dependency
+    installation methods and source code.
   </li>
   <li>
     More features are under development, please stay tuned.
@@ -60,6 +65,7 @@
         />
         <statusBarWidgetFactory id="AlibabaCloud" implementation="com.alibabacloud.ui.MyStatusBarWidgetFactory"
                                 order="after encodingWidget"/>
+        <notificationGroup id="AlibabaCloud API: Info" displayType="BALLOON"/>
         <notificationGroup id="AlibabaCloud API: Warning" displayType="BALLOON"/>
         <notificationGroup id="AlibabaCloud API: Error" displayType="BALLOON"/>
     </extensions>

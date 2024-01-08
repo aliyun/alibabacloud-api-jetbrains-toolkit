@@ -1,194 +1,29 @@
-package com.alibabacloud.api.service
+package com.alibabacloud.api.service.apidebug
 
+import com.alibabacloud.api.service.OpenAPIClient
 import com.alibabacloud.api.service.constants.ApiConstants
-import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.FormatUtil
-import com.alibabacloud.api.service.util.ResourceUtil
 import com.alibabacloud.models.credentials.ConfigureFile
-import com.aliyun.teautil.MapTypeAdapter
 import com.aliyun.teautil.models.TeaUtilException
-import com.google.common.reflect.TypeToken
-import com.google.gson.*
+import com.google.gson.Gson
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import com.google.gson.JsonSyntaxException
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.ui.content.Content
-import com.intellij.ui.content.ContentManager
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JBCefBrowserBase
-import com.intellij.ui.jcef.JBCefClient
 import com.intellij.ui.jcef.JBCefJSQuery
-import com.intellij.util.castSafelyTo
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefLoadHandler
 import org.cef.handler.CefLoadHandlerAdapter
 import org.cef.network.CefRequest
-import java.io.File
-import java.io.IOException
-import java.net.HttpURLConnection
-import java.net.URL
-import javax.swing.JPanel
 
-class ProcessMeta {
+class ApiDebug {
     companion object {
-        /**
-         * show api document and debug interface
-         */
-        fun showApiDetail(
-            apiDocContent: Content,
-            contentManager: ContentManager,
-            apiPanel: JPanel,
-            productName: String,
-            apiName: String,
-            defaultVersion: String,
-            project: Project,
-            useCache: Boolean,
-        ) {
-            contentManager.setSelectedContent(apiDocContent, true)
-            val browser = JBCefBrowser()
-            browser.jbCefClient.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 20)
-
-            val cacheDir = File(ApiConstants.CACHE_PATH)
-            if (!cacheDir.exists()) {
-                cacheDir.mkdir()
-            }
-            val cacheFile = File(ApiConstants.CACHE_PATH, "$productName-$defaultVersion-$apiName.html")
-            val cacheMeta = File(ApiConstants.CACHE_PATH, "${productName}Meta")
-            var cacheContent: String? = null
-            var cacheDocMeta: String? = null
-            if (useCache && cacheFile.exists() && cacheMeta.exists() && cacheFile.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis() && cacheMeta.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis()) {
-                try {
-                    cacheContent = cacheFile.readText()
-                    browser.loadHTML(cacheContent)
-                    cacheDocMeta = cacheMeta.readText()
-                    val cacheApiDocData = Gson().fromJson(cacheDocMeta, JsonObject::class.java)
-                    val endpoints = cacheApiDocData.get(ApiConstants.API_DOC_ENDPOINTS).asJsonArray
-                    executeDebug(browser, cacheApiDocData, apiName, endpoints, project)
-                } catch (_: IOException) {
-                } catch (_: NullPointerException) {
-                }
-                apiPanel.removeAll()
-                apiPanel.add(browser.component)
-                apiPanel.revalidate()
-                apiPanel.repaint()
-            }
-
-            if (cacheContent == null || cacheDocMeta == null || cacheContent.isEmpty() || cacheDocMeta.isEmpty()) {
-                val colorList = FormatUtil.adjustColor()
-                val loadingHtml =
-                    ResourceUtil.load("/html/loading.html").replace("var(--background-color)", colorList[0])
-                        .replace("var(--text-color)", colorList[1])
-
-                browser.loadHTML(loadingHtml)
-                apiPanel.removeAll()
-                apiPanel.add(browser.component)
-                apiPanel.revalidate()
-                apiPanel.repaint()
-
-                var modifiedHtml = String()
-                ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Loading API Doc", true) {
-                    override fun run(indicator: ProgressIndicator) {
-                        val apiDocUrl =
-                            URL("${ApiConstants.API_PARAM_URL}/products/$productName/versions/$defaultVersion/api-docs.json")
-                        val apiDocConnection = apiDocUrl.openConnection() as HttpURLConnection
-                        var apiDocData = JsonObject()
-                        var endpoints = JsonArray()
-                        var apiDocResponse = String()
-
-                        if (apiDocConnection.responseCode == HttpURLConnection.HTTP_OK) {
-                            apiDocResponse = apiDocConnection.inputStream.bufferedReader().use { it.readText() }
-                            val docJsonResponse = Gson().fromJson(apiDocResponse, JsonObject::class.java)
-                            apiDocData = docJsonResponse
-                            endpoints = docJsonResponse.get(ApiConstants.API_DOC_ENDPOINTS).asJsonArray
-                        }
-
-                        apiDocConnection.disconnect()
-
-                        executeDebug(browser, apiDocData, apiName, endpoints, project)
-
-                        val apiMeta =
-                            apiDocData.get(ApiConstants.DEBUG_APIS).asJsonObject.get(apiName).asJsonObject
-
-                        val ext = JsonObject()
-                        ext.add("errorCodes", apiMeta.get("errorCodes"))
-                        ext.add("extraInfo", apiMeta.get("extraInfo"))
-                        ext.add("methods", apiMeta.get("methods"))
-                        ext.add("requestParamsDescription", apiMeta.get("requestParamsDescription"))
-                        ext.add("responseParamsDescription", apiMeta.get("responseParamsDescription"))
-                        ext.add("responseDemo", apiMeta.get("responseDemo"))
-                        ext.add("schemes", apiMeta.get("schemes"))
-                        ext.add("security", apiMeta.get("security"))
-                        ext.add("summary", apiMeta.get("summary"))
-                        ext.add("title", apiMeta.get("title"))
-
-                        val externalDocs = JsonObject()
-                        externalDocs.addProperty("description", "去调试")
-                        externalDocs.addProperty(
-                            "url",
-                            "https://api.aliyun.com/api/$productName/$defaultVersion/$apiName",
-                        )
-
-                        val spec = JsonObject()
-                        spec.addProperty("name", apiName)
-                        spec.add("description", apiMeta.get("description"))
-                        spec.add("method", apiMeta.get("method"))
-                        spec.add("parameters", apiMeta.get("parameters"))
-                        spec.add("responses", apiMeta.get("responses"))
-                        spec.add("summary", apiMeta.get("summary"))
-                        spec.add("title", apiMeta.get("title"))
-                        spec.add("ext", ext)
-                        spec.add("externalDocs", externalDocs)
-
-                        val apiParams = JsonObject()
-                        apiParams.addProperty("specName", "$productName::$defaultVersion")
-                        apiParams.addProperty("modName", "")
-                        apiParams.addProperty("name", apiName)
-                        apiParams.addProperty("pageType", "document")
-                        apiParams.addProperty("schemaType", "api")
-                        apiParams.addProperty("name", apiName)
-                        apiParams.add("spec", spec)
-
-                        val definitions =
-                            apiDocData.get(ApiConstants.API_DOC_RESP_COMPONENTS).asJsonObject.get(ApiConstants.API_DOC_RESP_SCHEMAS).asJsonObject
-
-                        val templateHtml = ResourceUtil.load("/html/index.html")
-                        modifiedHtml =
-                            templateHtml.replace("\$APIMETA", "$apiParams").replace("\$DEFS", "$definitions")
-                        try {
-                            CacheUtil.cleanExceedCache()
-                            cacheFile.writeText(modifiedHtml)
-                            cacheMeta.writeText(apiDocResponse)
-                        } catch (e: IOException) {
-                            throw e
-                        }
-                    }
-
-                    override fun onSuccess() {
-                        browser.loadHTML(modifiedHtml)
-                        apiPanel.removeAll()
-                        apiPanel.add(browser.component)
-                        apiPanel.revalidate()
-                        apiPanel.repaint()
-                    }
-
-                    override fun onThrowable(error: Throwable) {
-                        if (error is IOException) {
-                            cacheFile.delete()
-                            cacheMeta.delete()
-                        }
-                    }
-                })
-            }
-        }
-
-        /**
-         * execute api debug
-         */
-        private fun executeDebug(
+        fun executeDebug(
             browser: JBCefBrowser,
             apiDocData: JsonObject,
             apiName: String,
@@ -199,41 +34,26 @@ class ProcessMeta {
 
             query.addHandler { arg: String? ->
                 try {
-                    val argsType = object : TypeToken<Map<String, Any>>() {}.type
-                    val gson = GsonBuilder()
-                        .registerTypeAdapter(object : TypeToken<Map<String?, Any?>?>() {}.type, MapTypeAdapter())
-                        .create()
-                    val debugParams: Map<String, Any> = gson.fromJson(arg, argsType)
-                    val paramsValue = debugParams["paramsValue"].castSafelyTo<Map<String, Any>>()
-                    val regionId = debugParams["regionId"].toString()
+                    val paramsValue = FormatUtil.getArg(arg).first
+                    val regionId = FormatUtil.getArg(arg).second
                     var debugHtml = ""
                     val config = ConfigureFile.loadConfigureFile()
                     val profile = config.profiles.find { it.name == config.current }
                     val accessKeyId = profile?.access_key_id
                     val accessKeySecret = profile?.access_key_secret
                     if (accessKeyId == null || accessKeySecret == null || accessKeyId == "" || accessKeySecret == "") {
-                        NotificationGroupManager.getInstance()
-                            .getNotificationGroup("AlibabaCloud API: Warning")
+                        NotificationGroupManager.getInstance().getNotificationGroup("AlibabaCloud API: Warning")
                             .createNotification(
                                 "需要登录：如需调试请先在 Edit Profile 处配置用户信息",
                                 NotificationType.WARNING,
-                            )
-                            .notify(project)
+                            ).notify(project)
                     } else {
-                        debugHtml =
-                            getDebugResponse(
-                                paramsValue,
-                                apiDocData,
-                                apiName,
-                                endpoints,
-                                regionId,
-                                accessKeyId,
-                                accessKeySecret,
-                                project
-                            ).replace(
-                                "\\\"",
-                                "",
-                            )
+                        debugHtml = getDebugResponse(
+                            paramsValue, apiDocData, apiName, endpoints, regionId, accessKeyId, accessKeySecret, project
+                        ).replace(
+                            "\\\"",
+                            "",
+                        )
                     }
 
                     browser.cefBrowser.executeJavaScript(
@@ -244,10 +64,8 @@ class ProcessMeta {
                     return@addHandler JBCefJSQuery.Response("ok")
                 } catch (e: JsonSyntaxException) {
                     val message = "Params format error, please check."
-                    NotificationGroupManager.getInstance()
-                        .getNotificationGroup("AlibabaCloud API: Warning")
-                        .createNotification(message, NotificationType.WARNING)
-                        .notify(project)
+                    NotificationGroupManager.getInstance().getNotificationGroup("AlibabaCloud API: Warning")
+                        .createNotification(message, NotificationType.WARNING).notify(project)
                     return@addHandler JBCefJSQuery.Response(null, 0, "errorMsg")
                 }
             }
@@ -308,24 +126,6 @@ class ProcessMeta {
             )
         }
 
-        fun getApiListRequest(url: URL): JsonArray {
-            try {
-                val connection = url.openConnection() as HttpURLConnection
-                connection.requestMethod = ApiConstants.METHOD_GET
-
-                if (connection.responseCode == HttpURLConnection.HTTP_OK) {
-                    val response = connection.inputStream.bufferedReader().use { it.readText() }
-                    val jsonResponse = Gson().fromJson(response, JsonObject::class.java)
-                    val data = jsonResponse.getAsJsonArray(ApiConstants.API_DIR_DATA)
-                    connection.disconnect()
-                    return data
-                }
-                return JsonArray()
-            } catch (_: IOException) {
-                return JsonArray()
-            }
-        }
-
         private fun getDebugResponse(
             args: Map<String, Any>?,
             apiDocData: JsonObject,
@@ -364,6 +164,12 @@ class ProcessMeta {
                     endpoint = element.asJsonObject.get("endpoint").asString
                 }
             }
+
+//            val selectedRegionId = if (regionId == "") "cn-hangzhou" else regionId
+//            val endpoint =
+//                endpoints.find { it.asJsonObject.get("regionId").asString == selectedRegionId }?.asJsonObject?.get(
+//                    "endpoint"
+//                )?.asString
 
             val openApiRequest = OpenAPIClient.OpenApiRequest()
             openApiRequest.headers = mutableMapOf()
@@ -560,23 +366,17 @@ class ProcessMeta {
                 response = client.doRequest(data, openApiRequest, runtimeOptions).toMutableMap()
                 duration = (System.currentTimeMillis() - startTime).toInt()
             } catch (teaUnretryableException: com.aliyun.tea.TeaUnretryableException) {
-                val message =
-                    if (teaUnretryableException.message == "Invalid URL host: \"\"") {
-                        "请选择正确的服务地址"
-                    } else {
-                        teaUnretryableException.message
-                            ?: ""
-                    }
-                NotificationGroupManager.getInstance()
-                    .getNotificationGroup("AlibabaCloud API: Warning")
-                    .createNotification(message, NotificationType.WARNING)
-                    .notify(project)
+                val message = if (teaUnretryableException.message == "Invalid URL host: \"\"") {
+                    "请选择正确的服务地址"
+                } else {
+                    teaUnretryableException.message ?: ""
+                }
+                NotificationGroupManager.getInstance().getNotificationGroup("AlibabaCloud API: Warning")
+                    .createNotification(message, NotificationType.WARNING).notify(project)
             } catch (teaUtilException: TeaUtilException) {
                 val message = "Some format exception, welcome to feedback"
-                NotificationGroupManager.getInstance()
-                    .getNotificationGroup("AlibabaCloud API: Error")
-                    .createNotification(message, NotificationType.ERROR)
-                    .notify(project)
+                NotificationGroupManager.getInstance().getNotificationGroup("AlibabaCloud API: Error")
+                    .createNotification(message, NotificationType.ERROR).notify(project)
             }
             response["cost"] = duration
             return Gson().toJson(response)

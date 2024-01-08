@@ -27,6 +27,35 @@ class SearchHelper {
         ) {
             val searchResultsWindow = JWindow(SwingUtilities.getWindowAncestor(contentPanel))
             val searchResultsModel = DefaultListModel<String>()
+            searchResultsWindow.focusableWindowState = false
+
+            val updateSearchResults = {
+                ApplicationManager.getApplication().invokeLater {
+                    val searchText = searchField.text.trim()
+                    searchResultsModel.clear()
+
+                    if (searchText.isNotEmpty()) {
+                        if (nameAndVersionMap == null) {
+                            getSearchApiElement(tree, searchText, searchResultsModel)
+                        } else {
+                            getSearchProductElement(searchText, nameAndVersionMap, searchResultsModel)
+                        }
+
+                        if (!searchResultsModel.isEmpty) {
+                            searchResultsWindow.size = Dimension(searchField.width, 100)
+                            val locationOnScreen = searchField.locationOnScreen
+                            searchResultsWindow.location =
+                                Point(locationOnScreen.x, locationOnScreen.y + searchField.height)
+                            searchResultsWindow.isVisible = true
+                        } else {
+                            searchResultsWindow.isVisible = false
+                        }
+                    } else {
+                        searchResultsWindow.isVisible = false
+                    }
+                }
+            }
+
             val searchResultsList = JBList(searchResultsModel).apply {
                 selectionMode = ListSelectionModel.SINGLE_SELECTION
                 addMouseListener(object : MouseAdapter() {
@@ -62,33 +91,6 @@ class SearchHelper {
 
                 override fun changedUpdate(e: DocumentEvent?) {
                     updateSearchResults()
-                }
-
-                private fun updateSearchResults() {
-                    ApplicationManager.getApplication().invokeLater {
-                        val searchText = searchField.text.trim()
-                        searchResultsModel.clear()
-
-                        if (searchText.isNotEmpty()) {
-                            if (nameAndVersionMap == null) {
-                                getSearchApiElement(tree, searchText, searchResultsModel)
-                            } else {
-                                getSearchProductElement(searchText, nameAndVersionMap, searchResultsModel)
-                            }
-
-                            if (!searchResultsModel.isEmpty) {
-                                searchResultsWindow.size = Dimension(searchField.width, 100)
-                                val locationOnScreen = searchField.locationOnScreen
-                                searchResultsWindow.location =
-                                    Point(locationOnScreen.x, locationOnScreen.y + searchField.height)
-                                searchResultsWindow.isVisible = true
-                            } else {
-                                searchResultsWindow.isVisible = false
-                            }
-                        } else {
-                            searchResultsWindow.isVisible = false
-                        }
-                    }
                 }
             })
         }
