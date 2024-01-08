@@ -2,12 +2,20 @@
 <script type="text/javascript">
     window.apiMeta = encodeURI(JSON.stringify($APIMETA));
     window.definitions = encodeURI(JSON.stringify($DEFS));
-
+    function callJava(arg) {
+        alert('arg is' + arg)
+    }
 </script>
 <head>
     <link href="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/static/css/vendor.css" rel="stylesheet"/>
 </head>
 <body>
+<div id="editorPane" contenteditable="true">
+    <p>{}</p>
+</div>
+<button onclick="window.callJava(document.getElementById('editorPane').innerText)">生成示例</button>
+<!--<button onclick="window.callJava(JSON.stringify({regionId: 'cn-hangzhou', ImageId: 'test'}))">示例代码</button>-->
+
 <div id="root"></div>
 <script src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/static/js/vendor.js"></script>
 </body>

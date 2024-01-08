@@ -2,6 +2,8 @@ package com.alibabacloud.api.service
 
 import com.alibabacloud.api.service.util.FormatUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBList
 import com.intellij.ui.treeStructure.Tree
@@ -27,6 +29,39 @@ class SearchHelper {
         ) {
             val searchResultsWindow = JWindow(SwingUtilities.getWindowAncestor(contentPanel))
             val searchResultsModel = DefaultListModel<String>()
+            searchResultsWindow.focusableWindowState = false
+
+            val updateSearchResults = {
+                ApplicationManager.getApplication().invokeLater {
+                    val searchText = searchField.text.trim()
+                    searchResultsModel.clear()
+
+                    if (searchText.isNotEmpty()) {
+                        if (nameAndVersionMap == null) {
+                            getSearchApiElement(tree, searchText, searchResultsModel)
+                        } else {
+                            getSearchProductElement(searchText, nameAndVersionMap, searchResultsModel)
+                        }
+
+                        if (!searchResultsModel.isEmpty) {
+                            searchResultsWindow.size = Dimension(searchField.width, 100)
+                            val locationOnScreen = searchField.locationOnScreen
+                            searchResultsWindow.location =
+                                Point(locationOnScreen.x, locationOnScreen.y + searchField.height)
+                            searchResultsWindow.isVisible = true
+                        } else {
+                            searchResultsWindow.isVisible = false
+                        }
+                    } else {
+                        searchResultsWindow.isVisible = false
+                    }
+                }
+            }
+
+            val debounceInterval = 300
+            val debounceTimer = Timer(debounceInterval) { updateSearchResults() }
+            debounceTimer.isRepeats = false
+
             val searchResultsList = JBList(searchResultsModel).apply {
                 selectionMode = ListSelectionModel.SINGLE_SELECTION
                 addMouseListener(object : MouseAdapter() {
@@ -52,42 +87,15 @@ class SearchHelper {
             }
 
             searchField.addDocumentListener(object : DocumentListener {
-                override fun insertUpdate(e: DocumentEvent?) {
-                    updateSearchResults()
-                }
+                override fun insertUpdate(e: DocumentEvent?) = debounce()
+                override fun removeUpdate(e: DocumentEvent?) = debounce()
+                override fun changedUpdate(e: DocumentEvent?) = debounce()
 
-                override fun removeUpdate(e: DocumentEvent?) {
-                    updateSearchResults()
-                }
-
-                override fun changedUpdate(e: DocumentEvent?) {
-                    updateSearchResults()
-                }
-
-                private fun updateSearchResults() {
-                    ApplicationManager.getApplication().invokeLater {
-                        val searchText = searchField.text.trim()
-                        searchResultsModel.clear()
-
-                        if (searchText.isNotEmpty()) {
-                            if (nameAndVersionMap == null) {
-                                getSearchApiElement(tree, searchText, searchResultsModel)
-                            } else {
-                                getSearchProductElement(searchText, nameAndVersionMap, searchResultsModel)
-                            }
-
-                            if (!searchResultsModel.isEmpty) {
-                                searchResultsWindow.size = Dimension(searchField.width, 100)
-                                val locationOnScreen = searchField.locationOnScreen
-                                searchResultsWindow.location =
-                                    Point(locationOnScreen.x, locationOnScreen.y + searchField.height)
-                                searchResultsWindow.isVisible = true
-                            } else {
-                                searchResultsWindow.isVisible = false
-                            }
-                        } else {
-                            searchResultsWindow.isVisible = false
-                        }
+                fun debounce() {
+                    if (debounceTimer.isRunning) {
+                        debounceTimer.restart()
+                    } else {
+                        debounceTimer.start()
                     }
                 }
             })

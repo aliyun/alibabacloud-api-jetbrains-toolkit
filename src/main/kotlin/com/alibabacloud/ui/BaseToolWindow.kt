@@ -140,10 +140,6 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         val selectionModel = tree.selectionModel
         val apiPanel = JPanel()
         apiPanel.layout = BoxLayout(apiPanel, BoxLayout.Y_AXIS)
-        val scrollPane = JBScrollPane()
-        scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
-        scrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
-        apiPanel.add(scrollPane)
 
         var apiDocContent: Content? = null
         var apiName: String
