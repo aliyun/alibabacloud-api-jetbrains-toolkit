@@ -103,8 +103,7 @@ class ApiExplorer {
                             element.asJsonObject.get(ApiConstants.PRODUCT_RESP_CATEGORY_NAME)?.asString ?: ""
                         val showNameCn =
                             element.asJsonObject.get(ApiConstants.PRODUCT_RESP_SHOW_NAME_CN)?.asString ?: ""
-                        val name =
-                            element.asJsonObject.get(ApiConstants.PRODUCT_RESP_PRODUCT_NAME)?.asString ?: ""
+                        val name = element.asJsonObject.get(ApiConstants.PRODUCT_RESP_PRODUCT_NAME)?.asString ?: ""
                         val defaultVersion =
                             element.asJsonObject.get(ApiConstants.PRODUCT_RESP_DEFAULT_VERSION)?.asString ?: ""
 
@@ -120,10 +119,8 @@ class ApiExplorer {
                             list.add(defaultVersion)
                             nameAndVersionMap[showNameCn] = list
                         } else {
-                            val innerMap =
-                                resultMap.getOrPut(category2Name) { mutableMapOf() }
-                            val showNameList =
-                                innerMap.getOrPut(categoryName) { mutableListOf() }
+                            val innerMap = resultMap.getOrPut(category2Name) { mutableMapOf() }
+                            val showNameList = innerMap.getOrPut(categoryName) { mutableListOf() }
                             showNameList.add(showNameCn)
                             val list = mutableListOf<String>()
                             list.add(name)
@@ -174,6 +171,24 @@ class ApiExplorer {
             }
 
             return Pair(nameAndVersionMap, Tree(treeModel))
+        }
+
+        fun getApiListRequest(url: URL): JsonArray {
+            try {
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = ApiConstants.METHOD_GET
+
+                if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                    val response = connection.inputStream.bufferedReader().use { it.readText() }
+                    val jsonResponse = Gson().fromJson(response, JsonObject::class.java)
+                    val data = jsonResponse.getAsJsonArray(ApiConstants.API_DIR_DATA)
+                    connection.disconnect()
+                    return data
+                }
+                return JsonArray()
+            } catch (_: IOException) {
+                return JsonArray()
+            }
         }
     }
 }

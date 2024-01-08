@@ -7,11 +7,11 @@
 Alibaba Cloud Developer Toolkit for JetBrains 让您访问阿里云服务更加便捷.
 
 ## 支持的 IDE
-IntelliJ IDEA(Ultimate, Community) 2022.2+
+IntelliJ IDEA(Ultimate, Community) 2022.2 ~ 2023.3
 
-Pycharm (Professional, Community) 2022.2+
+Pycharm (Professional, Community) 2022.2 ~ 2023.3
 
-GoLand 2022.2+
+GoLand 2022.2 ~ 2023.3
 
 ## 开始
 
@@ -29,29 +29,22 @@ GoLand 2022.2+
 </div>
 
 
-* **用户配置** 支持通过静态凭证切换和编辑用户配置，与阿里云 CLI 的配置方式一致。 位于 IDE 底部的状态栏显示当前用户。 [了解更多 CLI 配置相关](https://help.aliyun.com/document_detail/123181.html?spm=a2c4g.121544.0.0.2d7e76e3XWMs4u)
+* **用户配置：** 支持通过静态凭证切换和编辑用户配置，与阿里云 CLI 的配置方式一致。 位于 IDE 底部的状态栏显示当前用户。 [了解更多 CLI 配置相关](https://help.aliyun.com/document_detail/123181.html?spm=a2c4g.121544.0.0.2d7e76e3XWMs4u)
   * 如果您已经安装了阿里云 CLI，您可以切换已有用户。您可以通过点击“Edit Profile”打开config.json配置文件，进一步编辑用户配置。
   * 如果您还未安装阿里云 CLI，本插件会自动创建一个空的配置文件。
 
 
-* **产品导航** 云产品的树状视图，搜索框可以快速导航到对应产品，或者单击某个云产品，可以跳转到对应的 API 列表，API 列表上方的搜索框可以快速导航到您指定的 API。
+* **产品导航：** 云产品的树状视图，搜索框可以快速导航到对应产品，或者单击某个云产品，可以跳转到对应的 API 列表，API 列表上方的搜索框可以快速导航到您指定的 API。
   点击窗口工具栏中的刷新按钮可以刷新产品列表或 API 展示页面。通过缓存机制，用户再次访问同一 API 时可实现快速加载展示页面。
 
 
-* **API 文档展示** 单击某个 API 将打开一个新窗口，显示相应的 API 文档，包括接口描述、请求参数、响应参数和错误码等。
+* **API 文档展示：** 单击某个 API 将打开一个新窗口，显示相应的 API 文档，包括接口描述、请求参数、响应参数和错误码等。
 
 
-* **API 调试（Beta）** 支持对照参数列表进行便捷的 IDE 内 API 调试，或点击“去调试”按钮可快速跳转浏览器进行调试。
-  > 参数填写 Tips
+* **API 调试：** 支持对照参数列表进行便捷的 IDE 内 API 调试，或点击“去调试”按钮可快速跳转浏览器进行调试。
 
-  对于 `array` 类型的参数，请输入一个 JSON 文本。例如, 对于 `array<string>` 类型的参数，您可以输入：
-    ```json
-    ["str1", "str2"]
-    ```
-  对于 `array<object>` 类型的参数，您可以输入：
-    ```json
-    [{"property11": "value11", "property12": "value12"}, {"property21": "value21", "property22": "value22"}]
-    ```
+
+* **SDK 示例代码查看：** 支持 IDE 内查看 SDK 示例代码，填写参数后同步生成对应示例代码。支持跳转浏览器获取安装依赖方式、查看源码。
 
 
 * 更多功能正在开发中，敬请期待。

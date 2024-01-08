@@ -7,11 +7,11 @@
 The Alibaba Cloud Developer Toolkit for JetBrains makes it easier to access Alibaba Cloud services.
 
 ## Supported IDEs
-IntelliJ IDEA(Ultimate, Community) 2022.2+
+IntelliJ IDEA(Ultimate, Community) 2022.2 ~ 2023.3
 
-Pycharm (Professional, Community) 2022.2+
+Pycharm (Professional, Community) 2022.2 ~ 2023.3
 
-GoLand 2022.2+
+GoLand 2022.2 ~ 2023.3
 
 ## Getting Start
 
@@ -30,7 +30,7 @@ Marketplace in your IDE, or download installation files from your web browser th
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-debug2.png" style="display: inline-block;">
 </div>
 
-* **Profile Configuration** Support switch and edit user profile through static credentials, which is consistent with Alibaba
+* **Profile Configuration:** Support switch and edit user profile through static credentials, which is consistent with Alibaba
   Cloud CLI. The StatusBar located at the bottom of the IDE displays the current profile. [Learn more about CLI Configuration](https://help.aliyun.com/document_detail/123181.html?spm=a2c4g.121544.0.0.2d7e76e3XWMs4u)
     * If you have already installed Alibaba Cloud CLI, you can switch your existing profiles. You can open the config.json
       configuration file by clicking "Edit Profile" to further edit user profiles.
@@ -38,28 +38,22 @@ Marketplace in your IDE, or download installation files from your web browser th
       a default empty configuration.
 
 
-* **Product Explorer** A tree-view of cloud products with search: Quickly navigate you to the corresponding products or APIs.
+* **Product Explorer:** A tree-view of cloud products with search: Quickly navigate you to the corresponding products or APIs.
   You can refresh the product list or API detail page by clicking the refresh button in the window toolbar.
 
 
-* **API Document View** Clicking on an API can navigate you to a new tab which displays the corresponding API document,
+* **API Document View:** Clicking on an API can navigate you to a new tab which displays the corresponding API document,
   including descriptions, request parameters, response parameters and error codes. With cache implemented, subsequent
   visits to the same API will be loaded swiftly.
 
 
-* **API Debug (Beta)** Support convenient API debugging within the IDE against the parameter list, and also offers a
+* **API Debug:** Support convenient API debugging within the IDE against the parameter list, and also offers a
   "Go Debug" button for seamless transition to debug in browser.
-  >Parameter Filling Tips:
 
-  For parameters of the `array` type, please enter a JSON text. For instance, if the parameter type is `array<string>`,
-  you can input:
-    ```json
-    ["str1", "str2"]
-    ```
-  If the parameter type is `array<object>`, you can input:
-    ```json
-    [{"property11": "value11", "property12": "value12"}, {"property21": "value21", "property22": "value22"}]
-    ```
+
+* **SDK Code Sample View:** Support viewing SDK code samples within the IDE, with synchronous generation of corresponding 
+instance code after filling in parameters. Supports jumping to the browser for obtaining dependency installation methods
+and source code.
 
 
 * More features are under development, please stay tuned.
