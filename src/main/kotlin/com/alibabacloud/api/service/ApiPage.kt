@@ -18,10 +18,10 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JBCefClient
+import okhttp3.Request
 import java.awt.BorderLayout
 import java.io.File
 import java.io.IOException
-import java.net.HttpURLConnection
 import java.net.URL
 import javax.swing.JPanel
 import javax.swing.JSplitPane
@@ -51,19 +51,25 @@ class ApiPage {
             }
             val cacheFile = File(ApiConstants.CACHE_PATH, "$productName-$defaultVersion-$apiName.html")
             val cacheMeta = File(ApiConstants.CACHE_PATH, "${productName}Meta")
+            val cacheEndpoints = File(ApiConstants.CACHE_PATH, "${productName}Endpoints")
             var cacheContent: String? = null
             var cacheDocMeta: String? = null
+            val cacheEndpointList: String?
 
             val sdkPanel = JPanel(BorderLayout())
             val splitPane = JSplitPane(JSplitPane.VERTICAL_SPLIT)
 
-            if (useCache && cacheFile.exists() && cacheMeta.exists() && cacheFile.length() > 0 && cacheMeta.length() > 0 && cacheFile.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis() && cacheMeta.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis()) {
+
+
+            if (useCache && cacheFile.exists() && cacheMeta.exists() && cacheEndpoints.exists() && cacheFile.length() > 0 && cacheMeta.length() > 0 && cacheEndpoints.length() > 0 && cacheFile.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis() && cacheMeta.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis() && cacheEndpoints.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis()) {
                 try {
                     cacheContent = cacheFile.readText()
                     browser.loadHTML(cacheContent)
                     cacheDocMeta = cacheMeta.readText()
+                    cacheEndpointList = cacheEndpoints.readText()
                     val cacheApiDocData = Gson().fromJson(cacheDocMeta, JsonObject::class.java)
-                    val endpoints = cacheApiDocData.get(ApiConstants.API_DOC_ENDPOINTS).asJsonArray
+                    val endpointList = Gson().fromJson(cacheEndpointList, JsonArray::class.java)
+
                     execute(
                         project,
                         browser,
@@ -71,7 +77,7 @@ class ApiPage {
                         apiName,
                         defaultVersion,
                         productName,
-                        endpoints,
+                        endpointList,
                         sdkPanel,
                         splitPane
                     )
@@ -105,20 +111,40 @@ class ApiPage {
 
                 ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Loading API Doc", true) {
                     override fun run(indicator: ProgressIndicator) {
+                        var apiDocResponse = String()
                         val apiDocUrl =
                             URL("${ApiConstants.API_PARAM_URL}/products/$productName/versions/$defaultVersion/api-docs.json")
-                        val apiDocConnection = apiDocUrl.openConnection() as HttpURLConnection
                         var apiDocData = JsonObject()
-                        var endpoints = JsonArray()
-                        var apiDocResponse = String()
+                        var endpointList = JsonArray()
 
-                        if (apiDocConnection.responseCode == HttpURLConnection.HTTP_OK) {
-                            apiDocResponse = apiDocConnection.inputStream.bufferedReader().use { it.readText() }
-                            val docJsonResponse = Gson().fromJson(apiDocResponse, JsonObject::class.java)
-                            apiDocData = docJsonResponse
-                            endpoints = docJsonResponse.get(ApiConstants.API_DOC_ENDPOINTS).asJsonArray
+                        var request = Request.Builder().url(apiDocUrl).build()
+                        OkHttpClientProvider.instance.newCall(request).execute().use { response ->
+                            if (response.isSuccessful) {
+                                val responseBody = response.body?.string()
+                                if (responseBody != null) {
+                                    apiDocResponse = responseBody
+                                    val docResponse = Gson().fromJson(responseBody, JsonObject::class.java)
+                                    apiDocData = docResponse
+                                }
+                            }
                         }
-                        apiDocConnection.disconnect()
+
+                        val endpointUrl =
+                            URL("https://api.aliyun.com/meta/v1/products/$productName/endpoints.json?language=zh-CN")
+
+                        request = Request.Builder().url(endpointUrl).build()
+                        OkHttpClientProvider.instance.newCall(request).execute().use { response ->
+                            if (response.isSuccessful) {
+                                val responseBody = response.body?.string()
+                                if (responseBody != null) {
+                                    val endpointResponse = Gson().fromJson(responseBody, JsonObject::class.java)
+                                    endpointList =
+                                        endpointResponse.get(ApiConstants.ENDPOINT_LIST_DATA).asJsonObject.get(
+                                            ApiConstants.ENDPOINT_LIST_ENDPOINTS
+                                        ).asJsonArray
+                                }
+                            }
+                        }
 
                         execute(
                             project,
@@ -127,7 +153,7 @@ class ApiPage {
                             apiName,
                             defaultVersion,
                             productName,
-                            endpoints,
+                            endpointList,
                             sdkPanel,
                             splitPane
                         )
@@ -180,9 +206,9 @@ class ApiPage {
                         modifiedHtml = templateHtml.replace("\$APIMETA", "$apiParams").replace("\$DEFS", "$definitions")
                         try {
                             CacheUtil.cleanExceedCache()
-//                            cacheFile.writeText(modifiedHtml)
-                            cacheFile.writeText("")
-                            cacheMeta.writeText("")
+                            cacheFile.writeText(modifiedHtml)
+                            cacheMeta.writeText(apiDocResponse)
+                            cacheEndpoints.writeText(endpointList.toString())
                         } catch (e: IOException) {
                             throw e
                         }
@@ -220,37 +246,37 @@ class ApiPage {
             apiName: String,
             defaultVersion: String,
             productName: String,
-            endpoints: JsonArray,
+            endpointList: JsonArray,
             sdkPanel: JPanel,
             splitPane: JSplitPane
         ) {
             val bodyParams = JsonObject()
-            bodyParams.addProperty("apiName", apiName)
-            bodyParams.addProperty("apiVersion", defaultVersion)
-            bodyParams.addProperty("product", productName)
-            bodyParams.addProperty("sdkType", "dara")
-            bodyParams.add("params", JsonObject())
+            bodyParams.addProperty(ApiConstants.SDK_MAKE_CODE_BODY_API_NAME, apiName)
+            bodyParams.addProperty(ApiConstants.SDK_MAKE_CODE_BODY_API_VERSION, defaultVersion)
+            bodyParams.addProperty(ApiConstants.SDK_MAKE_CODE_BODY_PRODUCT, productName)
+            bodyParams.addProperty(ApiConstants.SDK_MAKE_CODE_BODY_SDK_TYPE, "dara")
+            bodyParams.add(ApiConstants.SDK_MAKE_CODE_BODY_PARAMS, JsonObject())
 
-            ApiDebug.executeDebug(browser, apiDocData, apiName, endpoints, project)
+            ApiDebug.executeDebug(browser, apiDocData, apiName, endpointList, project)
             SdkSample.executeSdk(browser) { paramsValue, regionId ->
                 var endpoint = String()
-                for (element in endpoints) {
-                    if (element.asJsonObject.get("regionId").asString == regionId) {
-                        endpoint = element.asJsonObject.get("endpoint").asString
+                if (endpointList.size() > 0) {
+                    for (element in endpointList) {
+                        if (element.asJsonObject.get(ApiConstants.ENDPOINT_REGION_ID).asString == regionId) {
+                            endpoint = element.asJsonObject.get(ApiConstants.ENDPOINT_PUBLIC).asString
+                        }
                     }
                 }
 
                 splitPane.setResizeWeight(0.6)
-                bodyParams.add("params", Gson().toJsonTree(paramsValue) as JsonObject)
-                bodyParams.addProperty("endpoint", endpoint)
+                bodyParams.add(ApiConstants.SDK_MAKE_CODE_BODY_PARAMS, Gson().toJsonTree(paramsValue) as JsonObject)
+                bodyParams.addProperty(ApiConstants.SDK_MAKE_CODE_BODY_ENDPOINT, endpoint)
                 val demoSdkObject = SdkSample.getDemoSdk(project, bodyParams)
 
                 ApplicationManager.getApplication().invokeLater {
                     SdkSample.sdkSamplePanel(
                         apiName, defaultVersion, productName, project, sdkPanel, demoSdkObject
                     )
-                }
-                ApplicationManager.getApplication().invokeLater {
                     splitPane.bottomComponent = sdkPanel
                 }
             }

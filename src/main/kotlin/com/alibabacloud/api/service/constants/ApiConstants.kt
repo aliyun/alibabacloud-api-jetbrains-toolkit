@@ -34,8 +34,6 @@ object ApiConstants {
     const val TOOLWINDOW_API_TREE = "Alibaba Cloud API"
     const val TOOLWINDOW_PRODUCT_TREE = "Alibaba Cloud API"
 
-    const val METHOD_GET = "GET"
-
     const val PRODUCT_RESP_DATA = "data"
     const val PRODUCT_RESP_CATEGORY_2_NAME = "category2Name"
     const val PRODUCT_RESP_CATEGORY_NAME = "categoryName"
@@ -45,6 +43,24 @@ object ApiConstants {
     const val PRODUCT_RESP_NOT_CLASSIFIED = "未分类"
 
     const val API_DIR_DATA = "data"
+    const val DEP_INSTALL_DATA = "data"
+    const val DEP_INSTALL = "install"
+    const val DEP_INSTALL_METHOD = "method"
+    const val DEP_INSTALL_COMMAND = "command"
+
+    const val SDK_MAKE_CODE_DATA = "data"
+    const val SDK_MAKE_CODE_DEMO = "demoSdk"
+    const val SDK_MAKE_CODE_BODY_API_NAME = "apiName"
+    const val SDK_MAKE_CODE_BODY_API_VERSION = "apiVersion"
+    const val SDK_MAKE_CODE_BODY_PRODUCT = "product"
+    const val SDK_MAKE_CODE_BODY_SDK_TYPE = "sdkType"
+    const val SDK_MAKE_CODE_BODY_PARAMS = "params"
+    const val SDK_MAKE_CODE_BODY_ENDPOINT = "endpoint"
+
+    const val ENDPOINT_PUBLIC = "public"
+    const val ENDPOINT_REGION_ID = "regionId"
+    const val ENDPOINT_LIST_DATA = "data"
+    const val ENDPOINT_LIST_ENDPOINTS = "endpoints"
 
     const val API_RESP_RESPONSES_SCHEMA_XML = "xml"
     const val API_RESP_RESPONSES_SCHEMA_TYPE = "type"
@@ -53,7 +69,6 @@ object ApiConstants {
 
     const val API_DOC_RESP_COMPONENTS = "components"
     const val API_DOC_RESP_SCHEMAS = "schemas"
-    const val API_DOC_ENDPOINTS = "endpoints"
 
     const val API_DIR_RESPONSE_NAME = "name"
     const val API_DIR_RESPONSE_NODE_TITLE = "node_title"

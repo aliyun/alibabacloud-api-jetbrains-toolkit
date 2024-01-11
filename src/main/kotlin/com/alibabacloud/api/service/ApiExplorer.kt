@@ -8,11 +8,11 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.treeStructure.Tree
+import okhttp3.Request
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.io.File
 import java.io.IOException
-import java.net.HttpURLConnection
 import java.net.URL
 import javax.swing.JPanel
 import javax.swing.tree.DefaultMutableTreeNode
@@ -85,17 +85,21 @@ class ApiExplorer {
             val nameAndVersionMap = mutableMapOf<String, List<String>>()
             val url = URL(ApiConstants.PRODUCT_LIST_URL)
             try {
-                val connection = url.openConnection() as HttpURLConnection
-                connection.requestMethod = ApiConstants.METHOD_GET
-                connection.connect()
+                val request = Request.Builder().url(url).build()
 
-                if (connection.responseCode == HttpURLConnection.HTTP_OK) {
-                    val response = connection.inputStream.bufferedReader().use { it.readText() }
-                    val jsonResponse = Gson().fromJson(response, JsonObject::class.java)
-                    val data = jsonResponse.getAsJsonArray(ApiConstants.PRODUCT_RESP_DATA)
-                    val resultMap = mutableMapOf<String, MutableMap<String, MutableList<String>>>()
-                    connection.disconnect()
+                val resultMap = mutableMapOf<String, MutableMap<String, MutableList<String>>>()
+                var data = JsonArray()
+                OkHttpClientProvider.instance.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val responseBody = response.body?.string()
+                        if (responseBody != null) {
+                            val jsonResponse = Gson().fromJson(responseBody, JsonObject::class.java)
+                            data = jsonResponse.getAsJsonArray(ApiConstants.PRODUCT_RESP_DATA)
+                        }
+                    }
+                }
 
+                if (data.size() > 0) {
                     for (element in data) {
                         val category2Name =
                             element.asJsonObject.get(ApiConstants.PRODUCT_RESP_CATEGORY_2_NAME)?.asString ?: ""
@@ -174,21 +178,21 @@ class ApiExplorer {
         }
 
         fun getApiListRequest(url: URL): JsonArray {
+            var data = JsonArray()
             try {
-                val connection = url.openConnection() as HttpURLConnection
-                connection.requestMethod = ApiConstants.METHOD_GET
-
-                if (connection.responseCode == HttpURLConnection.HTTP_OK) {
-                    val response = connection.inputStream.bufferedReader().use { it.readText() }
-                    val jsonResponse = Gson().fromJson(response, JsonObject::class.java)
-                    val data = jsonResponse.getAsJsonArray(ApiConstants.API_DIR_DATA)
-                    connection.disconnect()
-                    return data
+                val request = Request.Builder().url(url).build()
+                OkHttpClientProvider.instance.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val responseBody = response.body?.string()
+                        if (responseBody != null) {
+                            val jsonResponse = Gson().fromJson(responseBody, JsonObject::class.java)
+                            data = jsonResponse.getAsJsonArray(ApiConstants.API_DIR_DATA)
+                        }
+                    }
                 }
-                return JsonArray()
             } catch (_: IOException) {
-                return JsonArray()
             }
+            return data
         }
     }
 }

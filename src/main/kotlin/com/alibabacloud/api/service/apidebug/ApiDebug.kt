@@ -2,6 +2,8 @@ package com.alibabacloud.api.service.apidebug
 
 import com.alibabacloud.api.service.OpenAPIClient
 import com.alibabacloud.api.service.constants.ApiConstants
+import com.alibabacloud.api.service.constants.NotificationGroups
+import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.models.credentials.ConfigureFile
 import com.aliyun.teautil.models.TeaUtilException
@@ -9,7 +11,6 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
-import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.ui.jcef.JBCefBrowser
@@ -27,7 +28,7 @@ class ApiDebug {
             browser: JBCefBrowser,
             apiDocData: JsonObject,
             apiName: String,
-            endpoints: JsonArray,
+            endpointList: JsonArray,
             project: Project,
         ) {
             val query = JBCefJSQuery.create(browser as JBCefBrowserBase)
@@ -42,14 +43,23 @@ class ApiDebug {
                     val accessKeyId = profile?.access_key_id
                     val accessKeySecret = profile?.access_key_secret
                     if (accessKeyId == null || accessKeySecret == null || accessKeyId == "" || accessKeySecret == "") {
-                        NotificationGroupManager.getInstance().getNotificationGroup("AlibabaCloud API: Warning")
-                            .createNotification(
-                                "需要登录：如需调试请先在 Edit Profile 处配置用户信息",
-                                NotificationType.WARNING,
-                            ).notify(project)
+                        NormalNotification.showMessage(
+                            project,
+                            NotificationGroups.DEBUG_NOTIFICATION_GROUP,
+                            "需要登录",
+                            "如需调试请先在 Edit Profile 处配置用户信息",
+                            NotificationType.WARNING
+                        )
                     } else {
                         debugHtml = getDebugResponse(
-                            paramsValue, apiDocData, apiName, endpoints, regionId, accessKeyId, accessKeySecret, project
+                            paramsValue,
+                            apiDocData,
+                            apiName,
+                            endpointList,
+                            regionId,
+                            accessKeyId,
+                            accessKeySecret,
+                            project
                         ).replace(
                             "\\\"",
                             "",
@@ -63,9 +73,13 @@ class ApiDebug {
                     )
                     return@addHandler JBCefJSQuery.Response("ok")
                 } catch (e: JsonSyntaxException) {
-                    val message = "Params format error, please check."
-                    NotificationGroupManager.getInstance().getNotificationGroup("AlibabaCloud API: Warning")
-                        .createNotification(message, NotificationType.WARNING).notify(project)
+                    NormalNotification.showMessage(
+                        project,
+                        NotificationGroups.DEBUG_NOTIFICATION_GROUP,
+                        "参数格式错误",
+                        "请检查",
+                        NotificationType.ERROR
+                    )
                     return@addHandler JBCefJSQuery.Response(null, 0, "errorMsg")
                 }
             }
@@ -88,15 +102,9 @@ class ApiDebug {
                     }
 
                     override fun onLoadEnd(cefBrowser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
-                        val regionIds = JsonArray()
-                        for (i in 0 until endpoints.size()) {
-                            val regionIdToSelect = endpoints[i].asJsonObject.get("regionId").asString
-                            regionIds.add(regionIdToSelect)
-                        }
-
                         cefBrowser.executeJavaScript(
                             """
-                        populateDropdown($regionIds);
+                        populateDropdown($endpointList);
                         window.callLogicLayer = function(arg, cb) {
                         ${
                                 query.inject(
@@ -130,12 +138,15 @@ class ApiDebug {
             args: Map<String, Any>?,
             apiDocData: JsonObject,
             apiName: String,
-            endpoints: JsonArray,
+            endpointList: JsonArray,
             regionId: String?,
             accessKeyId: String,
             accessKeySecret: String,
             project: Project,
         ): String {
+            if (apiDocData.size() <= 0 || endpointList.size() < 0) {
+                return "网络请求失败，请重试"
+            }
             val apisObject = apiDocData.get(ApiConstants.DEBUG_APIS).asJsonObject.get(apiName).asJsonObject
             val methods = apisObject.get(ApiConstants.DEBUG_METHODS).asJsonArray
             val method = FormatUtil.getMethod(methods)
@@ -159,17 +170,11 @@ class ApiDebug {
             }
 
             var endpoint = String()
-            for (element in endpoints) {
+            for (element in endpointList) {
                 if (element.asJsonObject.get("regionId").asString == regionId) {
-                    endpoint = element.asJsonObject.get("endpoint").asString
+                    endpoint = element.asJsonObject.get("public").asString
                 }
             }
-
-//            val selectedRegionId = if (regionId == "") "cn-hangzhou" else regionId
-//            val endpoint =
-//                endpoints.find { it.asJsonObject.get("regionId").asString == selectedRegionId }?.asJsonObject?.get(
-//                    "endpoint"
-//                )?.asString
 
             val openApiRequest = OpenAPIClient.OpenApiRequest()
             openApiRequest.headers = mutableMapOf()
@@ -190,7 +195,10 @@ class ApiDebug {
                 FormatUtil._bodyType(produces)
             } else if (responseSchema.has(ApiConstants.API_RESP_RESPONSES_SCHEMA_XML)) {
                 "xml"
-            } else if (responseSchema.get(ApiConstants.API_RESP_RESPONSES_SCHEMA_TYPE)?.asString != ApiConstants.API_RESP_RESPONSES_SCHEMA_TYPE_OBJECT) {
+            } else if (responseSchema.has(ApiConstants.API_RESP_RESPONSES_SCHEMA_TYPE) && responseSchema.get(
+                    ApiConstants.API_RESP_RESPONSES_SCHEMA_TYPE
+                )?.asString != ApiConstants.API_RESP_RESPONSES_SCHEMA_TYPE_OBJECT
+            ) {
                 if (responseSchema.has(ApiConstants.API_RESP_RESPONSES_SCHEMA_FORMAT)) {
                     responseSchema.get(
                         ApiConstants.API_RESP_RESPONSES_SCHEMA_FORMAT,
@@ -263,36 +271,38 @@ class ApiDebug {
                                 val type = paramInfo.get("schema")?.asJsonObject?.get("type")?.asString
                                 if (name == "RequestBody" && type == "RequestBody") {
                                     body = value
-                                }
-
-                                if (style == "json" && value !is String) {
-                                    body = Gson().toJson(value)
-                                }
-                                if (style != null && value is List<*>) {
-                                    val valuesList = mutableListOf<Any>()
-                                    when (style) {
-                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_SIMPLE -> {
-                                            body = FormatUtil.joinValueArray(valuesList, value, ",")
-                                        }
-
-                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_SPACE -> {
-                                            body = FormatUtil.joinValueArray(valuesList, value, " ")
-                                        }
-
-                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_PIPE -> {
-                                            body = FormatUtil.joinValueArray(valuesList, value, "|")
-                                        }
-
-                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_REPEAT_LIST -> {
-                                            body = value
-                                        }
-
-                                        ApiConstants.DEBUG_NEW_PARAMS_STYLE_FLAT -> {
-                                            body = value
-                                        }
-                                    }
                                 } else {
-                                    body = value
+                                    val bodyMap = mutableMapOf<String, Any>()
+                                    if (style == "json" && value !is String) {
+                                        bodyMap[name] = Gson().toJson(value)
+                                    }
+                                    if (style != null && value is List<*>) {
+                                        val valuesList = mutableListOf<Any>()
+                                        when (style) {
+                                            ApiConstants.DEBUG_NEW_PARAMS_STYLE_SIMPLE -> {
+                                                bodyMap[name] = FormatUtil.joinValueArray(valuesList, value, ",")
+                                            }
+
+                                            ApiConstants.DEBUG_NEW_PARAMS_STYLE_SPACE -> {
+                                                bodyMap[name] = FormatUtil.joinValueArray(valuesList, value, " ")
+                                            }
+
+                                            ApiConstants.DEBUG_NEW_PARAMS_STYLE_PIPE -> {
+                                                bodyMap[name] = FormatUtil.joinValueArray(valuesList, value, "|")
+                                            }
+
+                                            ApiConstants.DEBUG_NEW_PARAMS_STYLE_REPEAT_LIST -> {
+                                                bodyMap[name] = value
+                                            }
+
+                                            ApiConstants.DEBUG_NEW_PARAMS_STYLE_FLAT -> {
+                                                bodyMap[name] = value
+                                            }
+                                        }
+                                    } else {
+                                        bodyMap[name] = value
+                                    }
+                                    body = bodyMap
                                 }
                                 openApiRequest.body = body
                             }
@@ -371,12 +381,17 @@ class ApiDebug {
                 } else {
                     teaUnretryableException.message ?: ""
                 }
-                NotificationGroupManager.getInstance().getNotificationGroup("AlibabaCloud API: Warning")
-                    .createNotification(message, NotificationType.WARNING).notify(project)
+                NormalNotification.showMessage(
+                    project, NotificationGroups.DEBUG_NOTIFICATION_GROUP, "发生错误", message, NotificationType.ERROR
+                )
             } catch (teaUtilException: TeaUtilException) {
-                val message = "Some format exception, welcome to feedback"
-                NotificationGroupManager.getInstance().getNotificationGroup("AlibabaCloud API: Error")
-                    .createNotification(message, NotificationType.ERROR).notify(project)
+                NormalNotification.showMessage(
+                    project,
+                    NotificationGroups.DEBUG_NOTIFICATION_GROUP,
+                    "发生错误",
+                    "参数格式错误，欢迎反馈",
+                    NotificationType.ERROR
+                )
             }
             response["cost"] = duration
             return Gson().toJson(response)
