@@ -23,6 +23,7 @@ dependencies {
     }
     implementation("com.aliyun:tea-util:0.2.21")
     implementation("com.aliyun:openapiutil:0.2.1")
+    implementation("com.squareup.okhttp3:okhttp:4.10.0")
 }
 
 intellij {

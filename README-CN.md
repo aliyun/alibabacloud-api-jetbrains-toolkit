@@ -26,6 +26,8 @@ GoLand 2022.2 ~ 2023.3
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-list-with-search.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-debug1.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-debug2.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/sdkSample.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/auto-import.png" style="display: inline-block;">
 </div>
 
 
@@ -44,7 +46,8 @@ GoLand 2022.2 ~ 2023.3
 * **API 调试：** 支持对照参数列表进行便捷的 IDE 内 API 调试，或点击“去调试”按钮可快速跳转浏览器进行调试。
 
 
-* **SDK 示例代码查看：** 支持 IDE 内查看 SDK 示例代码，填写参数后同步生成对应示例代码。支持跳转浏览器获取安装依赖方式、查看源码。
+* **SDK 示例代码查看：** 支持 IDE 内查看 SDK 示例代码，填写参数后同步生成对应示例代码。支持跳转浏览器获取安装依赖方式、查看源码。对于 Java 
+和 Java-async，支持 Maven 依赖的自动导入。
 
 
 * 更多功能正在开发中，敬请期待。

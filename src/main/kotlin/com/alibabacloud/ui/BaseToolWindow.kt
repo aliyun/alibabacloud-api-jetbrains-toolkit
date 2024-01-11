@@ -1,7 +1,7 @@
 package com.alibabacloud.ui
 
-import com.alibabacloud.api.service.ApiPage
 import com.alibabacloud.api.service.ApiExplorer
+import com.alibabacloud.api.service.ApiPage
 import com.alibabacloud.api.service.SearchHelper
 import com.alibabacloud.api.service.constants.ApiConstants
 import com.alibabacloud.api.service.util.CacheUtil
@@ -166,11 +166,12 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                     if (apiData == null) {
                         apiData = ApiExplorer.getApiListRequest(apiUrl)
                         val cacheApiListFile = File(ApiConstants.CACHE_PATH, "$productName-api-list")
-
-                        try {
-                            CacheUtil.writeApiListCache(cacheApiListFile, apiData)
-                        } catch (e: IOException) {
-                            cacheApiListFile.delete()
+                        if (apiData.size() > 0) {
+                            try {
+                                CacheUtil.writeApiListCache(cacheApiListFile, apiData)
+                            } catch (e: IOException) {
+                                cacheApiListFile.delete()
+                            }
                         }
                     }
 

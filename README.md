@@ -28,6 +28,8 @@ Marketplace in your IDE, or download installation files from your web browser th
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-list-with-search.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-debug1.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-debug2.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/sdkSample.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/auto-import.png" style="display: inline-block;">
 </div>
 
 * **Profile Configuration:** Support switch and edit user profile through static credentials, which is consistent with Alibaba
@@ -52,8 +54,8 @@ Marketplace in your IDE, or download installation files from your web browser th
 
 
 * **SDK Code Sample View:** Support viewing SDK code samples within the IDE, with synchronous generation of corresponding 
-instance code after filling in parameters. Supports jumping to the browser for obtaining dependency installation methods
-and source code.
+instance code after filling in parameters. Support jumping to the browser for obtaining dependency installation methods
+and source code. For Java and Java-async, automatic import of Maven dependencies is supported.
 
 
 * More features are under development, please stay tuned.
