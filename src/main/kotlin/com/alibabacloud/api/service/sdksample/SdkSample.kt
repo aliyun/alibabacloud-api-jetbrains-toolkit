@@ -5,13 +5,13 @@ import com.alibabacloud.api.service.constants.ApiConstants
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.util.FormatUtil
+import com.alibabacloud.api.service.util.DepsUtil
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.ex.EditorEx
@@ -24,8 +24,6 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightVirtualFile
@@ -93,7 +91,9 @@ class SdkSample {
             when (ideName) {
                 "PyCharm" -> {
                     val demoSdkPy =
-                        if (demoSdkObject.size() == 0) "获取示例代码失败，请重试" else demoSdkObject.get("python")?.asString
+                        if (demoSdkObject.size() == 0) "SDK 示例生成出错，请联系支持群开发同学解决" else demoSdkObject.get(
+                            "python"
+                        )?.asString
                             ?: "暂不支持该语言"
                     editor = createEditorWithPsiFile(project, apiName, demoSdkPy, "python")
                     langComboBox.selectedItem = "Python"
@@ -103,7 +103,9 @@ class SdkSample {
 
                 "GoLand" -> {
                     val demoSdkGo =
-                        if (demoSdkObject.size() == 0) "获取示例代码失败，请重试" else demoSdkObject.get("go")?.asString
+                        if (demoSdkObject.size() == 0) "SDK 示例生成出错，请联系支持群开发同学解决" else demoSdkObject.get(
+                            "go"
+                        )?.asString
                             ?: "暂不支持该语言"
                     editor = createEditorWithPsiFile(project, apiName, demoSdkGo, "go")
                     langComboBox.selectedItem = "Go"
@@ -113,7 +115,9 @@ class SdkSample {
 
                 "WebStorm" -> {
                     val demoSdkTs =
-                        if (demoSdkObject.size() == 0) "获取示例代码失败，请重试" else demoSdkObject.get("typescript")?.asString
+                        if (demoSdkObject.size() == 0) "SDK 示例生成出错，请联系支持群开发同学解决" else demoSdkObject.get(
+                            "typescript"
+                        )?.asString
                             ?: "暂不支持该语言"
                     editor = createEditorWithPsiFile(project, apiName, demoSdkTs, "typescript")
                     langComboBox.selectedItem = "TypeScript"
@@ -123,7 +127,9 @@ class SdkSample {
 
                 else -> {
                     val demoSdkJava =
-                        if (demoSdkObject.size() == 0) "获取示例代码失败，请重试" else demoSdkObject.get("java")?.asString
+                        if (demoSdkObject.size() == 0) "SDK 示例生成出错，请联系支持群开发同学解决" else demoSdkObject.get(
+                            "java"
+                        )?.asString
                             ?: "暂不支持该语言"
                     editor = createEditorWithPsiFile(project, apiName, demoSdkJava, "java")
                     langComboBox.selectedItem = "Java"
@@ -181,39 +187,7 @@ class SdkSample {
 
             val importDependencyButton = JButton("自动导入依赖").apply {
                 addActionListener {
-                    val basePath = project.basePath
-                    val projectBaseDir = basePath?.let { path ->
-                        LocalFileSystem.getInstance().findFileByPath(path)
-                    }
-                    val pomVirtualFile = projectBaseDir?.findChild("pom.xml")
-
-                    if (pomVirtualFile != null && pomVirtualFile.exists()) {
-                        insertDependencyInPom(project, pomVirtualFile, commandUrl, onSuccess = {
-                            NormalNotification.showMessage(
-                                project,
-                                NotificationGroups.SDK_NOTIFICATION_GROUP,
-                                "依赖导入成功",
-                                "请加载 Maven 更改",
-                                NotificationType.INFORMATION
-                            )
-                        }, onFailure = {
-                            NormalNotification.showMessage(
-                                project,
-                                NotificationGroups.SDK_NOTIFICATION_GROUP,
-                                "依赖导入失败",
-                                "请选择正确的语言",
-                                NotificationType.ERROR
-                            )
-                        })
-                    } else {
-                        NormalNotification.showMessage(
-                            project,
-                            NotificationGroups.SDK_NOTIFICATION_GROUP,
-                            "依赖导入失败",
-                            "未识别到 pom.xml（暂时只支持 Java）",
-                            NotificationType.ERROR
-                        )
-                    }
+                    DepsUtil.importMavenDeps(project, commandUrl)
                 }
             }
 
@@ -226,104 +200,6 @@ class SdkSample {
 
             sdkPanel.add(headPanel, BorderLayout.NORTH)
             sdkPanel.add(scrollPane, BorderLayout.CENTER)
-        }
-
-        private fun fetchMavenDependencyCommand(commandUrl: String): String? {
-            var mavenCommand: String? = null
-
-            val request = Request.Builder().url(commandUrl).build()
-            OkHttpClientProvider.instance.newCall(request).execute().use { response ->
-                if (response.isSuccessful) {
-                    val resp = Gson().fromJson(response.body?.string(), JsonObject::class.java)
-                    val install =
-                        resp?.get(ApiConstants.DEP_INSTALL_DATA)?.asJsonObject?.get(ApiConstants.DEP_INSTALL)?.asJsonArray
-                    if (install != null && install.size() > 0) {
-                        mavenCommand = install.asSequence().map { it.asJsonObject }
-                            .firstOrNull { it.get(ApiConstants.DEP_INSTALL_METHOD).asString == "Apache Maven" }
-                            ?.get(ApiConstants.DEP_INSTALL_COMMAND)?.asString?.removePrefix("```xml\n")
-                            ?.removeSuffix("\n```")
-                    }
-                    return mavenCommand
-                }
-            }
-            return null
-        }
-
-        private fun insertDependencyInPom(
-            project: Project,
-            pomVirtualFile: VirtualFile,
-            commandUrl: String,
-            onSuccess: () -> Unit,
-            onFailure: () -> Unit
-        ) {
-            WriteCommandAction.runWriteCommandAction(project) {
-                val documentManager = FileDocumentManager.getInstance()
-                val document = documentManager.getDocument(pomVirtualFile) ?: return@runWriteCommandAction
-                val pomBackupContent = document.text
-                ApplicationManager.getApplication().runReadAction {
-                    try {
-                        val mavenCommand = fetchMavenDependencyCommand(commandUrl)
-                        if (mavenCommand != null) {
-                            var pomContent = pomBackupContent
-
-                            val groupId =
-                                Regex("<groupId>(.*?)</groupId>").find(mavenCommand)?.groups?.get(1)?.value?.trim()
-                                    ?: ""
-                            val artifactId =
-                                Regex("<artifactId>(.*?)</artifactId>").find(mavenCommand)?.groups?.get(1)?.value?.trim()
-                                    ?: ""
-                            val version =
-                                Regex("<version>(.*?)</version>").find(mavenCommand)?.groups?.get(1)?.value?.trim()
-                                    ?: ""
-
-                            val dependencyPattern =
-                                "<dependency>[\\s\\S]*?<groupId>\\s*$groupId\\s*</groupId>[\\s\\S]*?<artifactId>\\s*$artifactId\\s*</artifactId>[\\s\\S]*?<version>\\s*$version\\s*</version>[\\s\\S]*?</dependency>"
-                            val alreadyExists = pomContent.contains(
-                                dependencyPattern.toRegex(
-                                    setOf(
-                                        RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE
-                                    )
-                                )
-                            )
-
-                            if (!alreadyExists) {
-                                val indentedMavenCommand =
-                                    mavenCommand.trim().replace("\n  ", "\n    ").replace("\n", "\n    ")
-                                        .prependIndent("    ")
-
-                                pomContent = if (pomContent.contains("<dependencies>")) {
-                                    pomContent.replaceFirst(
-                                        "</dependencies>", " $indentedMavenCommand\n   </dependencies>"
-                                    )
-                                } else {
-                                    pomContent.replaceFirst(
-                                        "</project>",
-                                        "    <dependencies>\n    $indentedMavenCommand\n    </dependencies>\n</project>"
-                                    )
-                                }
-                            }
-
-                            ApplicationManager.getApplication().invokeLater {
-                                WriteCommandAction.runWriteCommandAction(project) {
-                                    document.setText(pomContent)
-                                    documentManager.saveDocument(document)
-                                }
-                            }
-                            onSuccess()
-                        } else {
-                            onFailure()
-                        }
-                    } catch (e: Exception) {
-                        ApplicationManager.getApplication().invokeLater {
-                            WriteCommandAction.runWriteCommandAction(project) {
-                                document.setText(pomBackupContent)
-                                documentManager.saveDocument(document)
-                            }
-                            onFailure()
-                        }
-                    }
-                }
-            }
         }
 
         private fun sdkSampleButton(buttonText: String, getButtonUrl: () -> String): JButton {
@@ -371,7 +247,8 @@ class SdkSample {
                         val responseBody = response.body?.string()
                         if (responseBody != null) {
                             demoSdkObject = Gson().fromJson(responseBody, JsonObject::class.java)
-                                .get(ApiConstants.SDK_MAKE_CODE_DATA).asJsonObject.get(ApiConstants.SDK_MAKE_CODE_DEMO).asJsonObject
+                                .get(ApiConstants.SDK_MAKE_CODE_DATA)?.asJsonObject?.get(ApiConstants.SDK_MAKE_CODE_DEMO)?.asJsonObject
+                                ?: JsonObject()
                         }
                     }
                 }

@@ -67,7 +67,7 @@
                                 order="after encodingWidget"/>
         <notificationGroup id="AlibabaCloud API: SDK" displayType="BALLOON"/>
         <notificationGroup id="AlibabaCloud API: Debug" displayType="BALLOON"/>
-        <notificationGroup id="AlibabaCloud API: API" displayType="BALLOON"/>
+        <notificationGroup id="AlibabaCloud API: Dependencies" displayType="BALLOON"/>
     </extensions>
 
     <extensions defaultExtensionNs="alibabacloud.cli">
