@@ -118,8 +118,8 @@ class ApiExplorer {
                             showNameList.add(showNameCn)
                             val list = mutableListOf<String>()
                             list.add(name)
-                            list.add("未分类")
                             list.add("其他")
+                            list.add("未分类")
                             list.add(defaultVersion)
                             nameAndVersionMap[showNameCn] = list
                         } else {
