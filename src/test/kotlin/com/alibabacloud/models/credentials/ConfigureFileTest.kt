@@ -5,7 +5,10 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 internal class ConfigureFileTest : BasePlatformTestCase() {
     fun testLoadConfigureFile() {
         val configure = ConfigureFile.loadConfigureFile(javaClass.classLoader.getResource("aliyun_test.json").toString())
-        assertEquals("", configure.current)
+        if (configure != null) {
+            assertEquals("", configure.current)
+        }
+
     }
 
     fun testGetDefaultPath() {

@@ -7,22 +7,25 @@
 <p>
   The Alibaba Cloud Developer Toolkit for JetBrains makes it easier to access Alibaba Cloud services.
 </p>
+<h2><strong>Installation:</strong></h2>
+  You can download the Alibaba Cloud Developer Toolkit for JetBrains by searching for "Alibaba Cloud Developer Toolkit" in
+  the Marketplace in your IDE, or download zip file from your web browser and choose "Install Plugin from Disk..." in
+  settings to finish installation.
 <h2><strong>Features:</strong></h2>
 <ul>
   <li>
-    <strong>Profile Configuration:</strong> Support switch and edit user profile through static credentials, which
+    <strong>Profile Configuration:</strong> Support switch and add user profile through static credentials, which
     is consistent with Alibaba Cloud CLI. The status bar located at the bottom of the IDE displays the current
     profile. <a href="https://help.aliyun.com/document_detail/123181.html?spm=a2c4g.121544.0.0.2d7e76e3XWMs4u">Learn
     more about CLI Configuration</a>
     <br>
     <ul>
       <li>
-        If you have already installed Alibaba Cloud CLI, you can switch your existing profiles. You can open the
-        config.json configuration file by clicking "Edit Profile" to further edit user profiles.
+        If you have already installed Alibaba Cloud CLI, you can switch and view your existing profiles which is read-only.
+        You can select "Add Profile" to further add user profiles.
       </li>
       <li>
-        If you don't have Alibaba Cloud CLI installed, this plugin can automatically create a config file for
-        you and provide a default empty configuration.
+        If you don't have Alibaba Cloud CLI installed, you can select "Add Profile" to add user profiles when needed.
       </li>
     </ul>
   </li>
@@ -48,9 +51,6 @@
     More features are under development, please stay tuned.
   </li>
 </ul>
-<h2><strong>Installation:</strong></h2>
-  You can download the Alibaba Cloud Developer Toolkit for JetBrains by searching for "Alibaba Cloud Developer Toolkit" in the
-  JetBrains Marketplace in your IDE, or download installation files from your web browser.
 </p>
     ]]></description>
 
@@ -68,6 +68,7 @@
         <notificationGroup id="AlibabaCloud API: SDK" displayType="BALLOON"/>
         <notificationGroup id="AlibabaCloud API: Debug" displayType="BALLOON"/>
         <notificationGroup id="AlibabaCloud API: Dependencies" displayType="BALLOON"/>
+        <notificationGroup id="AlibabaCloud API: Config" displayType="BALLOON"/>
     </extensions>
 
     <extensions defaultExtensionNs="alibabacloud.cli">

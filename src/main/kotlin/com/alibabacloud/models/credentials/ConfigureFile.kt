@@ -4,11 +4,10 @@ import com.alibabacloud.credentials.constants.CredentialsConstants
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import java.io.File
-import java.util.ArrayList
 
 data class ConfigureFile(
     var current: String,
-    val profiles: List<Profile>,
+    val profiles: MutableList<Profile>,
     val meta_path: String,
 ) {
 
@@ -17,13 +16,14 @@ data class ConfigureFile(
             return CredentialsConstants.CONFIG_DIR + File.separator + "config.json"
         }
 
-        fun loadConfigureFile(path: String = getDefaultPath()): ConfigureFile {
+        fun loadConfigureFile(path: String = getDefaultPath()): ConfigureFile? {
             val configFile = File(path)
-            if (!configFile.exists()) {
-                return ConfigureFile("", ArrayList(), "")
+            return if (configFile.exists()) {
+                val fileContent = configFile.readText()
+                Gson().fromJson(fileContent, ConfigureFile::class.java)
+            } else {
+                null
             }
-            val fileContent = configFile.readText()
-            return Gson().fromJson(fileContent, ConfigureFile::class.java)
         }
 
         fun saveConfigureFile(configure: ConfigureFile, path: String = getDefaultPath()) {
@@ -40,27 +40,27 @@ data class ConfigureFile(
 
     data class Profile(
         var name: String = "",
-        var access_key_id: String = "",
-        var access_key_secret: String = "",
-        var mode: String = "",
-        var sts_token: String = "",
-        var sts_region: String = "",
-        var ram_role_name: String = "",
-        var ram_role_arn: String = "",
-        var ram_session_name: String = "",
-        var source_profile: String = "",
-        var private_key: String = "",
-        var key_pair_name: String = "",
-        var expired_seconds: Int = 0,
-        var verified: String = "",
+        var access_key_id: String? = null,
+        var access_key_secret: String? = null,
+        var mode: String? = null,
+        var sts_token: String? = null,
+        var sts_region: String? = null,
+        var ram_role_name: String? = null,
+        var ram_role_arn: String? = null,
+        var ram_session_name: String? = null,
+        var source_profile: String? = null,
+        var private_key: String? = null,
+        var key_pair_name: String? = null,
+        var expired_seconds: Int? = null,
+        var verified: String? = null,
         var region_id: String = "",
-        var output_format: String = "",
-        var language: String = "",
-        var site: String = "",
-        var retry_timeout: Int = 0,
-        var connect_timeout: Int = 0,
-        var retry_count: Int = 0,
-        var process_command: String = "",
-        var credentials_uri: String = "",
+        var output_format: String? = null,
+        var language: String? = null,
+        var site: String? = null,
+        var retry_timeout: Int? = null,
+        var connect_timeout: Int? = null,
+        var retry_count: Int? = null,
+        var process_command: String? = null,
+        var credentials_uri: String? = null,
     )
 }
