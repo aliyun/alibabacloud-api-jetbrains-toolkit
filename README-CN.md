@@ -16,13 +16,14 @@ GoLand 2022.2 ~ 2023.3
 ## 开始
 
 ### 安装
-您可以通过在 IDE 中的插件市场中搜索“Alibaba Cloud Developer Toolkit”来安装，或者通过浏览器跳转 [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/23361-alibaba-cloud-developer-toolkit) 来获取下载文件。
+您可以通过在 IDE 中的插件市场中搜索“Alibaba Cloud Developer Toolkit”来安装，或者通过浏览器跳转 [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/23361-alibaba-cloud-developer-toolkit) 来获取
+下载压缩包，通过 IDE 中的设置-从磁盘安装来完成插件安装。
 ![Install](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/install.png)
 
 ### 功能
 <div style="overflow-x: scroll; white-space: nowrap;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/config-user.png" style="display: inline-block;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/switch-user.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/add-profile.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/view-profile.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-list-with-search.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-debug1.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-debug2.png" style="display: inline-block;">
@@ -31,9 +32,9 @@ GoLand 2022.2 ~ 2023.3
 </div>
 
 
-* **用户配置：** 支持通过静态凭证切换和编辑用户配置，与阿里云 CLI 的配置方式一致。 位于 IDE 底部的状态栏显示当前用户。 [了解更多 CLI 配置相关](https://help.aliyun.com/document_detail/123181.html?spm=a2c4g.121544.0.0.2d7e76e3XWMs4u)
-  * 如果您已经安装了阿里云 CLI，您可以切换已有用户。您可以通过点击“Edit Profile”打开config.json配置文件，进一步编辑用户配置。
-  * 如果您还未安装阿里云 CLI，本插件会自动创建一个空的配置文件。
+* **用户配置：** 支持通过静态凭证切换和添加用户配置，与阿里云 CLI 的配置方式一致。 位于 IDE 底部的状态栏显示当前用户。 [了解更多 CLI 配置相关](https://help.aliyun.com/document_detail/123181.html?spm=a2c4g.121544.0.0.2d7e76e3XWMs4u)
+  * 如果您已经安装了阿里云 CLI，您可以切换、查看已有用户，已有用户配置是只读的，也可以通过点击“Add Profile”进一步添加用户配置。
+  * 如果您还未安装阿里云 CLI，需要时您可以通过点击“Add Profile”添加用户配置。
 
 
 * **产品导航：** 云产品的树状视图，搜索框可以快速导航到对应产品，或者单击某个云产品，可以跳转到对应的 API 列表，API 列表上方的搜索框可以快速导航到您指定的 API。

@@ -39,7 +39,7 @@ class ApiDebug {
                     val regionId = FormatUtil.getArg(arg).second
                     var debugHtml = ""
                     val config = ConfigureFile.loadConfigureFile()
-                    val profile = config.profiles.find { it.name == config.current }
+                    val profile = config?.profiles?.find { it.name == config.current }
                     val accessKeyId = profile?.access_key_id
                     val accessKeySecret = profile?.access_key_secret
                     if (accessKeyId == null || accessKeySecret == null || accessKeyId == "" || accessKeySecret == "") {
@@ -47,7 +47,7 @@ class ApiDebug {
                             project,
                             NotificationGroups.DEBUG_NOTIFICATION_GROUP,
                             "需要登录",
-                            "如需调试请先在 Edit Profile 处配置用户信息",
+                            "如需调试请先在 Add Profile 处配置用户信息",
                             NotificationType.WARNING
                         )
                     } else {

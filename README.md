@@ -16,15 +16,16 @@ GoLand 2022.2 ~ 2023.3
 ## Getting Start
 
 ### Installation
-You can download the Alibaba Cloud Developer Toolkit for JetBrains by searching for "Alibaba Cloud Developer Toolkit" in the JetBrains
-Marketplace in your IDE, or download installation files from your web browser through [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/23361-alibaba-cloud-developer-toolkit) .
+You can download the Alibaba Cloud Developer Toolkit for JetBrains by searching for "Alibaba Cloud Developer Toolkit" in
+the Marketplace in your IDE, or download zip file from your web browser through [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/23361-alibaba-cloud-developer-toolkit) and choose "Install Plugin from Disk..." in
+settings to finish installation.
 ![Install](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/install.png)
 
 ### Features
 
 <div style="overflow-x: scroll; white-space: nowrap;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/config-user.png" style="display: inline-block;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/switch-user.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/add-profile.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/view-profile.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-list-with-search.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-debug1.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-debug2.png" style="display: inline-block;">
@@ -32,12 +33,11 @@ Marketplace in your IDE, or download installation files from your web browser th
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/auto-import.png" style="display: inline-block;">
 </div>
 
-* **Profile Configuration:** Support switch and edit user profile through static credentials, which is consistent with Alibaba
+* **Profile Configuration:** Support switch and add user profile through static credentials, which is consistent with Alibaba
   Cloud CLI. The StatusBar located at the bottom of the IDE displays the current profile. [Learn more about CLI Configuration](https://help.aliyun.com/document_detail/123181.html?spm=a2c4g.121544.0.0.2d7e76e3XWMs4u)
-    * If you have already installed Alibaba Cloud CLI, you can switch your existing profiles. You can open the config.json
-      configuration file by clicking "Edit Profile" to further edit user profiles.
-    * If you don't have Alibaba Cloud CLI installed, this plugin can automatically create a config file for you and provide
-      a default empty configuration.
+    * If you have already installed Alibaba Cloud CLI, you can switch and view your existing profiles which is read-only. 
+    You can select "Add Profile" to further add user profiles.
+    * If you don't have Alibaba Cloud CLI installed, you can select "Add Profile" to add user profiles when needed.
 
 
 * **Product Explorer:** A tree-view of cloud products with search: Quickly navigate you to the corresponding products or APIs.

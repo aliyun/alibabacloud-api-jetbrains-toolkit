@@ -45,7 +45,7 @@ class MyStatusBarWidgetFactory : StatusBarWidgetFactory {
 
         override fun install(statusBar: StatusBar) {
             val config = ConfigureFile.loadConfigureFile()
-            text = "Alibaba Cloud: " + config.current
+            text = "Alibaba Cloud: " + (config?.current ?: "")
             icon = myIcon
         }
 

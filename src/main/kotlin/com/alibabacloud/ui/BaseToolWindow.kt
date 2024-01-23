@@ -12,7 +12,6 @@ import com.google.gson.JsonArray
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -20,7 +19,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.*
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.content.Content
@@ -34,6 +32,8 @@ import java.io.File
 import java.io.IOException
 import java.net.URL
 import javax.swing.*
+import javax.swing.event.PopupMenuEvent
+import javax.swing.event.PopupMenuListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeSelectionModel
 
@@ -42,10 +42,8 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val refreshLeftToolWindowAction = RefreshLeftToolWindowAction()
-        val refreshAction = listOf(refreshLeftToolWindowAction)
         refreshLeftToolWindowAction.templatePresentation.icon = AllIcons.Actions.Refresh
         refreshLeftToolWindowAction.templatePresentation.text = "Refresh Product List"
-        toolWindow.setTitleActions(refreshAction)
 
         val contentPanel = JPanel()
         contentPanel.layout = BoxLayout(contentPanel, BoxLayout.Y_AXIS)
@@ -54,8 +52,16 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         comboBox = ComboBox()
         comboBox.renderer = listRenderer
         comboBox.maximumSize = Dimension(Integer.MAX_VALUE, 50)
-        credentialsContentListener(project)
         contentPanel.add(comboBox)
+
+        val collapsibleInputPanel = CollapsibleInputPanel(project, comboBox)
+        contentPanel.add(collapsibleInputPanel, BorderLayout.NORTH)
+        val addProfileToolWindowAction = AddProfileToolWindowAction(collapsibleInputPanel)
+        val addProfileAction = listOf(addProfileToolWindowAction, refreshLeftToolWindowAction)
+        toolWindow.setTitleActions(addProfileAction)
+
+        credentialsContentListener(project, collapsibleInputPanel)
+
         val searchField = SearchTextField()
         searchField.textEditor.emptyText.text = "搜索产品："
         searchField.maximumSize = Dimension(Integer.MAX_VALUE, 50)
@@ -104,31 +110,42 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         }
     }
 
-    private fun credentialsContentListener(project: Project) {
+    private fun credentialsContentListener(project: Project, collapsibleInputPanel: CollapsibleInputPanel) {
         ConfigFileUtil.readProfilesFromConfigFile(comboBox)
-
+        comboBox.selectedItem = "Add Profile"
         comboBox.addActionListener {
             val selectedProfile = comboBox.selectedItem as String
-            if (selectedProfile == "Edit Profile") {
-                if (!File(ConfigureFile.getDefaultPath()).exists()) {
-                    ConfigureFile.saveConfigureFile(ConfigureFile.loadConfigureFile())
-                }
-                val virtualFile =
-                    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(ConfigureFile.getDefaultPath()))
-                OpenFileDescriptor(project, virtualFile!!).navigate(true)
+            if (selectedProfile == "Add Profile") {
+                collapsibleInputPanel.clearFields()
+                collapsibleInputPanel.expandForAddProfile()
             } else {
                 val config = ConfigureFile.loadConfigureFile()
-                config.current = selectedProfile
+                val selected = ConfigureFile.loadConfigureFile()!!.profiles.firstOrNull { it.name == selectedProfile }
+                collapsibleInputPanel.showProfiles(selected)
+                config!!.current = selectedProfile
                 ConfigureFile.saveConfigureFile(config)
             }
             val config = ConfigureFile.loadConfigureFile()
             val statusBar = WindowManager.getInstance().getStatusBar(project)
             val statusBarWidget = statusBar?.getWidget("Alibaba Cloud Widget")
             if (statusBarWidget is MyStatusBarWidgetFactory.MyStatusBarWidget) {
-                statusBarWidget.updateStatusBarText(config.current)
+                if (config != null) {
+                    statusBarWidget.updateStatusBarText(config.current)
+                }
             }
-            ConfigFileUtil.subscribeToFileChangeEvent(project, comboBox)
         }
+
+        comboBox.addPopupMenuListener(object : PopupMenuListener {
+            override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
+                ConfigFileUtil.readProfilesFromConfigFile(comboBox)
+            }
+
+            override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {
+            }
+
+            override fun popupMenuCanceled(e: PopupMenuEvent?) {
+            }
+        })
     }
 
     private fun productClickListener(
@@ -283,6 +300,14 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         toolWindow.show()
         val selectionModel = tree.selectionModel
         return Pair(selectionModel, tree)
+    }
+
+    private class AddProfileToolWindowAction(private val collapsibleInputPanel: CollapsibleInputPanel) :
+        AnAction("Add Profile", "Add ddd", AllIcons.General.User) {
+        override fun actionPerformed(e: AnActionEvent) {
+            collapsibleInputPanel.clearFields()
+            collapsibleInputPanel.expandForAddProfile()
+        }
     }
 
     private class RefreshLeftToolWindowAction : AnAction() {
