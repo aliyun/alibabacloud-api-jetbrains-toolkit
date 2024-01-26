@@ -303,7 +303,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
     }
 
     private class AddProfileToolWindowAction(private val collapsibleInputPanel: CollapsibleInputPanel) :
-        AnAction("Add Profile", "Add ddd", AllIcons.General.User) {
+        AnAction("Add Profile", "Add profile", AllIcons.General.User) {
         override fun actionPerformed(e: AnActionEvent) {
             collapsibleInputPanel.clearFields()
             collapsibleInputPanel.expandForAddProfile()

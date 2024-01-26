@@ -42,10 +42,14 @@
     <strong>API Debug:</strong> Support convenient API debugging within the IDE against the parameter list, and
     also offers a "Go Debug" button for seamless transition to debug in browser.
   </li>
-    <li>
+  <li>
     <strong>SDK Code Sample View:</strong> Support viewing SDK code samples within the IDE, with synchronous generation of
     corresponding instance code after filling in parameters. Support jumping to the browser for obtaining dependency installation
     methods and source code. For Java and Java-async, automatic import of Maven dependencies is supported.
+  </li>
+  <li>
+    <strong>SDK Code Sample Auto-completion:</strong> Support auto-completion, insertion and dependency import of Java
+    and Java Async SDK code sample.
   </li>
   <li>
     More features are under development, please stay tuned.
@@ -55,6 +59,7 @@
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends optional="true">com.intellij.modules.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="Alibaba Cloud Developer Toolkit"
@@ -69,6 +74,9 @@
         <notificationGroup id="AlibabaCloud API: Debug" displayType="BALLOON"/>
         <notificationGroup id="AlibabaCloud API: Dependencies" displayType="BALLOON"/>
         <notificationGroup id="AlibabaCloud API: Config" displayType="BALLOON"/>
+        <notificationGroup id="AlibabaCloud API: Completion" displayType="BALLOON"/>
+        <completion.contributor language="JAVA" implementationClass="com.alibabacloud.api.service.completion.JavaSdkCompletionContributor"/>
+        <postStartupActivity implementation="com.alibabacloud.api.service.startactivity.StartPullMeta"/>
     </extensions>
 
     <extensions defaultExtensionNs="alibabacloud.cli">

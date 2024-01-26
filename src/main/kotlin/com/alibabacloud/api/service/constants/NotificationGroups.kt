@@ -4,5 +4,6 @@ object NotificationGroups {
     const val SDK_NOTIFICATION_GROUP = "AlibabaCloud API: SDK"
     const val DEBUG_NOTIFICATION_GROUP = "AlibabaCloud API: Debug"
     const val DEPS_NOTIFICATION_GROUP = "AlibabaCloud API: Dependencies"
+    const val COMPLETION_NOTIFICATION_GROUP = "AlibabaCloud API: Completion"
     const val CONFIG_NOTIFICATION_GROUP = "AlibabaCloud API: Config"
 }

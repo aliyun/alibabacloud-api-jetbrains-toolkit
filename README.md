@@ -58,6 +58,9 @@ instance code after filling in parameters. Support jumping to the browser for ob
 and source code. For Java and Java-async, automatic import of Maven dependencies is supported.
 
 
+* **SDK Code Sample Auto-completion:** Support auto-completion, insertion and dependency import of Java and Java Async SDK code sample.
+
+
 * More features are under development, please stay tuned.
 
 
