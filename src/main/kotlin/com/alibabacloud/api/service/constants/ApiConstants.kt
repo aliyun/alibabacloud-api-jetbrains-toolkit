@@ -9,8 +9,8 @@ object ApiConstants {
     const val PRODUCT_LIST_URL = "https://api.aliyun.com/api/products?type=api"
 
     val CACHE_PATH = System.getProperty("user.home") + File.separator + ".api-cache"
-    val ONE_DAY = Duration.ofDays(1)
-    val MAX_CACHE_NUM = 200
+    val ONE_DAY: Duration = Duration.ofDays(1)
+    const val MAX_CACHE_NUM = 200
 
     val FILE_MAP: Map<String, String> = mapOf(
         "java" to "Sample.java",

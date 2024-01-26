@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.castSafelyTo
 import okhttp3.Request
 
 class DepsUtil {
@@ -53,7 +54,10 @@ class DepsUtil {
             onSuccess: () -> Unit,
             onFailure: () -> Unit
         ) {
-            val (isDependencyExists, isPomExists) = isMavenDependencyExist(project, commandUrl)
+            val resList = isMavenDependencyExist(project, commandUrl)
+            val isDependencyExists = resList[0].castSafelyTo<Boolean>()!!
+            val isPomExists = resList[1].castSafelyTo<Boolean>()!!
+            val mavenCommand = resList[2].castSafelyTo<String>()
             if (isPomExists) {
                 WriteCommandAction.runWriteCommandAction(project) {
                     val documentManager = FileDocumentManager.getInstance()
@@ -61,7 +65,6 @@ class DepsUtil {
                     val pomBackupContent = document.text
                     ApplicationManager.getApplication().runReadAction {
                         try {
-                            val mavenCommand = fetchMavenDependencyCommand(commandUrl)
                             if (mavenCommand != null) {
                                 var pomContent = pomBackupContent
                                 if (!isDependencyExists) {
@@ -153,10 +156,10 @@ class DepsUtil {
             return null
         }
 
-        private fun isMavenDependencyExist(
+        fun isMavenDependencyExist(
             project: Project,
             commandUrl: String
-        ): Pair<Boolean, Boolean> {
+        ): MutableList<Any?> {
             var isDependencyExists = false
             var isPomExists = false
             val basePath = project.basePath
@@ -164,6 +167,7 @@ class DepsUtil {
                 LocalFileSystem.getInstance().findFileByPath(path)
             }
             val pomVirtualFile = projectBaseDir?.findChild("pom.xml")
+            var mavenCommand: String? = null
             if (pomVirtualFile != null && pomVirtualFile.exists()) {
                 isPomExists = true
                 ApplicationManager.getApplication().runReadAction {
@@ -171,16 +175,16 @@ class DepsUtil {
                     val document = documentManager.getDocument(pomVirtualFile)
                     if (document != null) {
                         val pomBackupContent = document.text
-                        val mavenCommand = fetchMavenDependencyCommand(commandUrl)
+                        mavenCommand = fetchMavenDependencyCommand(commandUrl)
                         if (mavenCommand != null) {
                             val groupId =
-                                Regex("<groupId>(.*?)</groupId>").find(mavenCommand)?.groups?.get(1)?.value?.trim()
+                                Regex("<groupId>(.*?)</groupId>").find(mavenCommand!!)?.groups?.get(1)?.value?.trim()
                                     ?: ""
                             val artifactId =
-                                Regex("<artifactId>(.*?)</artifactId>").find(mavenCommand)?.groups?.get(1)?.value?.trim()
+                                Regex("<artifactId>(.*?)</artifactId>").find(mavenCommand!!)?.groups?.get(1)?.value?.trim()
                                     ?: ""
                             val version =
-                                Regex("<version>(.*?)</version>").find(mavenCommand)?.groups?.get(1)?.value?.trim()
+                                Regex("<version>(.*?)</version>").find(mavenCommand!!)?.groups?.get(1)?.value?.trim()
                                     ?: ""
 
                             val dependencyPattern =
@@ -196,7 +200,11 @@ class DepsUtil {
                     }
                 }
             }
-            return Pair(isDependencyExists, isPomExists)
+            val resList = mutableListOf<Any?>()
+            resList.add(isDependencyExists)
+            resList.add(isPomExists)
+            resList.add(mavenCommand)
+            return resList
         }
     }
 }

@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.0"
-    id("org.jetbrains.intellij") version "1.15.0"
+    id("org.jetbrains.intellij") version "1.16.0"
     id("org.jetbrains.kotlinx.kover") version "0.7.3"
 }
 
@@ -29,6 +29,7 @@ dependencies {
 intellij {
     version.set(System.getenv("INTELLIJ_VERSION") ?: "2022.2.5")
     type.set(System.getenv("INTELLIJ_TYPE") ?: "IC")
+    plugins.set(listOf("com.intellij.java"))
 }
 
 tasks {
