@@ -25,6 +25,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.castSafelyTo
+import nonapi.io.github.classgraph.json.ReferenceEqualityKey
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -110,7 +111,6 @@ class JavaSdkCompletionContributor : CompletionContributor() {
         }
     }
 
-
     private fun insertHandler(insertionContext: InsertionContext, document: Document, request: Request, lang: String) {
         var demoSdk = String()
         val project = insertionContext.project
@@ -126,23 +126,7 @@ class JavaSdkCompletionContributor : CompletionContributor() {
                 override fun run(indicator: ProgressIndicator) {
                     indicator.isIndeterminate = true
                     try {
-                        OkHttpClientProvider.instance.newCall(request).execute().use { response ->
-                            if (response.isSuccessful) {
-                                val responseBody = response.body?.string()
-                                if (responseBody != null) {
-                                    val demoSdkObject =
-                                        Gson().fromJson(
-                                            responseBody,
-                                            JsonObject::class.java
-                                        )
-                                            .get("data")?.asJsonObject?.get("demoSdk")?.asJsonObject
-                                    demoSdk = demoSdkObject?.get(lang)?.asString
-                                        ?: "该 API 暂无 $lang SDK 示例"
-                                }
-                            } else {
-                                demoSdk = "SDK 示例生成出错，请联系支持群开发同学解决"
-                            }
-                        }
+                        demoSdk = getDemoSdk(request, lang)
                     } catch (e: SocketTimeoutException) {
                         NormalNotification.showMessage(
                             project,
@@ -160,6 +144,28 @@ class JavaSdkCompletionContributor : CompletionContributor() {
             })
     }
 
+     private fun getDemoSdk(request: Request, lang: String): String {
+        var demoSdk = String()
+        OkHttpClientProvider.instance.newCall(request).execute().use { response ->
+            if (response.isSuccessful) {
+                val responseBody = response.body?.string()
+                if (responseBody != null) {
+                    val demoSdkObject =
+                        Gson().fromJson(
+                            responseBody,
+                            JsonObject::class.java
+                        )
+                            .get("data")?.asJsonObject?.get("demoSdk")?.asJsonObject
+                    demoSdk = demoSdkObject?.get(lang)?.asJsonObject?.get("codeSample")?.asString
+                        ?: "该 API 暂无 $lang SDK 示例"
+                }
+            } else {
+                demoSdk = "SDK 示例生成出错，请联系支持群开发同学解决"
+            }
+        }
+        return demoSdk
+    }
+
     private fun insertCodeSnippet(document: Document, context: InsertionContext, snippet: String) {
         WriteCommandAction.runWriteCommandAction(context.project) {
             val startOffset = context.startOffset
@@ -169,7 +175,7 @@ class JavaSdkCompletionContributor : CompletionContributor() {
             val lineIndentation =
                 document.getText(TextRange(lineStartOffset, startOffset)).takeWhile { it.isWhitespace() }
             val lines = snippet.split("\n")
-            val indentedSnippet = lines.first() + "\n" + lines.drop(1).joinToString("\n") { lineIndentation + it }
+            val indentedSnippet = lines.first() + "\n" + lines.drop(1)?.joinToString("\n") { lineIndentation + it }
 
             document.deleteString(startOffset, tailOffset)
             document.insertString(startOffset, indentedSnippet)
