@@ -9,16 +9,16 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.WrapLayout
 import java.awt.BorderLayout
 import java.awt.Desktop
-import java.awt.FlowLayout
 import java.awt.GridLayout
 import java.io.File
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 
-class CollapsibleInputPanel(private val project: Project, private val comboBox: JComboBox<String>) : JPanel() {
+class CollapsibleInputPanel(private val project: Project) : JPanel() {
     private val profileNameField = JBTextField()
     private val akField = JBTextField()
     private val skField = JPasswordField()
@@ -38,7 +38,7 @@ class CollapsibleInputPanel(private val project: Project, private val comboBox: 
             collapsePanel()
         }
     }
-    private val buttonPanel = JPanel(FlowLayout(FlowLayout.CENTER))
+    private val buttonPanel = JPanel(WrapLayout())
     private var isExpanded: Boolean = false
     private var hasValidationError = false
     private var isUserInteraction = true
@@ -131,7 +131,6 @@ class CollapsibleInputPanel(private val project: Project, private val comboBox: 
                 hasValidationError = true
             }
 
-
             val config = ConfigureFile.loadConfigureFile()
             if (config?.profiles?.any { it.name == profileName } == true) {
                 NormalNotification.showMessage(
@@ -156,7 +155,6 @@ class CollapsibleInputPanel(private val project: Project, private val comboBox: 
 
             if (config != null) {
                 config.profiles.add(newProfile)
-                config.current = profileName
                 ConfigureFile.saveConfigureFile(config)
             } else {
                 val configDir = File(CredentialsConstants.CONFIG_DIR)
