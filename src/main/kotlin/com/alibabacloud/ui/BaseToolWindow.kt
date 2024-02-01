@@ -38,7 +38,6 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeSelectionModel
 
 class BaseToolWindow : ToolWindowFactory, DumbAware {
-    private lateinit var comboBox: JComboBox<String>
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val refreshLeftToolWindowAction = RefreshLeftToolWindowAction()
@@ -49,18 +48,20 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         contentPanel.layout = BoxLayout(contentPanel, BoxLayout.Y_AXIS)
         val listRenderer = CustomListCellRenderer()
 
-        comboBox = ComboBox()
+
+        val comboBoxManager = ComboBoxManager.getInstance(project)
+        val comboBox = comboBoxManager.comboBox
         comboBox.renderer = listRenderer
         comboBox.maximumSize = Dimension(Integer.MAX_VALUE, 50)
         contentPanel.add(comboBox)
 
-        val collapsibleInputPanel = CollapsibleInputPanel(project, comboBox)
+        val collapsibleInputPanel = CollapsibleInputPanel(project)
         contentPanel.add(collapsibleInputPanel, BorderLayout.NORTH)
         val addProfileToolWindowAction = AddProfileToolWindowAction(collapsibleInputPanel)
         val addProfileAction = listOf(addProfileToolWindowAction, refreshLeftToolWindowAction)
         toolWindow.setTitleActions(addProfileAction)
 
-        credentialsContentListener(project, collapsibleInputPanel)
+        credentialsContentListener(project, collapsibleInputPanel, comboBox)
 
         val searchField = SearchTextField()
         searchField.textEditor.emptyText.text = "搜索产品："
@@ -110,27 +111,33 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         }
     }
 
-    private fun credentialsContentListener(project: Project, collapsibleInputPanel: CollapsibleInputPanel) {
+    private fun credentialsContentListener(
+        project: Project,
+        collapsibleInputPanel: CollapsibleInputPanel,
+        comboBox: ComboBox<String>
+    ) {
         ConfigFileUtil.readProfilesFromConfigFile(comboBox)
-        comboBox.selectedItem = "Add Profile"
+        var config = ConfigureFile.loadConfigureFile()
+        if (config != null) {
+            comboBox.selectedItem = config.current
+        } else {
+            comboBox.selectedItem = "Add Profile"
+        }
         comboBox.addActionListener {
             val selectedProfile = comboBox.selectedItem as String
             if (selectedProfile == "Add Profile") {
                 collapsibleInputPanel.clearFields()
                 collapsibleInputPanel.expandForAddProfile()
             } else {
-                val config = ConfigureFile.loadConfigureFile()
-                val selected = ConfigureFile.loadConfigureFile()!!.profiles.firstOrNull { it.name == selectedProfile }
+                config = ConfigureFile.loadConfigureFile()
+                val selected = config!!.profiles.firstOrNull { it.name == selectedProfile }
                 collapsibleInputPanel.showProfiles(selected)
                 config!!.current = selectedProfile
-                ConfigureFile.saveConfigureFile(config)
-            }
-            val config = ConfigureFile.loadConfigureFile()
-            val statusBar = WindowManager.getInstance().getStatusBar(project)
-            val statusBarWidget = statusBar?.getWidget("Alibaba Cloud Widget")
-            if (statusBarWidget is MyStatusBarWidgetFactory.MyStatusBarWidget) {
-                if (config != null) {
-                    statusBarWidget.updateStatusBarText(config.current)
+                ConfigureFile.saveConfigureFile(config!!)
+                val statusBar = WindowManager.getInstance().getStatusBar(project)
+                val statusBarWidget = statusBar?.getWidget("Alibaba Cloud Widget")
+                if (statusBarWidget is MyStatusBarWidgetFactory.MyStatusBarWidget) {
+                    statusBarWidget.updateStatusBar(config)
                 }
             }
         }
@@ -138,12 +145,15 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         comboBox.addPopupMenuListener(object : PopupMenuListener {
             override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
                 ConfigFileUtil.readProfilesFromConfigFile(comboBox)
+                ComboBoxManager.updateComboBoxItem(comboBox)
             }
 
             override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {
+                ComboBoxManager.updateComboBoxItem(comboBox)
             }
 
             override fun popupMenuCanceled(e: PopupMenuEvent?) {
+                ComboBoxManager.updateComboBoxItem(comboBox)
             }
         })
     }
@@ -350,4 +360,5 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
             )
         }
     }
+
 }
