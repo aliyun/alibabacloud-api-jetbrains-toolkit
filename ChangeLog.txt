@@ -1,3 +1,8 @@
+2024-02-02 Version: 0.0.4
+1. Support SDK code sample auto-completion.
+2. Support switch user profiles through statusBar.
+2. Support credentials visual interaction.
+
 2024-01-16 Version: 0.0.3
 1. Support SDK sample code view.
 2. Support auto import of Maven dependencies.
