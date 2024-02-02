@@ -84,6 +84,13 @@
     </extensions>
 
     <change-notes><![CDATA[
+    <b>0.0.4 (2024-02-02)</b>
+      <ul>
+        <li>Support SDK code sample auto-completion.</li>
+        <li>Support switch user profiles through statusBar.</li>
+        <li>Support credentials visual interaction.</li>
+        <li>Fix some bugs.</li>
+      </ul>
     <b>0.0.3 (2024-01-16)</b>
       <ul>
         <li>Support SDK sample code view.</li>
