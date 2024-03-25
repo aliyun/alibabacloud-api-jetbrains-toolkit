@@ -186,7 +186,7 @@ class ApiDebug {
             }
 
             val queries = mutableMapOf<String, Any>()
-            var body = Any()
+            var body: Any
             val headers = mutableMapOf<String, String>()
 
             val responseSchema =
