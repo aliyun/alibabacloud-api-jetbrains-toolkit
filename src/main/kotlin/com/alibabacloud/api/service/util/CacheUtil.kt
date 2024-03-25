@@ -57,7 +57,7 @@ class CacheUtil {
 
         // 从文件中读取并恢复 API 列表
         fun readApiListCache(file: File): JsonArray {
-            var jsonString = ""
+            var jsonString: String
             BufferedReader(FileReader(file)).use { reader ->
                 jsonString = reader.readText()
             }

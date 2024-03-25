@@ -83,6 +83,18 @@
 
     </extensions>
 
+    <actions>
+        <group id="alibabacloud-developer-editor-menu" text="Alibaba Cloud Developer Toolkit" icon="/icons/logo.svg" description="Alibaba Cloud Developer Toolkit editor menu" popup="true">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+            <action id="CodeSnippetsAction"
+                    class="com.alibabacloud.action.CodeSnippetsAction"
+                    icon="/icons/api.svg"
+                    description="SDK Code Snippets switch">
+            <keyboard-shortcut first-keystroke="control meta p" keymap="$default"/>
+            </action>
+        </group>
+    </actions>
+
     <change-notes><![CDATA[
     <b>0.0.4 (2024-02-02)</b>
       <ul>

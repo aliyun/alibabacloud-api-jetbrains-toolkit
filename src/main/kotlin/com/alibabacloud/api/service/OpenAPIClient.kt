@@ -284,7 +284,7 @@ class OpenAPIClient(config: Config) {
 
                 val resp = mutableMapOf<String, Any>()
                 if (Common.is4xx(response_.statusCode) || Common.is5xx(response_.statusCode)) {
-                    var err: MutableMap<String?, Any?> = HashMap()
+                    var err: MutableMap<String?, Any?>
                     if (!Common.isUnset(response_.headers["content-type"]) && Common.equalString(
                             response_.headers["content-type"],
                             "text/xml;charset=utf-8",
@@ -818,7 +818,7 @@ class OpenAPIClient(config: Config) {
          * credential type
          */
         @NameInMap("type")
-        @Deprecated("")
+//        @Deprecated("")
         var type: String? = null
 
         /**

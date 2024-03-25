@@ -11,6 +11,10 @@ object ResourceUtil {
         return readAllBytes(ResourceUtil::class.java.getResourceAsStream(resourcePath))
     }
 
+    fun loadPath(resourcePath: String): String {
+        return ResourceUtil::class.java.getResource(resourcePath)!!.toString()
+    }
+
     private fun readAllBytes(inputStream: InputStream?): String {
         try {
             val reader = BufferedReader(InputStreamReader(inputStream!!, StandardCharsets.UTF_8))

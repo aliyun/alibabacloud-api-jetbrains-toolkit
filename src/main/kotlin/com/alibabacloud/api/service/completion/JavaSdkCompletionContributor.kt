@@ -4,6 +4,7 @@ import com.alibabacloud.api.service.OkHttpClientProvider
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.util.DepsUtil
+import com.alibabacloud.states.ToolkitSettingsState
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.intellij.codeInsight.completion.CompletionContributor
@@ -25,7 +26,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.castSafelyTo
-import nonapi.io.github.classgraph.json.ReferenceEqualityKey
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -37,7 +37,7 @@ class JavaSdkCompletionContributor : CompletionContributor() {
 
         val editor = parameters.editor
         val caretOffset = editor.caretModel.offset
-        if (isInvalidInsertionLocation(editor, caretOffset)) {
+        if (!ToolkitSettingsState.getInstance().state.isCompletionEnabled || isInvalidInsertionLocation(editor, caretOffset)) {
             return
         }
         val document = editor.document
@@ -144,7 +144,7 @@ class JavaSdkCompletionContributor : CompletionContributor() {
             })
     }
 
-     private fun getDemoSdk(request: Request, lang: String): String {
+    private fun getDemoSdk(request: Request, lang: String): String {
         var demoSdk = String()
         OkHttpClientProvider.instance.newCall(request).execute().use { response ->
             if (response.isSuccessful) {
@@ -175,7 +175,7 @@ class JavaSdkCompletionContributor : CompletionContributor() {
             val lineIndentation =
                 document.getText(TextRange(lineStartOffset, startOffset)).takeWhile { it.isWhitespace() }
             val lines = snippet.split("\n")
-            val indentedSnippet = lines.first() + "\n" + lines.drop(1)?.joinToString("\n") { lineIndentation + it }
+            val indentedSnippet = lines.first() + "\n" + lines.drop(1).joinToString("\n") { lineIndentation + it }
 
             document.deleteString(startOffset, tailOffset)
             document.insertString(startOffset, indentedSnippet)
@@ -197,7 +197,6 @@ class JavaSdkCompletionContributor : CompletionContributor() {
             val resList = DepsUtil.isMavenDependencyExist(project, commandUrl)
             val isDependencyExists = resList[0].castSafelyTo<Boolean>()!!
             val isPomExists = resList[1].castSafelyTo<Boolean>()!!
-            val mavenCommand = resList[2].castSafelyTo<String>()
             if (isPomExists && !isDependencyExists) {
                 val content = "是否自动导入依赖：" + (if (lang == "java-async") "alibabacloud-" else "") + "${
                     productName.lowercase().replace("-", "_")
