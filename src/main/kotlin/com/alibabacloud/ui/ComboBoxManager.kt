@@ -17,7 +17,7 @@ class ComboBoxManager {
             val actionListeners = comboBox.actionListeners
             actionListeners.forEach { comboBox.removeActionListener(it) }
             val configRealTime = ConfigureFile.loadConfigureFile()
-            comboBox.selectedItem = configRealTime?.current ?: "Add Profile"
+            comboBox.selectedItem = configRealTime?.current ?: "New Profile"
             actionListeners.forEach { comboBox.addActionListener(it) }
         }
     }

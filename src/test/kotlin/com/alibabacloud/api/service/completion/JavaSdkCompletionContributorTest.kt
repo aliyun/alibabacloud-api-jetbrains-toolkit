@@ -1,42 +1,138 @@
 package com.alibabacloud.api.service.completion
 
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.alibabacloud.api.service.ApiPage
+import com.alibabacloud.api.service.constants.NotificationGroups
+import com.alibabacloud.api.service.notification.NormalNotification
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.project.Project
+import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.InjectMocks
+import org.mockito.Mock
+import org.mockito.Mockito.`when`
+import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.verify
+import java.io.IOException
 
-internal class JavaSdkCompletionContributorTest : BasePlatformTestCase() {
-    fun testDemoSdk() {
-        val jsonString = """
+@ExtendWith(MockitoExtension::class)
+internal class JavaSdkCompletionContributorTest {
+    @Mock
+    lateinit var project: Project
+
+    @Mock
+    lateinit var okHttpClient: OkHttpClient
+
+    @Mock
+    lateinit var call: Call
+
+    @Mock
+    lateinit var response: Response
+
+    @Mock
+    lateinit var responseBody: ResponseBody
+
+    @Mock
+    lateinit var normalNotification: NormalNotification
+
+    @InjectMocks
+    lateinit var javaSdkCompletionContributor: JavaSdkCompletionContributor
+
+    private val sampleResponse: String = """
         {
-            "apiName": "ListReservedCapacities",
-            "apiVersion": "2021-04-06",
-            "product": "FC-Open",
-            "sdkType": "dara",
-            "params": {},
-            "simplify": true
+            "code": 0,
+            "data": {
+                "demoSdk": {
+                    "java": {
+                        "codeSample": "Java Code Sample.",
+                        "importList": [
+                            "import com.aliyun.tea.*;"
+                        ]
+                    },
+                    "java-async": {
+                        "codeSample": "Java Async Code Sample.",
+                        "importList": [
+                            "import com.aliyun.tea.*;"
+                        ]
+                    }
+                },
+                "apiInfo": {
+                    "apiStyle": "xxx",
+                    "product": "xxx",
+                    "apiVersion": "xxx",
+                    "apiName": "xxx"
+                },
+                "cost": 431
+                }
         }
     """.trimIndent()
-        val mediaType = "application/json; charset=utf-8".toMediaType()
-        val body = jsonString.toRequestBody(mediaType)
 
-        val request = Request.Builder()
-            .url("https://api.aliyun.com/api/product/makeCode").post(body)
+    @BeforeEach
+    fun setUp() {
+        `when`(okHttpClient.newCall(any())).thenReturn(call)
+        `when`(call.execute()).thenReturn(response)
+        ApiPage.notificationService = normalNotification
+    }
+
+    @AfterEach
+    fun tearDown() {
+        ApiPage.notificationService = NormalNotification
+    }
+
+    @Test
+    fun `getDemoSdk should return correct sample code on successful response`() {
+        `when`(response.isSuccessful).thenReturn(true)
+        `when`(response.body).thenReturn(responseBody)
+        `when`(responseBody.string()).thenReturn(sampleResponse)
+
+        val postRequest = Request.Builder().url("https://api.aliyun.com/api/product/makeCode")
+            .post("{}".toRequestBody("application/json; charset=utf-8".toMediaType()))
             .build()
 
-        val javaSdkCompletionContributor = JavaSdkCompletionContributor()
-        val method = JavaSdkCompletionContributor::class.java.getDeclaredMethod(
-            "getDemoSdk",
-            Request::class.java,
-            String::class.java
+        val demoSdkJava = javaSdkCompletionContributor.getDemoSdk(project, okHttpClient, postRequest, "java")
+        val demoSdkJavaAsync = javaSdkCompletionContributor.getDemoSdk(project, okHttpClient, postRequest, "java-async")
+        assertEquals("Java Code Sample.", demoSdkJava)
+        assertEquals("Java Async Code Sample.", demoSdkJavaAsync)
+    }
+
+    @Test
+    fun `getDemoSdk should handle unsuccessful response`() {
+        `when`(response.isSuccessful).thenReturn(false)
+
+        val postRequest = Request.Builder().url("https://api.aliyun.com/api/product/makeCode")
+            .post("{}".toRequestBody("application/json; charset=utf-8".toMediaType()))
+            .build()
+
+        val demoSdk = javaSdkCompletionContributor.getDemoSdk(project, okHttpClient, postRequest, "java")
+
+        assertEquals("SDK 示例生成出错，请联系支持群开发同学解决", demoSdk)
+    }
+
+    @Test
+    fun `getDemoSdk should handle IOException`() {
+        `when`(call.execute()).thenThrow(IOException::class.java)
+
+        val postRequest = Request.Builder().url("https://api.aliyun.com/api/product/makeCode")
+            .post("{}".toRequestBody("application/json; charset=utf-8".toMediaType()))
+            .build()
+
+        val demoSdk = javaSdkCompletionContributor.getDemoSdk(project, okHttpClient, postRequest, "java")
+
+        verify(normalNotification).showMessage(
+            eq(project),
+            eq(NotificationGroups.COMPLETION_NOTIFICATION_GROUP),
+            eq("生成示例代码失败"),
+            eq("请检查网络"),
+            eq(NotificationType.WARNING)
         )
-        method.isAccessible = true
-        val args = arrayOfNulls<Any>(2)
-        args[0] = request
-        args[1] = "java"
-        val demoSdk = method.invoke(javaSdkCompletionContributor, *args)
-        val expectedCodeSample =
-            "com.aliyun.teaopenapi.models.Config config = new com.aliyun.teaopenapi.models.Config()\n        // 请确保代码运行环境设置了环境变量 ALIBABA_CLOUD_ACCESS_KEY_ID 和 ALIBABA_CLOUD_ACCESS_KEY_SECRET。\n        .setAccessKeyId(System.getenv(\"ALIBABA_CLOUD_ACCESS_KEY_ID\"))\n        .setAccessKeySecret(System.getenv(\"ALIBABA_CLOUD_ACCESS_KEY_SECRET\"))\n        // Endpoint 请参考 https://api.aliyun.com/product/FC-Open\n        .setEndpoint(\"<your-account-id>.<region>.fc.aliyuncs.com\");\ncom.aliyun.fc_open20210406.Client client = new com.aliyun.fc_open20210406.Client(config);\ncom.aliyun.fc_open20210406.models.ListReservedCapacitiesHeaders listReservedCapacitiesHeaders = new com.aliyun.fc_open20210406.models.ListReservedCapacitiesHeaders();\ncom.aliyun.fc_open20210406.models.ListReservedCapacitiesRequest listReservedCapacitiesRequest = new com.aliyun.fc_open20210406.models.ListReservedCapacitiesRequest();\ncom.aliyun.fc_open20210406.models.ListReservedCapacitiesResponse listReservedCapacitiesResponse = client.listReservedCapacities(listReservedCapacitiesRequest, listReservedCapacitiesHeaders);"
-        assertEquals(expectedCodeSample, demoSdk)
+
+        assertEquals(String(), demoSdk)
     }
 }

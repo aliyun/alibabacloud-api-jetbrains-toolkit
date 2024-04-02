@@ -4,8 +4,9 @@ import com.alibabacloud.api.service.OkHttpClientProvider
 import com.alibabacloud.api.service.constants.ApiConstants
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
-import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.api.service.util.DepsUtil
+import com.alibabacloud.api.service.util.FormatUtil
+import com.alibabacloud.api.service.util.RequestUtil
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
@@ -33,7 +34,6 @@ import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefJSQuery
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
@@ -47,7 +47,6 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.io.IOException
 import java.net.URI
-import java.net.URL
 import javax.swing.BorderFactory
 import javax.swing.JButton
 import javax.swing.JPanel
@@ -234,14 +233,14 @@ class SdkSample {
         }
 
         fun getDemoSdk(project: Project, bodyParams: JsonObject): JsonObject {
-            val url = URL("https://api.aliyun.com/api/product/makeCode")
+            val url = "https://api.aliyun.com/api/product/makeCode"
             var demoSdkObject = JsonObject()
             val mediaType = "application/json; charset=utf-8".toMediaType()
             val bodyStr = Gson().toJson(bodyParams)
             val body = bodyStr.toRequestBody(mediaType)
-            val request = Request.Builder().url(url).post(body).build()
 
             try {
+                val request = RequestUtil.createRequest(url, "POST", body)
                 OkHttpClientProvider.instance.newCall(request).execute().use { response ->
                     if (response.isSuccessful) {
                         val responseBody = response.body?.string()
@@ -257,7 +256,15 @@ class SdkSample {
                     project,
                     NotificationGroups.SDK_NOTIFICATION_GROUP,
                     "请求超时",
-                    "获取SDK示例代码超时，请刷新",
+                    "获取SDK示例代码超时，请重新生成示例",
+                    NotificationType.WARNING
+                )
+            } catch (e: IllegalArgumentException) {
+                NormalNotification.showMessage(
+                    project,
+                    NotificationGroups.NETWORK_NOTIFICATION_GROUP,
+                    "参数错误",
+                    "body 为空",
                     NotificationType.WARNING
                 )
             }

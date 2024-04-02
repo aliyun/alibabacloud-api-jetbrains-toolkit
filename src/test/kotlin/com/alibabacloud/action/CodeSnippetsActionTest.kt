@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.mockito.Mockito
 
-class CodeSnippetsActionTest : BasePlatformTestCase() {
+internal class CodeSnippetsActionTest : BasePlatformTestCase() {
     private lateinit var action: CodeSnippetsAction
     private lateinit var anActionEvent: AnActionEvent
     private lateinit var presentation: Presentation

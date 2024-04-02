@@ -2,13 +2,17 @@ package com.alibabacloud.api.service
 
 import com.alibabacloud.api.service.apidebug.ApiDebug
 import com.alibabacloud.api.service.constants.ApiConstants
+import com.alibabacloud.api.service.constants.NotificationGroups
+import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.sdksample.SdkSample
 import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.FormatUtil
+import com.alibabacloud.api.service.util.RequestUtil
 import com.alibabacloud.api.service.util.ResourceUtil
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -18,16 +22,18 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JBCefClient
-import okhttp3.Request
+import okhttp3.OkHttpClient
 import java.awt.BorderLayout
 import java.io.File
 import java.io.IOException
-import java.net.URL
 import javax.swing.JPanel
 import javax.swing.JSplitPane
 
+
 class ApiPage {
     companion object {
+        var notificationService: NormalNotification = NormalNotification
+
         /**
          * show api document and debug interface
          */
@@ -111,40 +117,13 @@ class ApiPage {
 
                 ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Loading API Doc", true) {
                     override fun run(indicator: ProgressIndicator) {
-                        var apiDocResponse = String()
                         val apiDocUrl =
-                            URL("${ApiConstants.API_PARAM_URL}/products/$productName/versions/$defaultVersion/api-docs.json")
-                        var apiDocData = JsonObject()
-                        var endpointList = JsonArray()
-
-                        var request = Request.Builder().url(apiDocUrl).build()
-                        OkHttpClientProvider.instance.newCall(request).execute().use { response ->
-                            if (response.isSuccessful) {
-                                val responseBody = response.body?.string()
-                                if (responseBody != null) {
-                                    apiDocResponse = responseBody
-                                    val docResponse = Gson().fromJson(responseBody, JsonObject::class.java)
-                                    apiDocData = docResponse
-                                }
-                            }
-                        }
-
+                            "https://api.aliyun.com/meta/v1/products/$productName/versions/$defaultVersion/api-docs.json"
                         val endpointUrl =
-                            URL("https://api.aliyun.com/meta/v1/products/$productName/endpoints.json?language=zh-CN")
+                            "https://api.aliyun.com/meta/v1/products/$productName/endpoints.json?language=zh-CN"
 
-                        request = Request.Builder().url(endpointUrl).build()
-                        OkHttpClientProvider.instance.newCall(request).execute().use { response ->
-                            if (response.isSuccessful) {
-                                val responseBody = response.body?.string()
-                                if (responseBody != null) {
-                                    val endpointResponse = Gson().fromJson(responseBody, JsonObject::class.java)
-                                    endpointList =
-                                        endpointResponse.get(ApiConstants.ENDPOINT_LIST_DATA).asJsonObject.get(
-                                            ApiConstants.ENDPOINT_LIST_ENDPOINTS
-                                        ).asJsonArray
-                                }
-                            }
-                        }
+                        val apiDocData = getApiDocData(project, OkHttpClientProvider.instance, apiDocUrl, cacheMeta)
+                        val endpointList = getEndpointList(project, OkHttpClientProvider.instance, endpointUrl)
 
                         execute(
                             project,
@@ -207,10 +186,17 @@ class ApiPage {
                         try {
                             CacheUtil.cleanExceedCache()
                             cacheFile.writeText(modifiedHtml)
-                            cacheMeta.writeText(apiDocResponse)
                             cacheEndpoints.writeText(endpointList.toString())
                         } catch (e: IOException) {
-                            throw e
+                            cacheFile.delete()
+                            cacheEndpoints.delete()
+                            notificationService.showMessage(
+                                project,
+                                NotificationGroups.CACHE_NOTIFICATION_GROUP,
+                                "缓存写入失败",
+                                "",
+                                NotificationType.ERROR
+                            )
                         }
                     }
 
@@ -233,10 +219,101 @@ class ApiPage {
                         if (error is IOException) {
                             cacheFile.delete()
                             cacheMeta.delete()
+                            notificationService.showMessage(
+                                project,
+                                NotificationGroups.CACHE_NOTIFICATION_GROUP,
+                                "缓存写入失败",
+                                "",
+                                NotificationType.ERROR
+                            )
                         }
                     }
                 })
             }
+        }
+
+        fun getApiDocData(project: Project, instance: OkHttpClient, apiDocUrl: String, cacheMeta: File): JsonObject {
+            var apiDocData = JsonObject()
+            var apiDocResponse: String
+            val request = RequestUtil.createRequest(apiDocUrl)
+            try {
+                instance.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val responseBody = response.body?.string()
+                        if (responseBody != null) {
+                            apiDocResponse = responseBody
+                            try {
+                                CacheUtil.cleanExceedCache()
+                                cacheMeta.writeText(apiDocResponse)
+                            } catch (e: IOException) {
+                                notificationService.showMessage(
+                                    project,
+                                    NotificationGroups.CACHE_NOTIFICATION_GROUP,
+                                    "缓存写入失败",
+                                    "",
+                                    NotificationType.ERROR
+                                )
+                            }
+                            val docResponse = Gson().fromJson(responseBody, JsonObject::class.java)
+                            apiDocData = docResponse
+                        }
+                    } else {
+                        notificationService.showMessage(
+                            project,
+                            NotificationGroups.NETWORK_NOTIFICATION_GROUP,
+                            "获取 API 数据失败",
+                            "网络请求失败，错误码 ${response.code}, 错误信息 ${response.message}",
+                            NotificationType.ERROR
+                        )
+                    }
+                }
+            } catch (e: IOException) {
+                cacheMeta.delete()
+                notificationService.showMessage(
+                    project,
+                    NotificationGroups.NETWORK_NOTIFICATION_GROUP,
+                    "获取 API 数据失败",
+                    "请检查网络",
+                    NotificationType.ERROR
+                )
+            }
+            return apiDocData
+        }
+
+        fun getEndpointList(project: Project, instance: OkHttpClient, endpointUrl: String): JsonArray {
+            var endpointList = JsonArray()
+            val request = RequestUtil.createRequest(endpointUrl)
+            try {
+                instance.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val responseBody = response.body?.string()
+                        if (responseBody != null) {
+                            val endpointResponse = Gson().fromJson(responseBody, JsonObject::class.java)
+                            endpointList =
+                                endpointResponse.get(ApiConstants.ENDPOINT_LIST_DATA).asJsonObject.get(
+                                    ApiConstants.ENDPOINT_LIST_ENDPOINTS
+                                ).asJsonArray
+                        }
+                    } else {
+                        notificationService.showMessage(
+                            project,
+                            NotificationGroups.NETWORK_NOTIFICATION_GROUP,
+                            "获取 endpoint 数据失败",
+                            "网络请求失败，错误码 ${response.code}, 错误信息 ${response.message}",
+                            NotificationType.ERROR
+                        )
+                    }
+                }
+            } catch (e: IOException) {
+                notificationService.showMessage(
+                    project,
+                    NotificationGroups.NETWORK_NOTIFICATION_GROUP,
+                    "获取 endpoint 数据失败",
+                    "请检查网络",
+                    NotificationType.ERROR
+                )
+            }
+            return endpointList
         }
 
         fun execute(

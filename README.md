@@ -26,7 +26,7 @@ settings to finish installation.
 <div style="overflow-x: scroll; white-space: nowrap;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/add-profile.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/view-profile.png" style="display: inline-block;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-list-with-search.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/explorer.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-debug1.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-debug2.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/sdkSample.png" style="display: inline-block;">
@@ -36,8 +36,8 @@ settings to finish installation.
 * **Profile Configuration:** Support switch and add user profile through static credentials, which is consistent with Alibaba
   Cloud CLI. The StatusBar located at the bottom of the IDE displays the current profile. [Learn more about CLI Configuration](https://help.aliyun.com/document_detail/123181.html?spm=a2c4g.121544.0.0.2d7e76e3XWMs4u)
     * If you have already installed Alibaba Cloud CLI, you can switch and view your existing profiles which is read-only. 
-    You can select "Add Profile" to further add user profiles.
-    * If you don't have Alibaba Cloud CLI installed, you can select "Add Profile" to add user profiles when needed.
+    You can select "New Profile" to further add user profiles.
+    * If you don't have Alibaba Cloud CLI installed, you can select "New Profile" to add user profiles when needed.
 
 
 * **Product Explorer:** A tree-view of cloud products with search: Quickly navigate you to the corresponding products or APIs.

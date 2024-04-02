@@ -22,10 +22,10 @@
     <ul>
       <li>
         If you have already installed Alibaba Cloud CLI, you can switch and view your existing profiles which is read-only.
-        You can select "Add Profile" to further add user profiles.
+        You can select "New Profile" to further add user profiles.
       </li>
       <li>
-        If you don't have Alibaba Cloud CLI installed, you can select "Add Profile" to add user profiles when needed.
+        If you don't have Alibaba Cloud CLI installed, you can select "New Profile" to add user profiles when needed.
       </li>
     </ul>
   </li>
@@ -75,6 +75,8 @@
         <notificationGroup id="AlibabaCloud API: Dependencies" displayType="BALLOON"/>
         <notificationGroup id="AlibabaCloud API: Config" displayType="BALLOON"/>
         <notificationGroup id="AlibabaCloud API: Completion" displayType="BALLOON"/>
+        <notificationGroup id="AlibabaCloud API: Network" displayType="BALLOON"/>
+        <notificationGroup id="AlibabaCloud API: Cache" displayType="BALLOON"/>
         <completion.contributor language="JAVA" implementationClass="com.alibabacloud.api.service.completion.JavaSdkCompletionContributor"/>
         <postStartupActivity implementation="com.alibabacloud.api.service.startactivity.StartPullMeta"/>
     </extensions>

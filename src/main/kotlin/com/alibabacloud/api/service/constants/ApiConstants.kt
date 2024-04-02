@@ -4,10 +4,6 @@ import java.io.File
 import java.time.Duration
 
 object ApiConstants {
-    const val API_DIR_URL = "https://api.aliyun.com/api/product/apiDir"
-    const val API_PARAM_URL = "https://api.aliyun.com/meta/v1"
-    const val PRODUCT_LIST_URL = "https://api.aliyun.com/api/products?type=api"
-
     val CACHE_PATH = System.getProperty("user.home") + File.separator + ".api-cache"
     val ONE_DAY: Duration = Duration.ofDays(1)
     const val MAX_CACHE_NUM = 200
@@ -33,14 +29,6 @@ object ApiConstants {
     const val TOOLWINDOW_APIS = "Alibaba Cloud APIs"
     const val TOOLWINDOW_API_TREE = "Alibaba Cloud API"
     const val TOOLWINDOW_PRODUCT_TREE = "Alibaba Cloud API"
-
-    const val PRODUCT_RESP_DATA = "data"
-    const val PRODUCT_RESP_CATEGORY_2_NAME = "category2Name"
-    const val PRODUCT_RESP_CATEGORY_NAME = "categoryName"
-    const val PRODUCT_RESP_SHOW_NAME_CN = "show_name_cn"
-    const val PRODUCT_RESP_PRODUCT_NAME = "name"
-    const val PRODUCT_RESP_DEFAULT_VERSION = "default_version"
-    const val PRODUCT_RESP_NOT_CLASSIFIED = "未分类"
 
     const val API_DIR_DATA = "data"
     const val DEP_INSTALL_DATA = "data"
@@ -72,6 +60,8 @@ object ApiConstants {
 
     const val API_DIR_RESPONSE_NAME = "name"
     const val API_DIR_RESPONSE_NODE_TITLE = "node_title"
+    const val API_DIR_RESPONSE_TITLE = "title"
+    const val API_DIR_RESPONSE_DIR_ID = "dir_id"
     const val API_DIR_RESPONSE_CHILDREN = "children"
 
     const val DEBUG_METHODS = "methods"

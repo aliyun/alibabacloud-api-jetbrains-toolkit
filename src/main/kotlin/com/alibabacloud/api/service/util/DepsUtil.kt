@@ -17,7 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.castSafelyTo
-import okhttp3.Request
+import java.io.IOException
 
 class DepsUtil {
     companion object {
@@ -41,7 +41,7 @@ class DepsUtil {
                     project,
                     NotificationGroups.DEPS_NOTIFICATION_GROUP,
                     "依赖导入失败",
-                    "请选择正确的语言",
+                    "请检查网络或所选语言",
                     NotificationType.ERROR
                 )
             })
@@ -102,7 +102,7 @@ class DepsUtil {
                             } else {
                                 onFailure()
                             }
-                        } catch (e: Exception) {
+                        } catch (e: IOException) {
                             ApplicationManager.getApplication().invokeLater {
                                 WriteCommandAction.runWriteCommandAction(project) {
                                     document.setText(pomBackupContent)
@@ -135,30 +135,38 @@ class DepsUtil {
             }
         }
 
-        private fun fetchMavenDependencyCommand(commandUrl: String): String? {
+        private fun fetchMavenDependencyCommand(project: Project, commandUrl: String): String? {
             var mavenCommand: String? = null
-
-            val request = Request.Builder().url(commandUrl).build()
-            OkHttpClientProvider.instance.newCall(request).execute().use { response ->
-                if (response.isSuccessful) {
-                    val resp = Gson().fromJson(response.body?.string(), JsonObject::class.java)
-                    val install =
-                        resp?.get(ApiConstants.DEP_INSTALL_DATA)?.asJsonObject?.get(ApiConstants.DEP_INSTALL)?.asJsonArray
-                    if (install != null && install.size() > 0) {
-                        mavenCommand = install.asSequence().map { it.asJsonObject }
-                            .firstOrNull { it.get(ApiConstants.DEP_INSTALL_METHOD).asString == "Apache Maven" }
-                            ?.get(ApiConstants.DEP_INSTALL_COMMAND)?.asString?.removePrefix("```xml\n")
-                            ?.removeSuffix("\n```")
+            val request = RequestUtil.createRequest(commandUrl)
+            try {
+                OkHttpClientProvider.instance.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        val resp = Gson().fromJson(response.body?.string(), JsonObject::class.java)
+                        val install =
+                            resp?.get(ApiConstants.DEP_INSTALL_DATA)?.asJsonObject?.get(ApiConstants.DEP_INSTALL)?.asJsonArray
+                        if (install != null && install.size() > 0) {
+                            mavenCommand = install.asSequence().map { it.asJsonObject }
+                                .firstOrNull { it.get(ApiConstants.DEP_INSTALL_METHOD).asString == "Apache Maven" }
+                                ?.get(ApiConstants.DEP_INSTALL_COMMAND)?.asString?.removePrefix("```xml\n")
+                                ?.removeSuffix("\n```")
+                        }
+                        return mavenCommand
                     }
-                    return mavenCommand
                 }
+            } catch (e: IOException) {
+                NormalNotification.showMessage(
+                    project,
+                    NotificationGroups.NETWORK_NOTIFICATION_GROUP,
+                    "获取依赖失败",
+                    "请检查网络",
+                    NotificationType.ERROR
+                )
             }
             return null
         }
 
         fun isMavenDependencyExist(
-            project: Project,
-            commandUrl: String
+            project: Project, commandUrl: String
         ): MutableList<Any?> {
             var isDependencyExists = false
             var isPomExists = false
@@ -175,7 +183,7 @@ class DepsUtil {
                     val document = documentManager.getDocument(pomVirtualFile)
                     if (document != null) {
                         val pomBackupContent = document.text
-                        mavenCommand = fetchMavenDependencyCommand(commandUrl)
+                        mavenCommand = fetchMavenDependencyCommand(project, commandUrl)
                         if (mavenCommand != null) {
                             val groupId =
                                 Regex("<groupId>(.*?)</groupId>").find(mavenCommand!!)?.groups?.get(1)?.value?.trim()

@@ -24,7 +24,7 @@ GoLand 2022.2 ~ 2023.3
 <div style="overflow-x: scroll; white-space: nowrap;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/add-profile.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/view-profile.png" style="display: inline-block;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-list-with-search.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/explorer.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-debug1.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-debug2.png" style="display: inline-block;">
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/sdkSample.png" style="display: inline-block;">
@@ -33,8 +33,8 @@ GoLand 2022.2 ~ 2023.3
 
 
 * **用户配置：** 支持通过静态凭证切换和添加用户配置，与阿里云 CLI 的配置方式一致。 位于 IDE 底部的状态栏显示当前用户。 [了解更多 CLI 配置相关](https://help.aliyun.com/document_detail/123181.html?spm=a2c4g.121544.0.0.2d7e76e3XWMs4u)
-  * 如果您已经安装了阿里云 CLI，您可以切换、查看已有用户，已有用户配置是只读的，也可以通过点击“Add Profile”进一步添加用户配置。
-  * 如果您还未安装阿里云 CLI，需要时您可以通过点击“Add Profile”添加用户配置。
+  * 如果您已经安装了阿里云 CLI，您可以切换、查看已有用户，已有用户配置是只读的，也可以通过点击“New Profile”进一步添加用户配置。
+  * 如果您还未安装阿里云 CLI，需要时您可以通过点击“New Profile”添加用户配置。
 
 
 * **产品导航：** 云产品的树状视图，搜索框可以快速导航到对应产品，或者单击某个云产品，可以跳转到对应的 API 列表，API 列表上方的搜索框可以快速导航到您指定的 API。

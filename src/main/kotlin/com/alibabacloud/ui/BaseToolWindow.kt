@@ -3,13 +3,17 @@ package com.alibabacloud.ui
 import com.alibabacloud.api.service.ApiExplorer
 import com.alibabacloud.api.service.ApiPage
 import com.alibabacloud.api.service.SearchHelper
+import com.alibabacloud.api.service.completion.cacheNameAndVersionFile
 import com.alibabacloud.api.service.constants.ApiConstants
+import com.alibabacloud.api.service.constants.NotificationGroups
+import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.credentials.util.ConfigFileUtil
 import com.alibabacloud.models.credentials.ConfigureFile
 import com.google.gson.JsonArray
 import com.intellij.icons.AllIcons
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
@@ -30,7 +34,6 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.io.File
 import java.io.IOException
-import java.net.URL
 import javax.swing.*
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
@@ -38,16 +41,10 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeSelectionModel
 
 class BaseToolWindow : ToolWindowFactory, DumbAware {
-
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        val refreshLeftToolWindowAction = RefreshLeftToolWindowAction()
-        refreshLeftToolWindowAction.templatePresentation.icon = AllIcons.Actions.Refresh
-        refreshLeftToolWindowAction.templatePresentation.text = "Refresh Product List"
-
         val contentPanel = JPanel()
         contentPanel.layout = BoxLayout(contentPanel, BoxLayout.Y_AXIS)
         val listRenderer = CustomListCellRenderer()
-
 
         val comboBoxManager = ComboBoxManager.getInstance(project)
         val comboBox = comboBoxManager.comboBox
@@ -57,19 +54,23 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
 
         val collapsibleInputPanel = CollapsibleInputPanel(project)
         contentPanel.add(collapsibleInputPanel, BorderLayout.NORTH)
-        val addProfileToolWindowAction = AddProfileToolWindowAction(collapsibleInputPanel)
-        val addProfileAction = listOf(addProfileToolWindowAction, refreshLeftToolWindowAction)
-        toolWindow.setTitleActions(addProfileAction)
 
+        val addProfileToolWindowAction = AddProfileToolWindowAction(collapsibleInputPanel)
         credentialsContentListener(project, collapsibleInputPanel, comboBox)
 
         val searchField = SearchTextField()
+        searchField.name = "searchProduct"
         searchField.textEditor.emptyText.text = "搜索产品："
         searchField.maximumSize = Dimension(Integer.MAX_VALUE, 50)
         contentPanel.add(searchField)
 
-        val cacheNameAndVersionFile = File(ApiConstants.CACHE_PATH, "nameAndVersion")
-        val cacheTreeFile = File(ApiConstants.CACHE_PATH, "tree")
+        val refreshLeftToolWindowAction = RefreshLeftToolWindowAction(project, contentPanel, searchField)
+        refreshLeftToolWindowAction.templatePresentation.icon = AllIcons.Actions.Refresh
+        refreshLeftToolWindowAction.templatePresentation.text = "Refresh Product List"
+        val addProfileAction = listOf(addProfileToolWindowAction, refreshLeftToolWindowAction)
+        toolWindow.setTitleActions(addProfileAction)
+
+        val cacheTreeFile = File(ApiConstants.CACHE_PATH, "tree1")
         var cacheNameAndVersionMap: MutableMap<String, List<String>>? = null
         var cacheTree: Tree? = null
         try {
@@ -83,24 +84,30 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         }
 
         if (cacheNameAndVersionMap != null && cacheTree != null) {
+            val treeRenderer = ProductTreeCellRenderer()
+            cacheTree.cellRenderer = treeRenderer
             val scrollPane = FormatUtil.getScrollPane(cacheTree)
+            scrollPane.name = "productTree"
             contentPanel.add(scrollPane)
             productClickListener(project, cacheTree, cacheNameAndVersionMap)
-            SearchHelper.search(cacheNameAndVersionMap, cacheTree, searchField, contentPanel)
+            SearchHelper.search(cacheNameAndVersionMap, cacheTree, searchField)
         } else {
             var nameAndVersionMap = mutableMapOf<String, List<String>>()
             var apiDocContentTree = Tree()
             ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Loading API List", true) {
                 override fun run(indicator: ProgressIndicator) {
-                    nameAndVersionMap = ApiExplorer.apiDocContentTree().first
-                    apiDocContentTree = ApiExplorer.apiDocContentTree().second
+                    val explorer = ApiExplorer.apiDocContentTree(project)
+                    nameAndVersionMap = explorer.first
+                    apiDocContentTree = explorer.second
+                    val treeRenderer = ProductTreeCellRenderer()
+                    apiDocContentTree.cellRenderer = treeRenderer
                 }
 
                 override fun onSuccess() {
                     val scrollPane = FormatUtil.getScrollPane(apiDocContentTree)
                     contentPanel.add(scrollPane)
                     productClickListener(project, apiDocContentTree, nameAndVersionMap)
-                    SearchHelper.search(nameAndVersionMap, apiDocContentTree, searchField, contentPanel)
+                    SearchHelper.search(nameAndVersionMap, apiDocContentTree, searchField)
                 }
             })
         }
@@ -121,11 +128,11 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         if (config != null) {
             comboBox.selectedItem = config.current
         } else {
-            comboBox.selectedItem = "Add Profile"
+            comboBox.selectedItem = "New Profile"
         }
         comboBox.addActionListener {
             val selectedProfile = comboBox.selectedItem as String
-            if (selectedProfile == "Add Profile") {
+            if (selectedProfile == "New Profile") {
                 collapsibleInputPanel.clearFields()
                 collapsibleInputPanel.expandForAddProfile()
             } else {
@@ -174,11 +181,17 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
             val selectedNode = tree.lastSelectedPathComponent as? DefaultMutableTreeNode
             if (selectedNode != null) {
                 if (selectedNode.isLeaf) {
-                    val productNameCN = selectedNode.userObject as String
-                    val productName = nameAndVersionMap[productNameCN]?.get(0) ?: ""
-                    val defaultVersion = nameAndVersionMap[productNameCN]?.get(3) ?: ""
-                    val apiUrl = URL("${ApiConstants.API_DIR_URL}?product=$productName&version=$defaultVersion")
-
+                    val match = (selectedNode.userObject as String)
+                    val pattern = """(.+?) {2}(.+)""".toRegex()
+                    val matchProduct = pattern.matchEntire(match)
+                    var productNameCN = ""
+                    var productName = ""
+                    matchProduct?.let {
+                        productNameCN = it.destructured.component1()
+                        productName = it.destructured.component2()
+                    }
+                    val defaultVersion = nameAndVersionMap[productNameCN]?.get(2) ?: ""
+                    val apiUrl = "https://api.aliyun.com/api/product/apiDir?product=$productName&version=$defaultVersion"
                     val cacheApiDataFile = File(ApiConstants.CACHE_PATH, "$productName-api-list")
                     val cacheApiData: JsonArray?
                     var apiData: JsonArray? = null
@@ -191,13 +204,20 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                         }
                     }
                     if (apiData == null) {
-                        apiData = ApiExplorer.getApiListRequest(apiUrl)
+                        apiData = ApiExplorer.getApiListRequest(project, apiUrl)
                         val cacheApiListFile = File(ApiConstants.CACHE_PATH, "$productName-api-list")
                         if (apiData.size() > 0) {
                             try {
                                 CacheUtil.writeApiListCache(cacheApiListFile, apiData)
                             } catch (e: IOException) {
                                 cacheApiListFile.delete()
+                                NormalNotification.showMessage(
+                                    project,
+                                    NotificationGroups.CACHE_NOTIFICATION_GROUP,
+                                    "缓存写入失败",
+                                    "",
+                                    NotificationType.ERROR
+                                )
                             }
                         }
                     }
@@ -226,7 +246,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                     selectionApi.addTreeSelectionListener {
                         val selectedApi = apiTree.lastSelectedPathComponent as? DefaultMutableTreeNode
                         if (selectedApi != null) {
-                            apiName = selectedApi.userObject as String
+                            apiName = (selectedApi.userObject as String).split("  ", limit = 2)[0]
                             if (selectedApi.isLeaf) {
                                 if (apiDocContent == null) {
                                     apiDocContent = toolWindow.contentManager.factory.createContent(
@@ -313,26 +333,44 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
     }
 
     private class AddProfileToolWindowAction(private val collapsibleInputPanel: CollapsibleInputPanel) :
-        AnAction("Add Profile", "Add profile", AllIcons.General.User) {
+        AnAction("New Profile", "New profile", AllIcons.General.User) {
         override fun actionPerformed(e: AnActionEvent) {
             collapsibleInputPanel.clearFields()
             collapsibleInputPanel.expandForAddProfile()
         }
     }
 
-    private class RefreshLeftToolWindowAction : AnAction() {
+    private class RefreshLeftToolWindowAction(
+        val project: Project,
+        val contentPanel: JPanel,
+        val searchField: SearchTextField
+    ) : AnAction() {
         override fun actionPerformed(e: AnActionEvent) {
-            val project = e.project ?: return
+            contentPanel.components.filter { it.name == "productTree" }.forEach {
+                contentPanel.remove(it)
+            }
+            contentPanel.revalidate()
+            contentPanel.repaint()
+
             var nameAndVersionMap = mutableMapOf<String, List<String>>()
             var apiDocContentTree = Tree()
             ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Loading API List", true) {
                 override fun run(indicator: ProgressIndicator) {
-                    nameAndVersionMap = ApiExplorer.apiDocContentTree().first
-                    apiDocContentTree = ApiExplorer.apiDocContentTree().second
+                    val explorer = ApiExplorer.apiDocContentTree(project)
+                    nameAndVersionMap = explorer.first
+                    apiDocContentTree = explorer.second
                 }
 
                 override fun onSuccess() {
+                    val treeRenderer = ProductTreeCellRenderer()
+                    apiDocContentTree.cellRenderer = treeRenderer
+                    val scrollPane = FormatUtil.getScrollPane(apiDocContentTree)
+                    scrollPane.name = "productTree"
+                    contentPanel.add(scrollPane)
                     BaseToolWindow().productClickListener(project, apiDocContentTree, nameAndVersionMap)
+                    SearchHelper.search(nameAndVersionMap, apiDocContentTree, searchField)
+                    contentPanel.revalidate()
+                    contentPanel.repaint()
                 }
             })
         }
@@ -360,5 +398,4 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
             )
         }
     }
-
 }
