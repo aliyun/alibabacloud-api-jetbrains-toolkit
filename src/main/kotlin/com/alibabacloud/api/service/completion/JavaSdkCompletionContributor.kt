@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
@@ -27,11 +28,13 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.castSafelyTo
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import java.net.SocketTimeoutException
+import java.io.IOException
 
 class JavaSdkCompletionContributor : CompletionContributor() {
+    var notificationService: NormalNotification = NormalNotification
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
         super.fillCompletionVariants(parameters, result)
 
@@ -100,7 +103,7 @@ class JavaSdkCompletionContributor : CompletionContributor() {
                     }
                 }
             } else {
-                NormalNotification.showMessage(
+                notificationService.showMessage(
                     project,
                     NotificationGroups.COMPLETION_NOTIFICATION_GROUP,
                     "请稍候",
@@ -112,7 +115,7 @@ class JavaSdkCompletionContributor : CompletionContributor() {
     }
 
     private fun insertHandler(insertionContext: InsertionContext, document: Document, request: Request, lang: String) {
-        var demoSdk = String()
+        var demoSdk: String
         val project = insertionContext.project
         WriteCommandAction.runWriteCommandAction(project) {
             val startOffset = insertionContext.startOffset
@@ -125,43 +128,35 @@ class JavaSdkCompletionContributor : CompletionContributor() {
             .run(object : Task.Backgroundable(project, "拉取示例代码...", true) {
                 override fun run(indicator: ProgressIndicator) {
                     indicator.isIndeterminate = true
-                    try {
-                        demoSdk = getDemoSdk(request, lang)
-                    } catch (e: SocketTimeoutException) {
-                        NormalNotification.showMessage(
-                            project,
-                            NotificationGroups.COMPLETION_NOTIFICATION_GROUP,
-                            "生成示例代码超时",
-                            "请重试",
-                            NotificationType.WARNING
-                        )
-                    }
-
+                    demoSdk = getDemoSdk(project, OkHttpClientProvider.instance, request, lang)
                     ApplicationManager.getApplication().invokeLater {
                         insertCodeSnippet(document, insertionContext, demoSdk)
                     }
                 }
             })
     }
-
-    private fun getDemoSdk(request: Request, lang: String): String {
+    fun getDemoSdk(project: Project, instance: OkHttpClient, request: Request, lang: String): String {
         var demoSdk = String()
-        OkHttpClientProvider.instance.newCall(request).execute().use { response ->
-            if (response.isSuccessful) {
-                val responseBody = response.body?.string()
-                if (responseBody != null) {
-                    val demoSdkObject =
-                        Gson().fromJson(
-                            responseBody,
-                            JsonObject::class.java
-                        )
-                            .get("data")?.asJsonObject?.get("demoSdk")?.asJsonObject
-                    demoSdk = demoSdkObject?.get(lang)?.asJsonObject?.get("codeSample")?.asString
-                        ?: "该 API 暂无 $lang SDK 示例"
+        try {
+            instance.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val responseBody = response.body?.string()
+                    if (responseBody != null) {
+                        val demoSdkObject = Gson().fromJson(responseBody, JsonObject::class.java).get("data")?.asJsonObject?.get("demoSdk")?.asJsonObject
+                        demoSdk = demoSdkObject?.get(lang)?.asJsonObject?.get("codeSample")?.asString ?: "该 API 暂无 $lang SDK 示例"
+                    }
+                } else {
+                    demoSdk = "SDK 示例生成出错，请联系支持群开发同学解决"
                 }
-            } else {
-                demoSdk = "SDK 示例生成出错，请联系支持群开发同学解决"
             }
+        } catch (e: IOException) {
+            notificationService.showMessage(
+                project,
+                NotificationGroups.COMPLETION_NOTIFICATION_GROUP,
+                "生成示例代码失败",
+                "请检查网络",
+                NotificationType.WARNING
+            )
         }
         return demoSdk
     }
@@ -201,7 +196,7 @@ class JavaSdkCompletionContributor : CompletionContributor() {
                 val content = "是否自动导入依赖：" + (if (lang == "java-async") "alibabacloud-" else "") + "${
                     productName.lowercase().replace("-", "_")
                 }${defaultVersion.replace("-", "")}?"
-                NormalNotification.showMessageWithActions(
+                notificationService.showMessageWithActions(
                     project,
                     NotificationGroups.DEPS_NOTIFICATION_GROUP,
                     "导入依赖",

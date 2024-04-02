@@ -9,7 +9,7 @@ import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeCellRenderer
 
-class CustomTreeCellRenderer : DefaultTreeCellRenderer() {
+class ProductTreeCellRenderer : DefaultTreeCellRenderer() {
     override fun getTreeCellRendererComponent(
         tree: JTree?,
         value: Any?,
@@ -17,26 +17,23 @@ class CustomTreeCellRenderer : DefaultTreeCellRenderer() {
         expanded: Boolean,
         leaf: Boolean,
         row: Int,
-        hasFocus: Boolean,
+        hasFocus: Boolean
     ): Component {
         super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
 
         val node = value as? DefaultMutableTreeNode
-        val regularIcon: Icon = IconLoader.getIcon("/icons/api.svg", javaClass)
-        val selectedIcon: Icon = IconLoader.getIcon("/icons/api-selected.svg", javaClass)
+        val productIcon: Icon = IconLoader.getIcon("/icons/product.svg", javaClass)
 
         node?.let {
             val nodeData = it.userObject as? String
             if (leaf) {
-                icon = if (selected) {
-                    selectedIcon
-                } else {
-                    regularIcon
-                }
                 val parts = nodeData?.split("  ", limit = 2)
                 val name = parts?.getOrNull(0) ?: ""
-                val title = parts?.getOrNull(1) ?: ""
-                text = "<html>$name <span style='font-size:smaller; color:gray;'>$title</span></html>"
+                val code = parts?.getOrNull(1) ?: ""
+                text = "<html>$name <span style='font-size:smaller; color:gray;'>$code</span></html>"
+                icon = productIcon
+            } else {
+                icon = null
             }
             backgroundNonSelectionColor = JBColor(Color(0, 0, 0, 0), Color(0, 0, 0, 0))
         }

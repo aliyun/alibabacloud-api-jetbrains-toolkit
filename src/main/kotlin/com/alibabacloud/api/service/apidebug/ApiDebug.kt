@@ -47,7 +47,7 @@ class ApiDebug {
                             project,
                             NotificationGroups.DEBUG_NOTIFICATION_GROUP,
                             "需要登录",
-                            "如需调试请先在 Add Profile 处配置用户信息",
+                            "如需调试请先在 New Profile 处配置用户信息",
                             NotificationType.WARNING
                         )
                     } else {

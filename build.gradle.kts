@@ -25,8 +25,13 @@ dependencies {
     implementation("com.aliyun:openapiutil:0.2.1")
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
     testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.10.0")
     testImplementation("com.github.tomakehurst:wiremock-jre8:2.35.0")
     testImplementation("org.assertj:assertj-core:3.20.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.1")
+    testImplementation("org.junit.vintage:junit-vintage-engine:5.10.1")
 }
 
 intellij {
@@ -42,6 +47,10 @@ tasks {
     }
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions.jvmTarget = "17"
+    }
+
+    test {
+        useJUnitPlatform()
     }
 
     patchPluginXml {

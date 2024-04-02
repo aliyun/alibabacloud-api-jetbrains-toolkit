@@ -11,7 +11,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
-class OkHttpClientProviderTest {
+internal class OkHttpClientProviderTest {
     @Rule
     @JvmField
     val application = ApplicationRule()

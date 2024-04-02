@@ -1,11 +1,9 @@
 package com.alibabacloud.states
 
-import com.github.tomakehurst.wiremock.client.WireMock
 import com.intellij.openapi.components.service
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import org.junit.Before
 
-class ToolkitSettingsStateTest : BasePlatformTestCase() {
+internal class ToolkitSettingsStateTest : BasePlatformTestCase() {
     override fun setUp() {
         super.setUp()
         val settingsState = service<ToolkitSettingsState>()
