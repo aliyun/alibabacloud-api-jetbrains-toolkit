@@ -11,8 +11,6 @@ object RequestUtil {
             "POST" -> {
                 if (body != null) {
                     builder.post(body)
-                } else {
-                    throw IllegalArgumentException("body is null")
                 }
             }
         }

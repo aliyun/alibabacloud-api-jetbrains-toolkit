@@ -10,6 +10,7 @@ import com.alibabacloud.api.service.util.RequestUtil
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
+import com.intellij.ide.BrowserUtil
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -220,13 +221,8 @@ class SdkSample {
                 })
 
                 addActionListener {
-                    if (Desktop.isDesktopSupported()) {
-                        val desktop = Desktop.getDesktop()
-                        if (desktop.isSupported(Desktop.Action.BROWSE)) {
-                            val buttonUrl = getButtonUrl()
-                            desktop.browse(URI(buttonUrl))
-                        }
-                    }
+                    val buttonUrl = getButtonUrl()
+                    BrowserUtil.browse(URI(buttonUrl))
                 }
             }
             return button
@@ -257,14 +253,6 @@ class SdkSample {
                     NotificationGroups.SDK_NOTIFICATION_GROUP,
                     "请求超时",
                     "获取SDK示例代码超时，请重新生成示例",
-                    NotificationType.WARNING
-                )
-            } catch (e: IllegalArgumentException) {
-                NormalNotification.showMessage(
-                    project,
-                    NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                    "参数错误",
-                    "body 为空",
                     NotificationType.WARNING
                 )
             }

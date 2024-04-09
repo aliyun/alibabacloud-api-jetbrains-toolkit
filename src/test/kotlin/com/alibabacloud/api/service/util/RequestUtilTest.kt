@@ -29,14 +29,4 @@ internal class RequestUtilTest {
         assertEquals("$url/", request.url.toString())
         assertNotNull(request.body)
     }
-
-    @Test
-    fun `test POST Request throws exception when body is null`() {
-        val url = "https://example.com"
-
-        val exception = assertThrows<IllegalArgumentException> {
-            RequestUtil.createRequest(url, "POST")
-        }
-        assertEquals("body is null", exception.message)
-    }
 }

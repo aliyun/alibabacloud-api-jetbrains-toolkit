@@ -77,6 +77,7 @@
         <notificationGroup id="AlibabaCloud API: Completion" displayType="BALLOON"/>
         <notificationGroup id="AlibabaCloud API: Network" displayType="BALLOON"/>
         <notificationGroup id="AlibabaCloud API: Cache" displayType="BALLOON"/>
+        <notificationGroup id="AlibabaCloud API: Questionnaire" displayType="BALLOON"/>
         <completion.contributor language="JAVA" implementationClass="com.alibabacloud.api.service.completion.JavaSdkCompletionContributor"/>
         <postStartupActivity implementation="com.alibabacloud.api.service.startactivity.StartPullMeta"/>
     </extensions>
