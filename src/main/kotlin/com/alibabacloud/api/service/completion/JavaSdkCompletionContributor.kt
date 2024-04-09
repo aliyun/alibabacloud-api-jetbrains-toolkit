@@ -34,7 +34,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 
 class JavaSdkCompletionContributor : CompletionContributor() {
-    var notificationService: NormalNotification = NormalNotification
+    private var notificationService: NormalNotification = NormalNotification
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
         super.fillCompletionVariants(parameters, result)
 
@@ -103,13 +103,16 @@ class JavaSdkCompletionContributor : CompletionContributor() {
                     }
                 }
             } else {
-                notificationService.showMessage(
-                    project,
-                    NotificationGroups.COMPLETION_NOTIFICATION_GROUP,
-                    "请稍候",
-                    "元数据尚未加载完成",
-                    NotificationType.WARNING
-                )
+                if (!UnLoadNotificationState.hasShown) {
+                    notificationService.showMessage(
+                        project,
+                        NotificationGroups.COMPLETION_NOTIFICATION_GROUP,
+                        "请稍候",
+                        "元数据尚未加载完成",
+                        NotificationType.WARNING
+                    )
+                }
+                UnLoadNotificationState.hasShown = true
             }
         }
     }

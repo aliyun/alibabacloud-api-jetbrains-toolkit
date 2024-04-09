@@ -8,51 +8,43 @@
   The Alibaba Cloud Developer Toolkit for JetBrains makes it easier to access Alibaba Cloud services.
 </p>
 <h2><strong>Installation:</strong></h2>
-  You can download the Alibaba Cloud Developer Toolkit for JetBrains by searching for "Alibaba Cloud Developer Toolkit" in
-  the Marketplace in your IDE, or download zip file from your web browser and choose "Install Plugin from Disk..." in
-  settings to finish installation.
+  <ul>
+    <li>
+      You can download the Alibaba Cloud Developer Toolkit for JetBrains by searching for "Alibaba Cloud Developer Toolkit"
+      in the Marketplace in your IDE.
+    </li>
+    <li>
+      Or download zip file from your web browser through <a href="https://plugins.jetbrains.com/plugin/23361-alibaba-cloud-developer-toolkit">JetBrains Marketplace</a>
+      and choose "Install Plugin from Disk..." in settings to finish installation.
+    </li>
+  </ul>
 <h2><strong>Features:</strong></h2>
 <ul>
   <li>
-    <strong>Profile Configuration:</strong> Support switch and add user profile through static credentials, which
-    is consistent with Alibaba Cloud CLI. The status bar located at the bottom of the IDE displays the current
-    profile. <a href="https://help.aliyun.com/document_detail/123181.html?spm=a2c4g.121544.0.0.2d7e76e3XWMs4u">Learn
-    more about CLI Configuration</a>
-    <br>
-    <ul>
-      <li>
-        If you have already installed Alibaba Cloud CLI, you can switch and view your existing profiles which is read-only.
-        You can select "New Profile" to further add user profiles.
-      </li>
-      <li>
-        If you don't have Alibaba Cloud CLI installed, you can select "New Profile" to add user profiles when needed.
-      </li>
-    </ul>
+    <strong>Profile Configuration:</strong> Support switch and new user profiles. Not necessary but needed to be configured when execute API debug.
   </li>
   <li>
-    <strong>Product Explorer:</strong> A tree-view of cloud products with search: Quickly navigate you to the corresponding
-    products or APIs. You can refresh the product list or API detail page by clicking the refresh button in the window toolbar.
+    <strong>Product Explorer:</strong> A tree-view of Alibaba Cloud products with search, quickly navigate you to the corresponding products or APIs.
   </li>
   <li>
     <strong>API Document View:</strong> Clicking on an API can navigate you to a new tab which displays the corresponding API document,
-  including descriptions, request parameters, response parameters and error codes. With cache implemented, subsequent
-  visits to the same API will be loaded swiftly.
+    including descriptions, request parameters, response parameters and error codes.
   </li>
   <li>
-    <strong>API Debug:</strong> Support convenient API debugging within the IDE against the parameter list, and
-    also offers a "Go Debug" button for seamless transition to debug in browser.
+    <strong>API Debug:</strong> Support convenient API debugging within the IDE against the parameter form.
   </li>
   <li>
-    <strong>SDK Code Sample View:</strong> Support viewing SDK code samples within the IDE, with synchronous generation of
-    corresponding instance code after filling in parameters. Support jumping to the browser for obtaining dependency installation
-    methods and source code. For Java and Java-async, automatic import of Maven dependencies is supported.
+    <strong>SDK Code Sample View:</strong> Support viewing, quickly opening SDK code samples (Java and Java Async) and automatic import
+    of Maven dependencies.
   </li>
   <li>
-    <strong>SDK Code Sample Auto-completion:</strong> Support auto-completion, insertion and dependency import of Java
-    and Java Async SDK code sample.
+    <strong>SDK Code Sample Auto-completion:</strong> Support auto-completion of Java and Java Async SDK code sample. Switch on and
+    off by keyboard shortcuts <code>ctrl + cmd + p</code>.
   </li>
   <li>
-    More features are under development, please stay tuned.
+    See the <a href="https://help.aliyun.com/zh/openapi/user-guide/using-the-alibaba-cloud-developer-toolkit-plugin-in-jetbrains-ides">user guide</a>
+    for more details. More features are under development, please stay tuned and welcome to submit your questions and suggestions on the
+    <a href="https://g.alicdn.com/aes/tracker-survey-preview/0.0.13/survey.html?pid=fePxMy&id=3494">experience questionnaire</a>.
   </li>
 </ul>
 </p>
