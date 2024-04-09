@@ -26,14 +26,16 @@ object DataService {
     @Volatile
     private var isLoaded = false
 
+    private var isLoading = false
+
     fun loadMeta(project: Project): Map<String, String> {
+        isLoading = true
         if (_javaIndex == null) {
             synchronized(this) {
                 if (_javaIndex == null) {
                     _javaIndex = mutableMapOf()
                     ProgressManager.getInstance().run(object : Task.Backgroundable(project, "拉取元数据...", true) {
                         override fun run(indicator: ProgressIndicator) {
-                            // TODO 刷新元数据
                             try {
                                 val productAndVersion = getProduct(project)
                                 getJavaIndex(project, productAndVersion)
@@ -52,6 +54,7 @@ object DataService {
                             super.onSuccess()
                             synchronized(this@DataService) {
                                 isLoaded = true
+                                isLoading = false
                             }
                         }
                     })
@@ -59,6 +62,23 @@ object DataService {
             }
         }
         return _javaIndex!!
+    }
+
+    fun refreshMeta(project: Project) {
+        if (!isLoading) {
+            _javaIndex = null
+            isLoaded = false
+            UnLoadNotificationState.hasShown = false
+            loadMeta(project)
+        } else {
+            NormalNotification.showMessage(
+                project,
+                NotificationGroups.NETWORK_NOTIFICATION_GROUP,
+                "正在拉取元数据",
+                "请稍后重试",
+                NotificationType.WARNING
+            )
+        }
     }
 
     fun getProduct(project: Project): MutableMap<String, String> {
@@ -156,4 +176,8 @@ object DataService {
     fun isDataLoaded(): Boolean {
         return isLoaded
     }
+}
+
+object UnLoadNotificationState {
+    var hasShown = false
 }

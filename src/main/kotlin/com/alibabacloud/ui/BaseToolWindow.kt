@@ -3,6 +3,7 @@ package com.alibabacloud.ui
 import com.alibabacloud.api.service.ApiExplorer
 import com.alibabacloud.api.service.ApiPage
 import com.alibabacloud.api.service.SearchHelper
+import com.alibabacloud.api.service.completion.DataService
 import com.alibabacloud.api.service.completion.cacheNameAndVersionFile
 import com.alibabacloud.api.service.constants.ApiConstants
 import com.alibabacloud.api.service.constants.NotificationGroups
@@ -14,9 +15,12 @@ import com.alibabacloud.models.credentials.ConfigureFile
 import com.alibabacloud.telemetry.ExperienceQuestionnaire
 import com.google.gson.JsonArray
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -35,6 +39,8 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.io.File
 import java.io.IOException
+import java.net.URI
+import java.time.LocalDateTime
 import javax.swing.*
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
@@ -56,7 +62,8 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         val collapsibleInputPanel = CollapsibleInputPanel(project)
         contentPanel.add(collapsibleInputPanel, BorderLayout.NORTH)
 
-        val addProfileToolWindowAction = AddProfileToolWindowAction(collapsibleInputPanel)
+        val addProfileAction = AddProfileAction(collapsibleInputPanel)
+        val feedbackAction = FeedbackAction()
         credentialsContentListener(project, collapsibleInputPanel, comboBox)
 
         val searchField = SearchTextField()
@@ -65,11 +72,34 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         searchField.maximumSize = Dimension(Integer.MAX_VALUE, 50)
         contentPanel.add(searchField)
 
-        val refreshLeftToolWindowAction = RefreshLeftToolWindowAction(project, contentPanel, searchField)
-        refreshLeftToolWindowAction.templatePresentation.icon = AllIcons.Actions.Refresh
-        refreshLeftToolWindowAction.templatePresentation.text = "Refresh Product List"
-        val addProfileAction = listOf(addProfileToolWindowAction, refreshLeftToolWindowAction)
-        toolWindow.setTitleActions(addProfileAction)
+        val refreshProductAction = RefreshProductAction(project, contentPanel, searchField)
+        refreshProductAction.templatePresentation.text = "Refresh Product List"
+
+        val refreshMetaDataAction = RefreshMetaDataAction()
+        refreshMetaDataAction.templatePresentation.text = "Reload Metadata"
+
+        val viewDocumentationAction = ViewDocumentationAction()
+        viewDocumentationAction.templatePresentation.text = "View Documentation"
+
+        val viewSourceCodeAction = ViewSourceCodeAction()
+        viewSourceCodeAction.templatePresentation.icon = AllIcons.Vcs.Vendors.Github
+        viewSourceCodeAction.templatePresentation.text = "View Source on GitHub"
+
+        val newIssueAction = NewIssueAction()
+        newIssueAction.templatePresentation.icon = AllIcons.Vcs.Vendors.Github
+        newIssueAction.templatePresentation.text = "New Issue on GitHub"
+
+
+        toolWindow.setTitleActions(listOf(addProfileAction, feedbackAction))
+        toolWindow.setAdditionalGearActions(
+            DefaultActionGroup().apply {
+                add(refreshProductAction)
+                add(refreshMetaDataAction)
+                add(viewDocumentationAction)
+                add(viewSourceCodeAction)
+                add(newIssueAction)
+            }
+        )
 
         val cacheTreeFile = File(ApiConstants.CACHE_PATH, "tree1")
         var cacheNameAndVersionMap: MutableMap<String, List<String>>? = null
@@ -168,7 +198,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         })
     }
 
-    private fun productClickListener(
+    fun productClickListener(
         project: Project,
         tree: JTree,
         nameAndVersionMap: MutableMap<String, List<String>>,
@@ -194,7 +224,8 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                         productName = it.destructured.component2()
                     }
                     val defaultVersion = nameAndVersionMap[productNameCN]?.get(2) ?: ""
-                    val apiUrl = "https://api.aliyun.com/api/product/apiDir?product=$productName&version=$defaultVersion"
+                    val apiUrl =
+                        "https://api.aliyun.com/api/product/apiDir?product=$productName&version=$defaultVersion"
                     val cacheApiDataFile = File(ApiConstants.CACHE_PATH, "$productName-api-list")
                     val cacheApiData: JsonArray?
                     var apiData: JsonArray? = null
@@ -335,7 +366,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         return Pair(selectionModel, tree)
     }
 
-    private class AddProfileToolWindowAction(private val collapsibleInputPanel: CollapsibleInputPanel) :
+    private class AddProfileAction(private val collapsibleInputPanel: CollapsibleInputPanel) :
         AnAction("New Profile", "New profile", AllIcons.General.User) {
         override fun actionPerformed(e: AnActionEvent) {
             collapsibleInputPanel.clearFields()
@@ -343,7 +374,16 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         }
     }
 
-    private class RefreshLeftToolWindowAction(
+    private class FeedbackAction : AnAction("Feedback", "Feedback", AllIcons.Actions.Help) {
+        override fun actionPerformed(e: AnActionEvent) {
+            BrowserUtil.browse(URI("https://g.alicdn.com/aes/tracker-survey-preview/0.0.13/survey.html?pid=fePxMy&id=3494"))
+            val properties = PropertiesComponent.getInstance()
+            properties.setValue(ExperienceQuestionnaire.QUESTIONNAIRE_EXPIRATION_KEY, 30 * 24, 30 * 24)
+            properties.setValue(ExperienceQuestionnaire.QUESTIONNAIRE_LAST_PROMPT_KEY, LocalDateTime.now().toString())
+        }
+    }
+
+    private class RefreshProductAction(
         val project: Project,
         val contentPanel: JPanel,
         val searchField: SearchTextField
@@ -378,6 +418,32 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
             })
         }
     }
+
+    private class RefreshMetaDataAction : AnAction() {
+        override fun actionPerformed(e: AnActionEvent) {
+            val project = e.project ?: return
+            DataService.refreshMeta(project)
+        }
+    }
+
+    private class ViewDocumentationAction : AnAction() {
+        override fun actionPerformed(e: AnActionEvent) {
+            BrowserUtil.browse(URI("https://help.aliyun.com/zh/openapi/user-guide/using-the-alibaba-cloud-developer-toolkit-plugin-in-jetbrains-ides"))
+        }
+    }
+
+    private class ViewSourceCodeAction : AnAction() {
+        override fun actionPerformed(e: AnActionEvent) {
+            BrowserUtil.browse(URI("https://github.com/aliyun/alibabacloud-api-jetbrains-toolkit"))
+        }
+    }
+
+    private class NewIssueAction : AnAction() {
+        override fun actionPerformed(e: AnActionEvent) {
+            BrowserUtil.browse(URI("https://github.com/aliyun/alibabacloud-api-jetbrains-toolkit/issues"))
+        }
+    }
+
 
     private class RefreshRightToolWindowAction(
         val apiDocContent: Content,
