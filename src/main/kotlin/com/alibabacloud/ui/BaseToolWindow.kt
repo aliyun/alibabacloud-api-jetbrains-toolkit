@@ -11,6 +11,7 @@ import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.credentials.util.ConfigFileUtil
 import com.alibabacloud.models.credentials.ConfigureFile
+import com.alibabacloud.telemetry.ExperienceQuestionnaire
 import com.google.gson.JsonArray
 import com.intellij.icons.AllIcons
 import com.intellij.notification.NotificationType
@@ -116,6 +117,8 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
             val content = factory.createContent(contentPanel, null, false)
             toolWindow.contentManager.addContent(content)
         }
+
+        ExperienceQuestionnaire(project).checkAndShowNotification()
     }
 
     private fun credentialsContentListener(
