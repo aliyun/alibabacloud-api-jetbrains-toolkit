@@ -1,3 +1,9 @@
+2024-04-10 Version: 0.0.5
+1. Support optional code snippets.
+2. Launch experience satisfaction questionnaire survey.
+3. Optimized the interface of explorer.
+4. Fix some issues.
+
 2024-02-02 Version: 0.0.4
 1. Support SDK code sample auto-completion.
 2. Support switch user profiles through statusBar.

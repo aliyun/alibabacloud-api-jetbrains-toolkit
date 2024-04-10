@@ -91,6 +91,13 @@
     </actions>
 
     <change-notes><![CDATA[
+    <b>0.0.5 (2024-04-10)</b>
+      <ul>
+        <li>Support optional code snippets.</li>
+        <li>Launch experience satisfaction questionnaire survey.</li>
+        <li>Optimized the interface of explorer.</li>
+        <li>Fix some issues.</li>
+      </ul>
     <b>0.0.4 (2024-02-02)</b>
       <ul>
         <li>Support SDK code sample auto-completion.</li>
