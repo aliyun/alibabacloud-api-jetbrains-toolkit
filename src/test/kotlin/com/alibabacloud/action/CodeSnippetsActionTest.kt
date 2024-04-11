@@ -29,10 +29,10 @@ internal class CodeSnippetsActionTest : BasePlatformTestCase() {
 
     fun `test actionPerformed should toggle completion state`() {
         val settings = ToolkitSettingsState.getInstance()
-        val initialState = settings.isCompletionEnabled()
+        val initialState = settings.isCompletionEnabled
 
         action.actionPerformed(anActionEvent)
-        val afterState = settings.isCompletionEnabled()
+        val afterState = settings.isCompletionEnabled
 
         assertEquals(initialState, true)
         assertEquals(afterState, false)
@@ -41,11 +41,11 @@ internal class CodeSnippetsActionTest : BasePlatformTestCase() {
     fun `test update should change presentation text based on state`() {
         val settings = ToolkitSettingsState.getInstance()
 
-        settings.setCompletion(true)
+        settings.isCompletionEnabled = true
         action.update(anActionEvent)
         assertEquals("Disable Alibaba Cloud SDK code auto-completion", anActionEvent.presentation.text)
 
-        settings.setCompletion(false)
+        settings.isCompletionEnabled = false
         action.update(anActionEvent)
         assertEquals("Enable Alibaba Cloud SDK code auto-completion", anActionEvent.presentation.text)
     }

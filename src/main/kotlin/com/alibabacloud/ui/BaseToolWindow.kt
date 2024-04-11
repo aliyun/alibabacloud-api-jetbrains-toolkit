@@ -89,7 +89,6 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         newIssueAction.templatePresentation.icon = AllIcons.Vcs.Vendors.Github
         newIssueAction.templatePresentation.text = "New Issue on GitHub"
 
-
         toolWindow.setTitleActions(listOf(addProfileAction, feedbackAction))
         toolWindow.setAdditionalGearActions(
             DefaultActionGroup().apply {
@@ -204,9 +203,6 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         nameAndVersionMap: MutableMap<String, List<String>>,
     ) {
         val selectionModel = tree.selectionModel
-        val apiPanel = JPanel()
-        apiPanel.layout = BoxLayout(apiPanel, BoxLayout.Y_AXIS)
-
         var apiDocContent: Content? = null
         var apiName: String
 
@@ -282,16 +278,16 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                         if (selectedApi != null) {
                             apiName = (selectedApi.userObject as String).split("  ", limit = 2)[0]
                             if (selectedApi.isLeaf) {
-                                if (apiDocContent == null) {
-                                    apiDocContent = toolWindow.contentManager.factory.createContent(
-                                        apiPanel,
-                                        "API: $apiName",
-                                        false,
-                                    )
-                                    contentManager.addContent(apiDocContent!!)
-                                } else {
-                                    apiDocContent!!.displayName = "API: $apiName"
-                                }
+                                val apiPanel = JPanel()
+                                apiPanel.layout = BoxLayout(apiPanel, BoxLayout.Y_AXIS)
+
+                                apiDocContent = toolWindow.contentManager.factory.createContent(
+                                    apiPanel,
+                                    "API: $apiName",
+                                    false,
+                                )
+                                contentManager.addContent(apiDocContent!!)
+
                                 ApiPage.showApiDetail(
                                     apiDocContent!!,
                                     contentManager,
