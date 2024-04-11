@@ -9,9 +9,9 @@
 Alibaba Cloud Developer Toolkit for JetBrains 让您访问阿里云服务更加便捷.
 
 ## 支持的 IDE
-IntelliJ IDEA(Ultimate, Community) 2022.2 ~ 2023.3
+IntelliJ IDEA(Ultimate, Community) 2022.2 ~ 2024.1
 
-Pycharm (Professional, Community) 2022.2 ~ 2023.3
+Pycharm (Professional, Community) 2022.2 ~ 2024.1
 
 GoLand 2022.2 ~ 2023.3
 

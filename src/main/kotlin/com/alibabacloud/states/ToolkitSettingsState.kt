@@ -7,9 +7,10 @@ import com.intellij.openapi.components.*
     name = "com.alibabacloud.states.ToolkitSettingsState",
     storages = [Storage("alibabacloud-developer-toolkit-settings.xml")]
 )
-class ToolkitSettingsState : PersistentStateComponent<ToolkitSettingsState.State> {
+class ToolkitSettingsState : PersistentStateComponent<ToolkitSettingsState.State>, ToolkitSettings {
     data class State(
-        var isCompletionEnabled: Boolean = true
+        var isCompletionEnabled: Boolean = true,
+        var isAutoUpdateEnabled: Boolean = true
     )
 
     private var toolkitState = State()
@@ -20,17 +21,27 @@ class ToolkitSettingsState : PersistentStateComponent<ToolkitSettingsState.State
         toolkitState = state
     }
 
-    fun setCompletion(isCompletionEnabled: Boolean) {
-        toolkitState.isCompletionEnabled = isCompletionEnabled
-    }
+    override var isCompletionEnabled: Boolean
+        get() = state.isCompletionEnabled
+        set(isCompletionEnabled) {
+            toolkitState.isCompletionEnabled = isCompletionEnabled
+        }
 
-    fun isCompletionEnabled(): Boolean {
-        return toolkitState.isCompletionEnabled
-    }
+    override var isAutoUpdateEnabled: Boolean
+        get() = state.isAutoUpdateEnabled
+        set(isAutoUpdateEnabled) {
+            toolkitState.isAutoUpdateEnabled = isAutoUpdateEnabled
+        }
+
 
     companion object {
         fun getInstance(): ToolkitSettingsState {
             return service()
         }
     }
+}
+
+interface ToolkitSettings {
+    var isCompletionEnabled: Boolean
+    var isAutoUpdateEnabled: Boolean
 }

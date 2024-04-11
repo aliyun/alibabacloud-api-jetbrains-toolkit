@@ -62,6 +62,12 @@
         />
         <statusBarWidgetFactory id="AlibabaCloud" implementation="com.alibabacloud.ui.MyStatusBarWidgetFactory"
                                 order="after encodingWidget"/>
+
+        <applicationConfigurable groupId="root"
+                                 id="Alibaba Cloud Developer Toolkit Settings"
+                                 displayName="Alibaba Cloud Developer Toolkit"
+                                 instance="com.alibabacloud.settings.ToolkitSettingsConfigurable"/>
+
         <notificationGroup id="AlibabaCloud API: SDK" displayType="BALLOON"/>
         <notificationGroup id="AlibabaCloud API: Debug" displayType="BALLOON"/>
         <notificationGroup id="AlibabaCloud API: Dependencies" displayType="BALLOON"/>
@@ -70,8 +76,11 @@
         <notificationGroup id="AlibabaCloud API: Network" displayType="BALLOON"/>
         <notificationGroup id="AlibabaCloud API: Cache" displayType="BALLOON"/>
         <notificationGroup id="AlibabaCloud API: Questionnaire" displayType="BALLOON"/>
-        <completion.contributor language="JAVA" implementationClass="com.alibabacloud.api.service.completion.JavaSdkCompletionContributor"/>
+        <notificationGroup id="Alibaba Cloud Developer Toolkit Update Installed" displayType="BALLOON"/>
+        <completion.contributor language="JAVA"
+                                implementationClass="com.alibabacloud.api.service.completion.JavaSdkCompletionContributor"/>
         <postStartupActivity implementation="com.alibabacloud.api.service.startactivity.StartPullMeta"/>
+        <postStartupActivity implementation="com.alibabacloud.toolkit.ToolkitUpdate"/>
     </extensions>
 
     <extensions defaultExtensionNs="alibabacloud.cli">
@@ -79,13 +88,17 @@
     </extensions>
 
     <actions>
-        <group id="alibabacloud-developer-editor-menu" text="Alibaba Cloud Developer Toolkit" icon="/icons/logo.svg" description="Alibaba Cloud Developer Toolkit editor menu" popup="true">
+        <group id="alibabacloud-developer-editor-menu"
+               text="Alibaba Cloud Developer Toolkit"
+               icon="/icons/logo.svg"
+               description="Alibaba Cloud Developer Toolkit editor menu"
+               popup="true">
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
             <action id="CodeSnippetsAction"
                     class="com.alibabacloud.action.CodeSnippetsAction"
                     icon="/icons/api.svg"
                     description="SDK Code Snippets switch">
-            <keyboard-shortcut first-keystroke="control meta p" keymap="$default"/>
+                <keyboard-shortcut first-keystroke="control meta p" keymap="$default"/>
             </action>
         </group>
     </actions>

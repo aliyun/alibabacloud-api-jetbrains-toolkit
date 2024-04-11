@@ -9,9 +9,9 @@ English | [简体中文](./README-CN.md)
 The Alibaba Cloud Developer Toolkit for JetBrains makes it easier to access Alibaba Cloud services.
 
 ## Supported IDEs
-IntelliJ IDEA(Ultimate, Community) 2022.2 ~ 2023.3
+IntelliJ IDEA(Ultimate, Community) 2022.2 ~ 2024.1
 
-Pycharm (Professional, Community) 2022.2 ~ 2023.3
+Pycharm (Professional, Community) 2022.2 ~ 2024.1
 
 GoLand 2022.2 ~ 2023.3
 
