@@ -7,13 +7,13 @@ internal class ToolkitSettingsStateTest : BasePlatformTestCase() {
     override fun setUp() {
         super.setUp()
         val settingsState = service<ToolkitSettingsState>()
-        settingsState.setCompletion(true)
+        settingsState.isCompletionEnabled = true
     }
 
     override fun tearDown() {
         super.tearDown()
         val settingsState = service<ToolkitSettingsState>()
-        settingsState.setCompletion(true)
+        settingsState.isCompletionEnabled = true
     }
 
     fun `test getState`() {
@@ -28,10 +28,10 @@ internal class ToolkitSettingsStateTest : BasePlatformTestCase() {
         val settingsState = service<ToolkitSettingsState>()
         assertNotNull(settingsState)
 
-        settingsState.setCompletion(false)
-        assertFalse(settingsState.isCompletionEnabled())
+        settingsState.isCompletionEnabled =false
+        assertFalse(settingsState.isCompletionEnabled)
 
-        settingsState.setCompletion(true)
-        assertTrue(settingsState.isCompletionEnabled())
+        settingsState.isCompletionEnabled = true
+        assertTrue(settingsState.isCompletionEnabled)
     }
 }

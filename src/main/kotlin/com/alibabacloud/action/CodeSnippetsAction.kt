@@ -7,8 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 
 class CodeSnippetsAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
-        val settings = ToolkitSettingsState.getInstance()
-        settings.setCompletion(!settings.isCompletionEnabled())
+        ToolkitSettingsState.getInstance().isCompletionEnabled = !ToolkitSettingsState.getInstance().isCompletionEnabled
     }
 
     override fun update(e: AnActionEvent) {

@@ -28,7 +28,7 @@ class ExperienceQuestionnaire(private val project: Project) {
         if (lastPromptTime == null || timeSinceLastPrompt >= expirationHours) {
             NormalNotification.showExperienceQuestionnaire(project,
                 NotificationGroups.QUESTIONNAIRE_NOTIFICATION_GROUP,
-                "",
+                "Alibaba Cloud Developer Toolkit",
                 "您在使用插件期间是否遇到问题？欢迎吐槽或点赞，您的反馈对我们十分重要！",
                 NotificationType.INFORMATION,
                 feedbackAction = {
