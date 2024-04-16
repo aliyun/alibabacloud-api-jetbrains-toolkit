@@ -1,6 +1,7 @@
 package com.alibabacloud.ui
 
 import com.alibabacloud.credentials.util.ConfigFileUtil
+import com.alibabacloud.icons.ToolkitIcons
 import com.alibabacloud.models.credentials.ConfigureFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -45,7 +46,7 @@ class MyStatusBarWidgetFactory : StatusBarWidgetFactory {
         override fun ID(): String = "Alibaba Cloud Widget"
 
         @JvmField
-        val myIcon: Icon = IconLoader.getIcon("/icons/statusbar.svg", javaClass)
+        val myIcon = ToolkitIcons.STATUSBAR_ICON
 
         override fun install(statusBar: StatusBar) {
             this.statusBar = statusBar

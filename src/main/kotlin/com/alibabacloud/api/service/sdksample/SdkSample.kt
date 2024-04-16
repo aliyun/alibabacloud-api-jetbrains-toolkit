@@ -4,7 +4,7 @@ import com.alibabacloud.api.service.OkHttpClientProvider
 import com.alibabacloud.api.service.constants.ApiConstants
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
-import com.alibabacloud.api.service.util.DepsUtil
+import com.alibabacloud.api.service.sdksample.util.AutoInstallPkgUtil
 import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.api.service.util.RequestUtil
 import com.google.gson.Gson
@@ -42,7 +42,6 @@ import org.cef.handler.CefLoadHandler
 import org.cef.handler.CefLoadHandlerAdapter
 import org.cef.network.CefRequest
 import java.awt.BorderLayout
-import java.awt.Desktop
 import java.awt.FlowLayout
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -80,21 +79,13 @@ class SdkSample {
             scrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
 
             var installUrl: String
-            var codeUrl = "https://github.com/aliyun/alibabacloud-java-sdk/tree/master/${productName.lowercase()}-${
-                defaultVersion.replace(
-                    "-", ""
-                )
-            }"
-            var commandUrl =
-                "https://api.aliyun.com/api/sdk/product/docNew?product=$productName&version=$defaultVersion&language=java-tea&lang=zh_CN"
+            var codeUrl = "https://github.com/aliyun/alibabacloud-java-sdk/tree/master/${productName.lowercase()}-${defaultVersion.replace("-", "")}"
 
             when (ideName) {
                 "PyCharm" -> {
                     val demoSdkPy =
-                        if (demoSdkObject.size() == 0) "SDK 示例生成出错，请联系支持群开发同学解决" else demoSdkObject.get(
-                            "python"
-                        )?.asString
-                            ?: "暂不支持该语言"
+                        if (demoSdkObject.size() == 0) ApiConstants.CODE_GENERATE_ERROR else demoSdkObject.get("python")?.asString
+                            ?: ApiConstants.CODE_LANG_NOT_SUPPORT
                     editor = createEditorWithPsiFile(project, apiName, demoSdkPy, "python")
                     langComboBox.selectedItem = "Python"
                     installUrl =
@@ -103,10 +94,8 @@ class SdkSample {
 
                 "GoLand" -> {
                     val demoSdkGo =
-                        if (demoSdkObject.size() == 0) "SDK 示例生成出错，请联系支持群开发同学解决" else demoSdkObject.get(
-                            "go"
-                        )?.asString
-                            ?: "暂不支持该语言"
+                        if (demoSdkObject.size() == 0) ApiConstants.CODE_GENERATE_ERROR else demoSdkObject.get("go")?.asString
+                            ?: ApiConstants.CODE_LANG_NOT_SUPPORT
                     editor = createEditorWithPsiFile(project, apiName, demoSdkGo, "go")
                     langComboBox.selectedItem = "Go"
                     installUrl =
@@ -115,10 +104,8 @@ class SdkSample {
 
                 "WebStorm" -> {
                     val demoSdkTs =
-                        if (demoSdkObject.size() == 0) "SDK 示例生成出错，请联系支持群开发同学解决" else demoSdkObject.get(
-                            "typescript"
-                        )?.asString
-                            ?: "暂不支持该语言"
+                        if (demoSdkObject.size() == 0) ApiConstants.CODE_GENERATE_ERROR else demoSdkObject.get("typescript")?.asString
+                            ?: ApiConstants.CODE_LANG_NOT_SUPPORT
                     editor = createEditorWithPsiFile(project, apiName, demoSdkTs, "typescript")
                     langComboBox.selectedItem = "TypeScript"
                     installUrl =
@@ -127,10 +114,8 @@ class SdkSample {
 
                 else -> {
                     val demoSdkJava =
-                        if (demoSdkObject.size() == 0) "SDK 示例生成出错，请联系支持群开发同学解决" else demoSdkObject.get(
-                            "java"
-                        )?.asString
-                            ?: "暂不支持该语言"
+                        if (demoSdkObject.size() == 0) ApiConstants.CODE_GENERATE_ERROR else demoSdkObject.get("java")?.asString
+                            ?: ApiConstants.CODE_LANG_NOT_SUPPORT
                     editor = createEditorWithPsiFile(project, apiName, demoSdkJava, "java")
                     langComboBox.selectedItem = "Java"
                     installUrl =
@@ -168,9 +153,6 @@ class SdkSample {
                             )
                         }"
 
-                    // TODO 暂时只支持Maven依赖导入
-                    commandUrl =
-                        "https://api.aliyun.com/api/sdk/product/docNew?product=$productName&version=$defaultVersion&language=$lang-tea&lang=zh_CN"
                     val demoSdkLang =
                         if (demoSdkObject.size() == 0) "获取示例代码失败，请重试" else demoSdkObject.get(selectedLang.lowercase())?.asString
                             ?: "暂不支持该语言"
@@ -187,7 +169,11 @@ class SdkSample {
 
             val importDependencyButton = JButton("自动导入依赖").apply {
                 addActionListener {
-                    DepsUtil.importMavenDeps(project, commandUrl)
+                    val selectedLang = langComboBox.selectedItem as String
+                    val lang = selectedLang.lowercase()
+                    val lastSdkInfo = AutoInstallPkgUtil.getLastSdkInfo(project, productName, defaultVersion)
+                    // TODO 暂时只支持 Maven 和 Python 依赖导入
+                    AutoInstallPkgUtil.autoImport(project, lang, productName, defaultVersion, lastSdkInfo)
                 }
             }
 

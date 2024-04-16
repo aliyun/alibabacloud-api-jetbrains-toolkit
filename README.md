@@ -9,9 +9,9 @@ English | [简体中文](./README-CN.md)
 The Alibaba Cloud Developer Toolkit for JetBrains makes it easier to access Alibaba Cloud services.
 
 ## Supported IDEs
-IntelliJ IDEA(Ultimate, Community) 2022.2 ~ 2023.3
+IntelliJ IDEA(Ultimate, Community) 2022.2 ~ 2024.1
 
-Pycharm (Professional, Community) 2022.2 ~ 2023.3
+Pycharm (Professional, Community) 2022.2 ~ 2024.1
 
 GoLand 2022.2 ~ 2023.3
 
@@ -41,11 +41,10 @@ GoLand 2022.2 ~ 2023.3
 * **API Debug:** Support convenient API debugging within the IDE against the parameter form.
 
 
-* **SDK Code Sample View:** Support viewing, quickly opening SDK code samples (Java and Java Async) and automatic import
-  of Maven dependencies.
+* **SDK Code Sample View:** Support viewing, quickly opening SDK code samples and automatic import of Maven and Python dependencies.
 
 
-* **SDK Code Sample Auto-completion:** Support auto-completion of Java and Java Async SDK code sample. Switch on and off by keyboard shortcuts `ctrl + cmd + p`.
+* **SDK Code Sample Auto-completion:** Support auto-completion of Java, Java Async and Python SDK code sample. Switch on and off by keyboard shortcuts `ctrl + cmd + p`.
 
 
 * See the [user guide](https://help.aliyun.com/zh/openapi/user-guide/using-the-alibaba-cloud-developer-toolkit-plugin-in-jetbrains-ides)

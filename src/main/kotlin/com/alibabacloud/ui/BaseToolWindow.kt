@@ -11,6 +11,7 @@ import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.credentials.util.ConfigFileUtil
+import com.alibabacloud.icons.ToolkitIcons
 import com.alibabacloud.models.credentials.ConfigureFile
 import com.alibabacloud.telemetry.ExperienceQuestionnaire
 import com.google.gson.JsonArray
@@ -252,13 +253,12 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                         }
                     }
 
-                    val myIcon: Icon = IconLoader.getIcon("/icons/toolwindow.svg", javaClass)
                     val existToolWindow =
                         ToolWindowManager.getInstance(project).getToolWindow(ApiConstants.TOOLWINDOW_APIS)
                     val toolWindow: ToolWindow
                     if (existToolWindow == null) {
                         val builder: RegisterToolWindowTaskBuilder.() -> Unit = {
-                            icon = myIcon
+                            icon = ToolkitIcons.TOOLWINDOW_ICON
                             anchor = ToolWindowAnchor.RIGHT
                             canCloseContent = true
                         }
@@ -331,7 +331,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         apiData: JsonArray,
         toolWindow: ToolWindow,
     ): Pair<TreeSelectionModel, Tree> {
-        val icon = IconLoader.getIcon("/icons/toolwindow.svg", BaseToolWindow::class.java)
+        val icon = ToolkitIcons.TOOLWINDOW_ICON
         toolWindow.setIcon(icon)
 
         val contentManager = toolWindow.contentManager

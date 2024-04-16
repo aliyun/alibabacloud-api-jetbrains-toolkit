@@ -34,11 +34,10 @@
     <strong>API Debug:</strong> Support convenient API debugging within the IDE against the parameter form.
   </li>
   <li>
-    <strong>SDK Code Sample View:</strong> Support viewing, quickly opening SDK code samples (Java and Java Async) and automatic import
-    of Maven dependencies.
+    <strong>SDK Code Sample View:</strong> Support viewing, quickly opening SDK code samples and automatic import of Maven and Python dependencies.
   </li>
   <li>
-    <strong>SDK Code Sample Auto-completion:</strong> Support auto-completion of Java and Java Async SDK code sample. Switch on and
+    <strong>SDK Code Sample Auto-completion:</strong> Support auto-completion of Java, Java Async and Python SDK code sample. Switch on and
     off by keyboard shortcuts <code>ctrl + cmd + p</code>.
   </li>
   <li>
@@ -52,6 +51,7 @@
 
     <depends>com.intellij.modules.platform</depends>
     <depends optional="true">com.intellij.modules.java</depends>
+    <depends optional="true">com.intellij.modules.python</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="Alibaba Cloud Developer Toolkit"
@@ -78,7 +78,9 @@
         <notificationGroup id="AlibabaCloud API: Questionnaire" displayType="BALLOON"/>
         <notificationGroup id="Alibaba Cloud Developer Toolkit Update Installed" displayType="BALLOON"/>
         <completion.contributor language="JAVA"
-                                implementationClass="com.alibabacloud.api.service.completion.JavaSdkCompletionContributor"/>
+                                implementationClass="com.alibabacloud.api.service.completion.java.JavaSdkCompletionContributor"/>
+        <completion.contributor language="Python"
+                                implementationClass="com.alibabacloud.api.service.completion.python.PythonSdkCompletionContributor"/>
         <postStartupActivity implementation="com.alibabacloud.api.service.startactivity.StartPullMeta"/>
         <postStartupActivity implementation="com.alibabacloud.toolkit.ToolkitUpdate"/>
     </extensions>
