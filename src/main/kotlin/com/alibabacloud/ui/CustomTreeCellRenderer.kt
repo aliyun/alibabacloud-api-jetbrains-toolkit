@@ -1,5 +1,6 @@
 package com.alibabacloud.ui
 
+import com.alibabacloud.icons.ToolkitIcons
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.JBColor
 import java.awt.Color
@@ -22,8 +23,8 @@ class CustomTreeCellRenderer : DefaultTreeCellRenderer() {
         super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
 
         val node = value as? DefaultMutableTreeNode
-        val regularIcon: Icon = IconLoader.getIcon("/icons/api.svg", javaClass)
-        val selectedIcon: Icon = IconLoader.getIcon("/icons/api-selected.svg", javaClass)
+        val regularIcon = ToolkitIcons.API_ICON
+        val selectedIcon = ToolkitIcons.API_SELECTED_ICON
 
         node?.let {
             val nodeData = it.userObject as? String

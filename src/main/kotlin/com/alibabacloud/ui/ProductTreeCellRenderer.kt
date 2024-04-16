@@ -1,5 +1,6 @@
 package com.alibabacloud.ui
 
+import com.alibabacloud.icons.ToolkitIcons
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.JBColor
 import java.awt.Color
@@ -22,8 +23,6 @@ class ProductTreeCellRenderer : DefaultTreeCellRenderer() {
         super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
 
         val node = value as? DefaultMutableTreeNode
-        val productIcon: Icon = IconLoader.getIcon("/icons/product.svg", javaClass)
-
         node?.let {
             val nodeData = it.userObject as? String
             if (leaf) {
@@ -31,7 +30,7 @@ class ProductTreeCellRenderer : DefaultTreeCellRenderer() {
                 val name = parts?.getOrNull(0) ?: ""
                 val code = parts?.getOrNull(1) ?: ""
                 text = "<html>$name <span style='font-size:smaller; color:gray;'>$code</span></html>"
-                icon = productIcon
+                icon = ToolkitIcons.PRODUCT_ICON
             } else {
                 icon = null
             }

@@ -36,8 +36,8 @@ dependencies {
 
 intellij {
     version.set(System.getenv("INTELLIJ_VERSION") ?: "2022.2.5")
-    type.set(System.getenv("INTELLIJ_TYPE") ?: "IC")
-    plugins.set(listOf("com.intellij.java"))
+    type.set(System.getenv("INTELLIJ_TYPE") ?: "IU")
+    plugins.set(listOf("com.intellij.java", "Pythonid:222.4554.10"))
 }
 
 tasks {
