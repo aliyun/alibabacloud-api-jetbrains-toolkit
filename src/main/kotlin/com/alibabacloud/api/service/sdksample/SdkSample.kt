@@ -42,6 +42,7 @@ import org.cef.handler.CefLoadHandler
 import org.cef.handler.CefLoadHandlerAdapter
 import org.cef.network.CefRequest
 import java.awt.BorderLayout
+import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -67,6 +68,12 @@ class SdkSample {
             sdkPanel.revalidate()
             sdkPanel.repaint()
             val headPanel = JPanel(FlowLayout(FlowLayout.LEFT))
+            val headScrollPane = JBScrollPane(headPanel).apply {
+                horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
+                verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
+            }
+            headScrollPane.minimumSize = Dimension(0, 0)
+            headPanel.minimumSize = Dimension(0, 0)
             val languages = arrayOf("Java-async", "Java", "Python", "TypeScript", "Go", "PHP")
             val langComboBox = ComboBox(languages)
 
@@ -184,8 +191,9 @@ class SdkSample {
             headPanel.add(openFileButton)
             headPanel.add(importDependencyButton)
 
-            sdkPanel.add(headPanel, BorderLayout.NORTH)
+            sdkPanel.add(headScrollPane, BorderLayout.NORTH)
             sdkPanel.add(scrollPane, BorderLayout.CENTER)
+            sdkPanel.minimumSize = Dimension(0, 0)
         }
 
         private fun sdkSampleButton(buttonText: String, getButtonUrl: () -> String): JButton {

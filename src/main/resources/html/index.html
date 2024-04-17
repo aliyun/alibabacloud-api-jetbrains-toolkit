@@ -1,13 +1,21 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <script type="text/javascript">
-    window.apiMeta = encodeURI(JSON.stringify($APIMETA));
     window.definitions = encodeURI(JSON.stringify($DEFS));
 </script>
 <head>
-    <link href="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/static/css/v0.0.3/vendor.css" rel="stylesheet"/>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alibaba Cloud API Toolkit UI</title>
+    <input type="hidden" id="router-meta-data" value="${encodeURI(JSON.stringify(pageConfig))}">
+    <link rel="stylesheet" href="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/static/css/v0.0.6/vendor.css">
 </head>
 <body>
 <div id="root"></div>
-<script src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/static/js/v0.0.3/vendor.js"></script>
+<script>
+    document.getElementById('router-meta-data').value = encodeURI(JSON.stringify($APIMETA))
+    const acquireVsCodeApi = () => {}
+</script>
+<script src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/static/css/v0.0.6/vendor.js"></script>
 </body>
 </html>
