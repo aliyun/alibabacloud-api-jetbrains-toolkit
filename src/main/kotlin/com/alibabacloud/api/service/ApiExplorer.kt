@@ -48,11 +48,12 @@ class ApiExplorer {
                         root.add(parentNode)
                         addChildrenToNode(children, parentNode)
                     } else {
+                        val isDeprecated = if ((element.get("deprecated")?.asInt ?: 0) == 1) " [Deprecated]" else ""
                         val nodeText =
                             if (element.has(ApiConstants.API_DIR_RESPONSE_TITLE) && !element.get(ApiConstants.API_DIR_RESPONSE_TITLE).isJsonNull) {
-                                "$name  ${element.get(ApiConstants.API_DIR_RESPONSE_TITLE).asString}"
+                                "$name  ${element.get(ApiConstants.API_DIR_RESPONSE_TITLE).asString}$isDeprecated"
                             } else {
-                                "$name  暂无描述"
+                                "$name  暂无描述$isDeprecated"
                             }
                         val apiNode = DefaultMutableTreeNode(nodeText)
                         root.add(apiNode)
@@ -92,11 +93,13 @@ class ApiExplorer {
                         val grandchildren = element.get(ApiConstants.API_DIR_RESPONSE_CHILDREN) as JsonArray
                         addChildrenToNode(grandchildren, childNode)
                     } else {
-                        val nodeText = if (element.has(ApiConstants.API_DIR_RESPONSE_TITLE) && !element.get(ApiConstants.API_DIR_RESPONSE_TITLE).isJsonNull) {
-                            "$name  ${element.get(ApiConstants.API_DIR_RESPONSE_TITLE).asString}"
-                        } else {
-                            "$name  暂无描述"
-                        }
+                        val isDeprecated = if ((element.get("deprecated")?.asInt ?: 0) == 1) " [Deprecated]" else ""
+                        val nodeText =
+                            if (element.has(ApiConstants.API_DIR_RESPONSE_TITLE) && !element.get(ApiConstants.API_DIR_RESPONSE_TITLE).isJsonNull) {
+                                "$name  ${element.get(ApiConstants.API_DIR_RESPONSE_TITLE).asString}$isDeprecated"
+                            } else {
+                                "$name  暂无描述$isDeprecated"
+                            }
                         val apiNode = DefaultMutableTreeNode(nodeText)
                         parent.add(apiNode)
                     }

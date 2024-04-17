@@ -28,7 +28,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.*
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.content.Content
@@ -42,7 +41,10 @@ import java.io.File
 import java.io.IOException
 import java.net.URI
 import java.time.LocalDateTime
-import javax.swing.*
+import javax.swing.BoxLayout
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.JTree
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
 import javax.swing.tree.DefaultMutableTreeNode
@@ -276,11 +278,21 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                     selectionApi.addTreeSelectionListener {
                         val selectedApi = apiTree.lastSelectedPathComponent as? DefaultMutableTreeNode
                         if (selectedApi != null) {
-                            apiName = (selectedApi.userObject as String).split("  ", limit = 2)[0]
+                            val refreshRightToolWindowAction = RefreshRightToolWindowAction(
+                                contentManager,
+                                productName,
+                                defaultVersion,
+                            )
+                            val refreshAction = listOf(refreshRightToolWindowAction)
+                            refreshRightToolWindowAction.templatePresentation.icon = AllIcons.Actions.Refresh
+                            refreshRightToolWindowAction.templatePresentation.text = "Refresh API Doc"
+                            toolWindow.setTitleActions(refreshAction)
+
                             if (selectedApi.isLeaf) {
                                 val apiPanel = JPanel()
                                 apiPanel.layout = BoxLayout(apiPanel, BoxLayout.Y_AXIS)
 
+                                apiName = (selectedApi.userObject as String).split("  ", limit = 2)[0]
                                 apiDocContent = toolWindow.contentManager.factory.createContent(
                                     apiPanel,
                                     "API: $apiName",
@@ -298,19 +310,6 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                                     project,
                                     true,
                                 )
-
-                                val refreshRightToolWindowAction = RefreshRightToolWindowAction(
-                                    apiDocContent!!,
-                                    contentManager,
-                                    apiPanel,
-                                    productName,
-                                    apiName,
-                                    defaultVersion,
-                                )
-                                val refreshAction = listOf(refreshRightToolWindowAction)
-                                refreshRightToolWindowAction.templatePresentation.icon = AllIcons.Actions.Refresh
-                                refreshRightToolWindowAction.templatePresentation.text = "Refresh API Doc"
-                                toolWindow.setTitleActions(refreshAction)
                             }
                         }
                     }
@@ -442,25 +441,27 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
 
 
     private class RefreshRightToolWindowAction(
-        val apiDocContent: Content,
         val contentManager: ContentManager,
-        val apiPanel: JPanel,
         val name: String,
-        val apiName: String,
         val defaultVersion: String,
     ) : AnAction() {
         override fun actionPerformed(e: AnActionEvent) {
             val project = e.project ?: return
-            ApiPage.showApiDetail(
-                apiDocContent,
-                contentManager,
-                apiPanel,
-                name,
-                apiName,
-                defaultVersion,
-                project,
-                false,
-            )
+            val currentContent = contentManager.selectedContent
+            val apiName = currentContent?.displayName?.substringAfter("API: ") ?: ""
+            if (currentContent != null && currentContent.component is JPanel) {
+                val apiPanel = currentContent.component as JPanel
+                ApiPage.showApiDetail(
+                    currentContent,
+                    contentManager,
+                    apiPanel,
+                    name,
+                    apiName,
+                    defaultVersion,
+                    project,
+                    false,
+                )
+            }
         }
     }
 }

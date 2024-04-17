@@ -28,6 +28,7 @@ import java.io.File
 import java.io.IOException
 import javax.swing.JPanel
 import javax.swing.JSplitPane
+import javax.swing.SwingUtilities
 
 
 class ApiPage {
@@ -65,8 +66,6 @@ class ApiPage {
             val sdkPanel = JPanel(BorderLayout())
             val splitPane = JSplitPane(JSplitPane.VERTICAL_SPLIT)
 
-
-
             if (useCache && cacheFile.exists() && cacheMeta.exists() && cacheEndpoints.exists() && cacheFile.length() > 0 && cacheMeta.length() > 0 && cacheEndpoints.length() > 0 && cacheFile.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis() && cacheMeta.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis() && cacheEndpoints.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis()) {
                 try {
                     cacheContent = cacheFile.readText()
@@ -93,7 +92,7 @@ class ApiPage {
                 apiPanel.removeAll()
                 splitPane.apply {
                     isContinuousLayout = true
-                    dividerSize = 10
+                    dividerSize = 5
                     topComponent = browser.component
                 }
                 apiPanel.add(splitPane)
@@ -206,7 +205,7 @@ class ApiPage {
 
                         splitPane.apply {
                             isContinuousLayout = true
-                            dividerSize = 10
+                            dividerSize = 5
                             topComponent = browser.component
                         }
 
