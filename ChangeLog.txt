@@ -1,3 +1,10 @@
+2024-04-18 Version: 0.0.6
+1. Support Python code snippets.
+2. Support auto import of Python packages.
+3. Supports displaying multiple API tabs and wether is deprecated.
+4. Update API page UI Interface.
+5. Support check and upgrade plugin to the latest version when plugin launched with user agreement.
+
 2024-04-10 Version: 0.0.5
 1. Support optional code snippets.
 2. Launch experience satisfaction questionnaire survey.
