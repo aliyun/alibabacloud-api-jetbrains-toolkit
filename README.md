@@ -44,7 +44,8 @@ GoLand 2022.2 ~ 2023.3
 * **SDK Code Sample View:** Support viewing, quickly opening SDK code samples and automatic import of Maven and Python dependencies.
 
 
-* **SDK Code Sample Auto-completion:** Support auto-completion of Java, Java Async and Python SDK code sample. Switch on and off by keyboard shortcuts `ctrl + cmd + p`.
+* **SDK Code Sample Auto-completion:** Support auto-completion of Java, Java Async and Python SDK code sample. Switch on and off 
+  by keyboard shortcuts `ctrl + cmd + p` or check in >settings >Alibaba Cloud Developer Toolkit.
 
 
 * See the [user guide](https://help.aliyun.com/zh/openapi/user-guide/using-the-alibaba-cloud-developer-toolkit-plugin-in-jetbrains-ides)
