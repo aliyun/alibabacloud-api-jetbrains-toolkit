@@ -33,7 +33,7 @@ class ToolkitSettingsConfigurable : SearchableConfigurable {
                 cell(enableCompletion).applyToComponent {
                     this.isSelected = ToolkitSettingsState.getInstance().isCompletionEnabled
                 }
-                text("自动插入 SDK 示例代码")
+                text("自动插入 SDK 示例代码（或通过快捷键 ctrl + cmd + p 切换）")
             }
         }
         group("用户反馈") {
