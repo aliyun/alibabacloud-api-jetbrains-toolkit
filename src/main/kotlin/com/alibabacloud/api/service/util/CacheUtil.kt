@@ -66,14 +66,18 @@ class CacheUtil {
 
         fun cleanExceedCache() {
             val cacheFolder = File(ApiConstants.CACHE_PATH)
-            val files = cacheFolder.listFiles()?.asList()
+            var files = cacheFolder.listFiles()?.asList()
 
             if (files != null && files.size > ApiConstants.MAX_CACHE_NUM) {
                 files.sortedBy { it.lastModified() }
 
-                while (files.size > ApiConstants.MAX_CACHE_NUM) {
+                while (files?.isNotEmpty() == true && files.size > ApiConstants.MAX_CACHE_NUM) {
                     val oldestFile = files.first()
-                    oldestFile.delete()
+                    if (oldestFile.delete()) {
+                        files = cacheFolder.listFiles()?.asList() ?: listOf()
+                    } else {
+                        break
+                    }
                 }
             }
         }

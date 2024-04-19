@@ -28,7 +28,6 @@ import java.io.File
 import java.io.IOException
 import javax.swing.JPanel
 import javax.swing.JSplitPane
-import javax.swing.SwingUtilities
 
 
 class ApiPage {
