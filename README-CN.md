@@ -43,7 +43,7 @@ GoLand 2022.2 ~ 2023.3
 * **SDK 示例代码查看：** 支持查看和快速打开 SDK 示例代码，支持 Maven 和 Python 依赖的自动导入。
 
 
-* **SDK 示例代码自动补全：** 支持 Java，Java 异步和 Python SDK 示例代码的自动补全、插入和依赖导入，可通过快捷键 `ctrl + cmd + p` 
+* **SDK 示例代码自动补全：** 支持 Java，Java 异步， Python 和 Go SDK 示例代码的自动补全、插入和依赖导入，可通过快捷键 `ctrl + cmd + p` 
   或 >设置 >Alibaba Cloud Developer Toolkit 开关此功能。
 
 
