@@ -5,7 +5,6 @@ import com.google.common.reflect.TypeToken
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.util.castSafelyTo
 import java.awt.Color
 import java.awt.Component
 import java.util.*
@@ -116,7 +115,7 @@ class FormatUtil {
                 .registerTypeAdapter(object : TypeToken<Map<String?, Any?>?>() {}.type, MapTypeAdapter())
                 .create()
             val params: Map<String, Any> = gson.fromJson(arg, argsType)
-            val paramsValue = params["paramsValue"].castSafelyTo<Map<String, Any>>()
+            val paramsValue = params["paramsValue"] as Map<String, Any>
             val regionId = params["regionId"].toString()
             return Pair(paramsValue, regionId)
         }

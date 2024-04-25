@@ -52,6 +52,7 @@
     <depends>com.intellij.modules.platform</depends>
     <depends optional="true">com.intellij.modules.java</depends>
     <depends optional="true">com.intellij.modules.python</depends>
+    <depends optional="true">org.jetbrains.plugins.go</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="Alibaba Cloud Developer Toolkit"
@@ -60,8 +61,7 @@
                     secondary="false"
                     icon="/icons/toolwindow.svg"
         />
-        <statusBarWidgetFactory id="AlibabaCloud" implementation="com.alibabacloud.ui.MyStatusBarWidgetFactory"
-                                order="after encodingWidget"/>
+        <statusBarWidgetFactory id="AlibabaCloud" implementation="com.alibabacloud.ui.MyStatusBarWidgetFactory" order="first"/>
 
         <applicationConfigurable groupId="root"
                                  id="Alibaba Cloud Developer Toolkit Settings"
@@ -81,6 +81,8 @@
                                 implementationClass="com.alibabacloud.api.service.completion.java.JavaSdkCompletionContributor"/>
         <completion.contributor language="Python"
                                 implementationClass="com.alibabacloud.api.service.completion.python.PythonSdkCompletionContributor"/>
+        <completion.contributor language="go"
+                                implementationClass="com.alibabacloud.api.service.completion.go.GoSdkCompletionContributor"/>
         <postStartupActivity implementation="com.alibabacloud.api.service.startactivity.StartPullMeta"/>
         <postStartupActivity implementation="com.alibabacloud.toolkit.ToolkitUpdate"/>
     </extensions>
