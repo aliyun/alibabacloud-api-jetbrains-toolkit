@@ -121,18 +121,11 @@ abstract class SdkCompletionContributor : CompletionContributor() {
         document: Document,
         context: InsertionContext,
         snippet: String,
-        importList: JsonArray
+        importList: JsonArray,
+        lang: String
     ) {
         WriteCommandAction.runWriteCommandAction(context.project) {
-            for (refText in importList) {
-                val ref = refText.asString
-                val documentText = document.text
-                if (!documentText.contains(ref)) {
-                    val packageInsertOffset = document.getLineStartOffset(0)
-                    val importSnippet = "$ref\n"
-                    document.insertString(packageInsertOffset, importSnippet)
-                }
-            }
+            insertImportList(importList, document, lang)
 
             val startOffset = context.startOffset
             val tailOffset = context.tailOffset
@@ -146,6 +139,50 @@ abstract class SdkCompletionContributor : CompletionContributor() {
             document.deleteString(startOffset, tailOffset)
             document.insertString(startOffset, indentedSnippet)
             context.editor.caretModel.moveToOffset(startOffset + indentedSnippet.length)
+        }
+    }
+
+    private fun insertImportList(importList: JsonArray, document: Document, lang: String) {
+        if (lang == "java" || lang == "java-async" || lang == "python") {
+            for (refText in importList) {
+                val ref = refText.asString
+                val documentText = document.text
+                if (!documentText.contains(ref)) {
+                    val packageInsertOffset = document.getLineStartOffset(0)
+                    document.insertString(packageInsertOffset, "$ref\n")
+                }
+            }
+        } else if (lang == "go") {
+            val documentText = document.text
+            val existingImportBlockMatch = Regex("import \\([^)]+\\)").find(documentText)
+            if (existingImportBlockMatch != null) {
+                val importBlockContent = existingImportBlockMatch.groupValues[0]
+                val importBlockStartOffset = existingImportBlockMatch.range.first + "import (".length
+
+                val firstNonWhitespaceAfterImport =
+                    documentText.substring(importBlockStartOffset).indexOf("\n", importBlockStartOffset)
+                val actualInsertOffset = importBlockStartOffset + firstNonWhitespaceAfterImport + 1
+
+                val reversedList = importList.drop(1).dropLast(1).reversed()
+                for (refText in reversedList) {
+                    val ref = refText.asString
+                    if (!importBlockContent.contains(ref)) {
+                        document.insertString(actualInsertOffset, "$ref\n")
+                    }
+                }
+            } else {
+                val packagePattern = Regex("package\\s+\\w+\\s*\\n")
+                val matchResult = packagePattern.find(documentText)
+                val packageInsertOffset = matchResult?.range?.last?.plus(1) ?: document.getLineStartOffset(0)
+                document.insertString(packageInsertOffset, "\n")
+
+                val reversedList = importList.reversed()
+                for (refText in reversedList) {
+                    val ref = refText.asString
+                    document.insertString(packageInsertOffset, "$ref\n")
+
+                }
+            }
         }
     }
 
@@ -212,16 +249,16 @@ abstract class SdkCompletionContributor : CompletionContributor() {
             }
         }
         ProgressManager.getInstance().run(object : Task.Backgroundable(project, "拉取示例代码...", true) {
-                override fun run(indicator: ProgressIndicator) {
-                    indicator.isIndeterminate = true
-                    sdkInfo = getDemoSdk(project, document, OkHttpClientProvider.instance, request, lang)
-                    demoSdk = sdkInfo[0].asString
-                    importList = sdkInfo[1].asJsonArray
-                    ApplicationManager.getApplication().invokeLater {
-                        insertCodeSnippet(document, insertionContext, demoSdk, importList)
-                        callback(sdkInfo)
-                    }
+            override fun run(indicator: ProgressIndicator) {
+                indicator.isIndeterminate = true
+                sdkInfo = getDemoSdk(project, document, OkHttpClientProvider.instance, request, lang)
+                demoSdk = sdkInfo[0].asString
+                importList = sdkInfo[1].asJsonArray
+                ApplicationManager.getApplication().invokeLater {
+                    insertCodeSnippet(document, insertionContext, demoSdk, importList, lang)
+                    callback(sdkInfo)
                 }
+            }
         })
     }
 
