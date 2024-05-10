@@ -108,6 +108,11 @@
     </actions>
 
     <change-notes><![CDATA[
+    <b>0.0.8 (2024-05-10)</b>
+      <ul>
+        <li>Upgrade explorer interface.</li>
+        <li>Fix some issue.</li>
+      </ul>
     <b>0.0.7 (2024-04-25)</b>
       <ul>
         <li>Support Go code snippets.</li>

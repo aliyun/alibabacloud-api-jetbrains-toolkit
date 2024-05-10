@@ -1,3 +1,7 @@
+2024-05-10 Version: 0.0.8
+1. Upgrade explorer interface.
+2. Fix some issue.
+
 2024-04-25 Version: 0.0.7
 1. Support Go code snippets.
 2. Fix cache issue.
