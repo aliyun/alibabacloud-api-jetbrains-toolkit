@@ -52,7 +52,7 @@ GoLand 2022.2 ~ 2023.3
 
 
 ## 插件 UI 导览
-![UI](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/ui.png)
+![UI](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/ui-guide.png)
 
 ### 用户配置
 * 如果您已经安装了[阿里云 CLI](https://help.aliyun.com/document_detail/123181.html?spm=a2c4g.121544.0.0.2d7e76e3XWMs4u)，您可以切换、查看已有用户。

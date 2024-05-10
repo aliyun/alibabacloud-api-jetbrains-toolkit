@@ -52,7 +52,7 @@ GoLand 2022.2 ~ 2023.3
   for more details. More features are under development, please stay tuned and welcome to submit your questions and suggestions on the [experience questionnaire](https://g.alicdn.com/aes/tracker-survey-preview/0.0.13/survey.html?pid=fePxMy&id=3494).
 
 ## Plugin UI Guide
-![UI](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/ui.png)
+![UI](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/ui-guide.png)
 
 ### Profile Configuration
 
