@@ -74,9 +74,9 @@ object DataService {
             NormalNotification.showMessage(
                 project,
                 NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                "正在拉取元数据",
-                "请稍后重试",
-                NotificationType.WARNING
+                "元数据拉取中",
+                "",
+                NotificationType.INFORMATION
             )
         }
     }
