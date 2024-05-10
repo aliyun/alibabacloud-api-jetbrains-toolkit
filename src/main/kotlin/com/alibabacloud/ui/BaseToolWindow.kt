@@ -75,11 +75,9 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         searchField.maximumSize = Dimension(Integer.MAX_VALUE, 50)
         contentPanel.add(searchField)
 
-        val refreshProductAction = RefreshProductAction(project, contentPanel, searchField)
-        refreshProductAction.templatePresentation.text = "Refresh Product List"
-
-        val refreshMetaDataAction = RefreshMetaDataAction()
-        refreshMetaDataAction.templatePresentation.text = "Reload Metadata"
+        val refreshToolkitAction = RefreshToolkitAction(project, contentPanel, searchField)
+        refreshToolkitAction.templatePresentation.icon = AllIcons.Actions.Refresh
+        refreshToolkitAction.templatePresentation.text = "Refresh"
 
         val viewDocumentationAction = ViewDocumentationAction()
         viewDocumentationAction.templatePresentation.text = "View Documentation"
@@ -92,11 +90,9 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         newIssueAction.templatePresentation.icon = AllIcons.Vcs.Vendors.Github
         newIssueAction.templatePresentation.text = "New Issue on GitHub"
 
-        toolWindow.setTitleActions(listOf(addProfileAction, feedbackAction))
+        toolWindow.setTitleActions(listOf(addProfileAction, feedbackAction, refreshToolkitAction))
         toolWindow.setAdditionalGearActions(
             DefaultActionGroup().apply {
-                add(refreshProductAction)
-                add(refreshMetaDataAction)
                 add(viewDocumentationAction)
                 add(viewSourceCodeAction)
                 add(newIssueAction)
@@ -378,7 +374,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         }
     }
 
-    private class RefreshProductAction(
+    private class RefreshToolkitAction(
         val project: Project,
         val contentPanel: JPanel,
         val searchField: SearchTextField
@@ -411,12 +407,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                     contentPanel.repaint()
                 }
             })
-        }
-    }
 
-    private class RefreshMetaDataAction : AnAction() {
-        override fun actionPerformed(e: AnActionEvent) {
-            val project = e.project ?: return
             DataService.refreshMeta(project)
         }
     }
