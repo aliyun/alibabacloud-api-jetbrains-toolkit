@@ -9,7 +9,12 @@ import com.alibabacloud.api.service.util.RequestUtil
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.google.gson.reflect.TypeToken
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -28,8 +33,17 @@ object DataService {
 
     private var isLoading = false
 
-    fun loadMeta(project: Project): Map<String, String> {
+    fun loadMeta(project: Project, isRefresh: Boolean): Map<String, String> {
         isLoading = true
+        if (!isRefresh) {
+            val completionIndex = CompletionIndexPersistentComponent.getInstance()
+            val state = completionIndex.state
+            _javaIndex = state.completionIndex
+            if (_javaIndex != null) {
+                isLoaded = true
+                isLoading = false
+            }
+        }
         if (_javaIndex == null) {
             synchronized(this) {
                 if (_javaIndex == null) {
@@ -69,7 +83,7 @@ object DataService {
             _javaIndex = null
             isLoaded = false
             UnLoadNotificationState.hasShown = false
-            loadMeta(project)
+            loadMeta(project, true)
         } else {
             NormalNotification.showMessage(
                 project,
@@ -168,6 +182,10 @@ object DataService {
                 throw e
             }
         }
+        val completionIndex = CompletionIndexPersistentComponent.getInstance()
+        val state = completionIndex.state
+        state.completionIndex = _javaIndex
+        completionIndex.loadState(state)
     }
 
     val javaIndex: Map<String, String>
@@ -176,8 +194,39 @@ object DataService {
     fun isDataLoaded(): Boolean {
         return isLoaded
     }
+
+    fun String.toToMapStr(): MutableMap<String, String> {
+        return Gson().fromJson(this, object : TypeToken<MutableMap<String, String>>() {}.type)
+    }
 }
 
 object UnLoadNotificationState {
     var hasShown = false
+}
+
+
+data class CompletionIndexState(
+    var completionIndex: MutableMap<String, String>? = null
+)
+
+@State(
+    name = "completionIndex",
+    storages = [Storage("alibabacloud-developer-toolkit-cache.xml")]
+)
+class CompletionIndexPersistentComponent : PersistentStateComponent<CompletionIndexState> {
+    private var state = CompletionIndexState()
+
+    override fun getState(): CompletionIndexState {
+        return state
+    }
+
+    override fun loadState(state: CompletionIndexState) {
+        this.state = state
+    }
+
+    companion object {
+        fun getInstance(): CompletionIndexPersistentComponent {
+            return service()
+        }
+    }
 }

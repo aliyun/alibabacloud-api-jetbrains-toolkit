@@ -6,6 +6,10 @@ import com.aliyun.tea.TeaModel.validateParams
 import com.aliyun.tea.interceptor.InterceptorChain
 import com.aliyun.teautil.Common
 import com.aliyun.teautil.models.RuntimeOptions
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.extensions.PluginId
 import java.io.InputStream
 
 
@@ -176,7 +180,7 @@ class OpenAPIClient(config: Config) {
                         TeaPair("host", _endpoint),
                         TeaPair("x-acs-version", params.version),
                         TeaPair("x-acs-action", params.action),
-                        TeaPair("user-agent", userAgent),
+                        TeaPair("user-agent", pluginUserAgent),
                         TeaPair("x-acs-date", com.aliyun.openapiutil.Client.getTimestamp()),
                         TeaPair("x-acs-signature-nonce", Common.getNonce()),
                         TeaPair("accept", "application/json"),
@@ -366,6 +370,21 @@ class OpenAPIClient(config: Config) {
          * @return user agent
          */
         get() = Common.getUserAgent(_userAgent)
+
+    @get:Throws(Exception::class)
+    val pluginUserAgent: String
+        /**
+         * Get user agent of plugin
+         * @return user agent
+         */
+        get() = String.format(
+            "Toolkit (%s; %s) alibabacloud-developer-toolkit/%s JetBrains/%s/%s",
+            System.getProperties().getProperty("os.name"),
+            System.getProperties().getProperty("os.arch"),
+            PluginManagerCore.getPlugin(PluginId.getId("alibabacloud.developer.toolkit"))?.version ?: "null",
+            ApplicationInfo.getInstance().fullVersion,
+            ApplicationNamesInfo.getInstance().fullProductName
+        )
 
     @get:Throws(Exception::class)
     val accessKeyId: String
