@@ -67,6 +67,7 @@
                                  id="Alibaba Cloud Developer Toolkit Settings"
                                  displayName="Alibaba Cloud Developer Toolkit"
                                  instance="com.alibabacloud.settings.ToolkitSettingsConfigurable"/>
+        <applicationService serviceImplementation="com.alibabacloud.api.service.completion.CompletionIndexPersistentComponent"/>
 
         <notificationGroup id="AlibabaCloud API: SDK" displayType="BALLOON"/>
         <notificationGroup id="AlibabaCloud API: Debug" displayType="BALLOON"/>

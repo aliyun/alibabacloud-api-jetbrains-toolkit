@@ -6,6 +6,6 @@ import com.intellij.openapi.startup.StartupActivity
 
 class StartPullMeta : StartupActivity {
     override fun runActivity(project: Project) {
-        DataService.loadMeta(project)
+        DataService.loadMeta(project, false)
     }
 }
