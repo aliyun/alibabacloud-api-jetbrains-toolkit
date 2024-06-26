@@ -109,6 +109,10 @@
     </actions>
 
     <change-notes><![CDATA[
+    <b>0.0.9 (2024-06-26)</b>
+      <ul>
+        <li>Cache metadata for code completion.</li>
+      </ul>
     <b>0.0.8 (2024-05-10)</b>
       <ul>
         <li>Upgrade explorer interface.</li>
