@@ -35,9 +35,13 @@ dependencies {
 }
 
 intellij {
-    version.set(System.getenv("INTELLIJ_VERSION") ?: "2022.2.5")
-    type.set(System.getenv("INTELLIJ_TYPE") ?: "IU")
-    plugins.set(listOf("com.intellij.java", "Pythonid:222.4554.10", "org.jetbrains.plugins.go:222.4459.24"))
+    val ideName = System.getenv("INTELLIJ_TYPE") ?: "IU"
+    val ideVersion = System.getenv("INTELLIJ_VERSION") ?: "2022.2.5"
+    val pyVersion = System.getenv("PY_VERSION") ?: "222.4554.10"
+    val goVersion = System.getenv("GO_VERSION") ?: "222.4459.24"
+    version.set(ideVersion)
+    type.set(ideName)
+    plugins.set(listOf("com.intellij.java", "Pythonid:$pyVersion", "org.jetbrains.plugins.go:$goVersion"))
 }
 
 tasks {
