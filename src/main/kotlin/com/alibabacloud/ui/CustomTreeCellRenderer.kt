@@ -22,16 +22,12 @@ class CustomTreeCellRenderer : DefaultTreeCellRenderer() {
 
         val node = value as? DefaultMutableTreeNode
         val regularIcon = ToolkitIcons.API_ICON
+        val deprecatedIcon = ToolkitIcons.API_DEPRECATED_ICON
         val selectedIcon = ToolkitIcons.API_SELECTED_ICON
 
         node?.let {
             val nodeData = it.userObject as? String
             if (leaf) {
-                icon = if (selected) {
-                    selectedIcon
-                } else {
-                    regularIcon
-                }
                 val parts = nodeData?.split("  ", limit = 2)
                 val name = parts?.getOrNull(0) ?: ""
                 val title = parts?.getOrNull(1) ?: ""
@@ -40,6 +36,13 @@ class CustomTreeCellRenderer : DefaultTreeCellRenderer() {
                     "<html><span style='color:gray;'><s>$name</s></span> <span style='font-size:smaller; color:gray;'><s>$title</s></span></html>"
                 } else {
                     "<html>$name <span style='font-size:smaller; color:gray;'>$title</span></html>"
+                }
+                icon = if (isDeprecated) {
+                    deprecatedIcon
+                } else if (selected) {
+                    selectedIcon
+                } else {
+                    regularIcon
                 }
             }
             backgroundNonSelectionColor = JBColor(Color(0, 0, 0, 0), Color(0, 0, 0, 0))

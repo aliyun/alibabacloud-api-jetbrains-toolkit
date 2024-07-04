@@ -10,6 +10,7 @@ import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.FormatUtil
+import com.alibabacloud.credentials.constants.CredentialsConstants
 import com.alibabacloud.credentials.util.ConfigFileUtil
 import com.alibabacloud.icons.ToolkitIcons
 import com.alibabacloud.models.credentials.ConfigureFile
@@ -34,17 +35,16 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.treeStructure.Tree
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Dimension
 import java.io.File
 import java.io.IOException
 import java.net.URI
 import java.time.LocalDateTime
-import javax.swing.BoxLayout
-import javax.swing.JPanel
-import javax.swing.JScrollPane
-import javax.swing.JTree
+import javax.swing.*
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
 import javax.swing.tree.DefaultMutableTreeNode
@@ -60,7 +60,12 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         val comboBox = comboBoxManager.comboBox
         comboBox.renderer = listRenderer
         comboBox.maximumSize = Dimension(Integer.MAX_VALUE, 50)
-        contentPanel.add(comboBox)
+        comboBox.border = BorderFactory.createEmptyBorder()
+        val profilePanel = JPanel()
+        profilePanel.layout = BoxLayout(profilePanel, BoxLayout.X_AXIS)
+        profilePanel.add(comboBox)
+        profilePanel.border = BorderFactory.createTitledBorder("当前登录用户：")
+        contentPanel.add(profilePanel)
 
         val collapsibleInputPanel = CollapsibleInputPanel(project)
         contentPanel.add(collapsibleInputPanel, BorderLayout.NORTH)
@@ -159,11 +164,11 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         if (config != null) {
             comboBox.selectedItem = config.current
         } else {
-            comboBox.selectedItem = "New Profile"
+            comboBox.selectedItem = CredentialsConstants.CREATE_USER
         }
         comboBox.addActionListener {
             val selectedProfile = comboBox.selectedItem as String
-            if (selectedProfile == "New Profile") {
+            if (selectedProfile == CredentialsConstants.CREATE_USER) {
                 collapsibleInputPanel.clearFields()
                 collapsibleInputPanel.expandForAddProfile()
             } else {
@@ -358,7 +363,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
     }
 
     private class AddProfileAction(private val collapsibleInputPanel: CollapsibleInputPanel) :
-        AnAction("New Profile", "New profile", AllIcons.General.User) {
+        AnAction(CredentialsConstants.CREATE_USER, CredentialsConstants.CREATE_USER, AllIcons.General.User) {
         override fun actionPerformed(e: AnActionEvent) {
             collapsibleInputPanel.clearFields()
             collapsibleInputPanel.expandForAddProfile()

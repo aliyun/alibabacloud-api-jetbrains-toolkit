@@ -1,5 +1,6 @@
 package com.alibabacloud.ui
 
+import com.alibabacloud.credentials.constants.CredentialsConstants
 import com.alibabacloud.models.credentials.ConfigureFile
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -17,7 +18,7 @@ class ComboBoxManager {
             val actionListeners = comboBox.actionListeners
             actionListeners.forEach { comboBox.removeActionListener(it) }
             val configRealTime = ConfigureFile.loadConfigureFile()
-            comboBox.selectedItem = configRealTime?.current ?: "New Profile"
+            comboBox.selectedItem = configRealTime?.current ?: CredentialsConstants.CREATE_USER
             actionListeners.forEach { comboBox.addActionListener(it) }
         }
     }
