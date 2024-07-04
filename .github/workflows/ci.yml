@@ -36,6 +36,22 @@ jobs:
     name: Test
     needs: [ build ]
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - ide_type: 'IU'
+            ide_version: '2022.2.5'
+            py_version: '222.4554.10'
+            go_version: '222.4459.24'
+          - ide_type: 'IU'
+            ide_version: '2023.3.7'
+            py_version: '233.11799.196'
+            go_version: '233.11799.196'
+          - ide_type: 'IU'
+            ide_version: '2024.1'
+            py_version: '241.14494.127'
+            go_version: '241.14494.127'
     steps:
 
       - name: Fetch Sources
@@ -49,8 +65,14 @@ jobs:
         uses: gradle/gradle-build-action@v2.4.2
         with:
           gradle-home-cache-cleanup: true
+      - name: Set IDE Name and Version
+        run: |
+          echo "INTELLIJ_TYPE=${{ matrix.ide_type }}" >> $GITHUB_ENV
+          echo "INTELLIJ_VERSION=${{ matrix.ide_version }}" >> $GITHUB_ENV
+          echo "PY_VERSION=${{ matrix.py_version }}" >> $GITHUB_ENV
+          echo "GO_VERSION=${{ matrix.go_version }}" >> $GITHUB_ENV
       - name: Run Tests
-        run: ./gradlew check
+        run: ./gradlew buildPlugin verifyPlugin check
       - name: Collect Tests Result
         if: ${{ failure() }}
         uses: actions/upload-artifact@v3
