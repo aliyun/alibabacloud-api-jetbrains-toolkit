@@ -1,6 +1,7 @@
 package com.alibabacloud.api.service.completion.go
 
 import com.alibabacloud.api.service.completion.SdkCompletionContributor
+import com.alibabacloud.api.service.completion.util.LookupElementUtil
 import com.alibabacloud.api.service.completion.util.ProjectStructureUtil
 import com.alibabacloud.api.service.completion.util.PythonPkgInstallUtil
 import com.alibabacloud.api.service.constants.CompletionConstants
@@ -31,10 +32,11 @@ class GoSdkCompletionContributor : SdkCompletionContributor() {
         document: Document,
         request: Request
     ) {
+        val apiInfo = LookupElementUtil.getFormat(key)
         result.addElement(
             LookupElementBuilder.create(key)
-                .withPresentableText(key)
-                .withTailText("  $value")
+                .withPresentableText(apiInfo.apiName)
+                .withTailText("  ${apiInfo.productName}::${apiInfo.defaultVersion}::$value")
                 .withIcon(ToolkitIcons.LOGO_ICON)
                 .withInsertHandler { insertionContext, _ ->
                     insertHandler(insertionContext, document, request, "go") {}

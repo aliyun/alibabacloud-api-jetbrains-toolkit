@@ -1,6 +1,7 @@
 package com.alibabacloud.api.service.completion.python
 
 import com.alibabacloud.api.service.completion.SdkCompletionContributor
+import com.alibabacloud.api.service.completion.util.LookupElementUtil
 import com.alibabacloud.api.service.completion.util.ProjectStructureUtil
 import com.alibabacloud.api.service.completion.util.PythonPkgInstallUtil
 import com.alibabacloud.api.service.constants.CompletionConstants
@@ -35,17 +36,16 @@ class PythonSdkCompletionContributor : SdkCompletionContributor() {
         document: Document,
         request: Request
     ) {
-        val productName = key.split("::")[1]
-        val defaultVersion = key.split("::")[2]
+        val apiInfo = LookupElementUtil.getFormat(key)
         result.addElement(
             LookupElementBuilder.create(key)
-                .withPresentableText(key)
-                .withTailText("  $value")
+                .withPresentableText(apiInfo.apiName)
+                .withTailText("  ${apiInfo.productName}::${apiInfo.defaultVersion}::$value")
                 .withIcon(ToolkitIcons.LOGO_ICON)
                 .withInsertHandler { insertionContext, _ ->
                     insertHandler(insertionContext, document, request, "python") { sdkInfo ->
                         if (!sdkInfo[0].asString.contains(CompletionConstants.NO_SDK)) {
-                            checkAndNotifyDependency(insertionContext, productName, defaultVersion, sdkInfo, "python")
+                            checkAndNotifyDependency(insertionContext, apiInfo.productName, apiInfo.defaultVersion, sdkInfo, "python")
                         }
                     }
                 }

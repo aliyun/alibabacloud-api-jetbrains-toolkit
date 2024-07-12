@@ -165,8 +165,11 @@ abstract class SdkCompletionContributor : CompletionContributor() {
 
                 val reversedList = importList.drop(1).dropLast(1).reversed()
                 for (refText in reversedList) {
-                    val ref = refText.asString
-                    if (!importBlockContent.contains(ref)) {
+                    val ref = refText.asString.trim()
+                    val refNormalized = ref.replace(Regex("\\s+"), " ")
+                    val importBlockContentNormalized = importBlockContent.replace(Regex("\\s+"), " ")
+
+                    if (!importBlockContentNormalized.contains(refNormalized)) {
                         document.insertString(actualInsertOffset, "$ref\n")
                     }
                 }
