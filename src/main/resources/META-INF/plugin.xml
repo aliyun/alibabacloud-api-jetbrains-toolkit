@@ -86,6 +86,9 @@
                                 implementationClass="com.alibabacloud.api.service.completion.go.GoSdkCompletionContributor"/>
         <postStartupActivity implementation="com.alibabacloud.api.service.startactivity.StartPullMeta"/>
         <postStartupActivity implementation="com.alibabacloud.toolkit.ToolkitUpdate"/>
+        <lang.documentationProvider implementationClass="com.alibabacloud.api.service.sdksample.document.CodeSampleDocumentProvider" language="JAVA" order="first"/>
+        <lang.documentationProvider implementationClass="com.alibabacloud.api.service.sdksample.document.CodeSampleDocumentProvider" language="Python" order="first"/>
+        <lang.documentationProvider implementationClass="com.alibabacloud.api.service.sdksample.document.CodeSampleDocumentProvider" language="go" order="first"/>
     </extensions>
 
     <extensions defaultExtensionNs="alibabacloud.cli">

@@ -2,6 +2,7 @@ package com.alibabacloud.api.service.completion.java
 
 import com.alibabacloud.api.service.completion.SdkCompletionContributor
 import com.alibabacloud.api.service.completion.util.JavaPkgInstallUtil
+import com.alibabacloud.api.service.completion.util.LookupElementUtil
 import com.alibabacloud.api.service.constants.CompletionConstants
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.icons.ToolkitIcons
@@ -29,18 +30,23 @@ class JavaSdkCompletionContributor : SdkCompletionContributor() {
         document: Document,
         request: Request
     ) {
-        val productName = key.split("::")[1]
-        val defaultVersion = key.split("::")[2]
+        val apiInfo = LookupElementUtil.getFormat(key)
         result.addElement(
             LookupElementBuilder.create(key)
-                .withPresentableText(key)
+                .withPresentableText(apiInfo.apiName)
                 .withTypeText("Java")
-                .withTailText("  $value")
+                .withTailText("  ${apiInfo.productName}::${apiInfo.defaultVersion}::$value")
                 .withIcon(ToolkitIcons.LOGO_ICON)
                 .withInsertHandler { insertionContext, _ ->
                     insertHandler(insertionContext, document, request, "java") { sdkInfo ->
                         if (!sdkInfo[0].asString.contains(CompletionConstants.NO_SDK)) {
-                            checkAndNotifyDependency(insertionContext, productName, defaultVersion, sdkInfo, "java")
+                            checkAndNotifyDependency(
+                                insertionContext,
+                                apiInfo.productName,
+                                apiInfo.defaultVersion,
+                                sdkInfo,
+                                "java"
+                            )
                         }
                     }
                 }
@@ -48,17 +54,17 @@ class JavaSdkCompletionContributor : SdkCompletionContributor() {
 
         result.addElement(
             LookupElementBuilder.create(key)
-                .withPresentableText(key)
+                .withPresentableText(apiInfo.apiName)
                 .withTypeText("JavaAsync")
-                .withTailText("  $value")
+                .withTailText("  ${apiInfo.productName}::${apiInfo.defaultVersion}::$value")
                 .withIcon(ToolkitIcons.LOGO_ICON)
                 .withInsertHandler { insertionContext, _ ->
                     insertHandler(insertionContext, document, request, "java-async") { sdkInfo ->
                         if (!sdkInfo[0].asString.contains(CompletionConstants.NO_SDK)) {
                             checkAndNotifyDependency(
                                 insertionContext,
-                                productName,
-                                defaultVersion,
+                                apiInfo.productName,
+                                apiInfo.defaultVersion,
                                 sdkInfo,
                                 "java-async"
                             )
