@@ -9,9 +9,11 @@ import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.api.service.util.RequestUtil
 import com.alibabacloud.api.service.util.ResourceUtil
+import com.alibabacloud.telemetry.ExperienceQuestionnaire
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
@@ -26,6 +28,7 @@ import okhttp3.OkHttpClient
 import java.awt.BorderLayout
 import java.io.File
 import java.io.IOException
+import java.time.LocalDateTime
 import javax.swing.JPanel
 import javax.swing.JSplitPane
 
@@ -85,6 +88,25 @@ class ApiPage {
                         sdkPanel,
                         splitPane
                     )
+
+                    ExperienceQuestionnaire(project).executeQuestionnaire(browser) { isNotice ->
+                        val properties = PropertiesComponent.getInstance()
+                        val currentDateTime = LocalDateTime.now()
+                        if (isNotice == "0") {
+                            // 用户选择填写问卷
+                            properties.setValue(ExperienceQuestionnaire.QUESTIONNAIRE_EXPIRATION_KEY, 30 * 24, 30 * 24)
+                            properties.setValue(
+                                ExperienceQuestionnaire.QUESTIONNAIRE_LAST_PROMPT_KEY,
+                                currentDateTime.toString()
+                            )
+                        } else {
+                            properties.setValue(ExperienceQuestionnaire.QUESTIONNAIRE_EXPIRATION_KEY, 1 * 24, 30 * 24)
+                            properties.setValue(
+                                ExperienceQuestionnaire.QUESTIONNAIRE_LAST_PROMPT_KEY,
+                                currentDateTime.toString()
+                            )
+                        }
+                    }
                 } catch (_: IOException) {
                 }
 
@@ -134,6 +156,33 @@ class ApiPage {
                             sdkPanel,
                             splitPane
                         )
+
+                        ExperienceQuestionnaire(project).executeQuestionnaire(browser) { isNotice ->
+                            val properties = PropertiesComponent.getInstance()
+                            val currentDateTime = LocalDateTime.now()
+                            if (isNotice == "0") {
+                                // 用户选择填写问卷
+                                properties.setValue(
+                                    ExperienceQuestionnaire.QUESTIONNAIRE_EXPIRATION_KEY,
+                                    30 * 24,
+                                    30 * 24
+                                )
+                                properties.setValue(
+                                    ExperienceQuestionnaire.QUESTIONNAIRE_LAST_PROMPT_KEY,
+                                    currentDateTime.toString()
+                                )
+                            } else {
+                                properties.setValue(
+                                    ExperienceQuestionnaire.QUESTIONNAIRE_EXPIRATION_KEY,
+                                    1 * 24,
+                                    30 * 24
+                                )
+                                properties.setValue(
+                                    ExperienceQuestionnaire.QUESTIONNAIRE_LAST_PROMPT_KEY,
+                                    currentDateTime.toString()
+                                )
+                            }
+                        }
 
                         val apiMeta = apiDocData.get(ApiConstants.DEBUG_APIS).asJsonObject.get(apiName).asJsonObject
 

@@ -2,10 +2,19 @@ package com.alibabacloud.telemetry
 
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
+import com.google.gson.JsonSyntaxException
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
+import com.intellij.ui.jcef.JBCefBrowser
+import com.intellij.ui.jcef.JBCefBrowserBase
+import com.intellij.ui.jcef.JBCefJSQuery
+import org.cef.browser.CefBrowser
+import org.cef.browser.CefFrame
+import org.cef.handler.CefLoadHandler
+import org.cef.handler.CefLoadHandlerAdapter
+import org.cef.network.CefRequest
 import java.net.URI
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -45,5 +54,83 @@ class ExperienceQuestionnaire(private val project: Project) {
                     properties.setValue(QUESTIONNAIRE_LAST_PROMPT_KEY, currentDateTime.toString())
                 })
         }
+    }
+
+    fun executeQuestionnaire(browser: JBCefBrowser, callback: (String?) -> Unit) {
+        val query = JBCefJSQuery.create(browser as JBCefBrowserBase)
+        val properties = PropertiesComponent.getInstance()
+        val lastPromptTime = properties.getValue(QUESTIONNAIRE_LAST_PROMPT_KEY)
+        val lastDateTime = lastPromptTime?.let { LocalDateTime.parse(it) } ?: LocalDateTime.MIN
+        val currentDateTime = LocalDateTime.now()
+
+        val expirationHours = properties.getInt(QUESTIONNAIRE_EXPIRATION_KEY, 30 * 24)
+        val timeSinceLastPrompt = ChronoUnit.HOURS.between(lastDateTime, currentDateTime)
+        var isNotice = false
+
+        if (lastPromptTime == null || timeSinceLastPrompt >= expirationHours) {
+            isNotice = true
+        }
+
+        // 如果什么都没点，是不是就没有返回
+        query.addHandler { arg: String? ->
+            try {
+                println("callback arg---$arg")
+                callback(arg)
+                return@addHandler JBCefJSQuery.Response("ok")
+            } catch (e: JsonSyntaxException) {
+                return@addHandler JBCefJSQuery.Response(null, 0, "errorMsg")
+            }
+        }
+
+        browser.jbCefClient.addLoadHandler(
+            object : CefLoadHandlerAdapter() {
+                override fun onLoadingStateChange(
+                    cefBrowser: CefBrowser,
+                    isLoading: Boolean,
+                    canGoBack: Boolean,
+                    canGoForward: Boolean,
+                ) {
+                }
+
+                override fun onLoadStart(
+                    cefBrowser: CefBrowser,
+                    frame: CefFrame,
+                    transitionType: CefRequest.TransitionType,
+                ) {
+                }
+
+                override fun onLoadEnd(cefBrowser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
+//                    println("isNotice---$isNotice")
+                    isNotice = true
+                    cefBrowser.executeJavaScript(
+                        """
+                        getNoticeFlag($isNotice);
+                        window.updateQuestionnaireExpiration = function(arg) {
+                        ${
+                            query.inject(
+                                "arg",
+                                "response => console.log('读取参数成功', (response))",
+                                "(error_code, error_message) => console.log('读取参数失败', error_code, error_message)",
+                            )
+                        }
+                        };
+
+                            """.trimIndent(),
+                        browser.cefBrowser.url,
+                        0,
+                    )
+                }
+
+                override fun onLoadError(
+                    cefBrowser: CefBrowser,
+                    frame: CefFrame,
+                    errorCode: CefLoadHandler.ErrorCode,
+                    errorText: String,
+                    failedUrl: String,
+                ) {
+                }
+            },
+            browser.cefBrowser,
+        )
     }
 }

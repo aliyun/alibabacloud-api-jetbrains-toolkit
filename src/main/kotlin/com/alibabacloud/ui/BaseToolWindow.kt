@@ -35,10 +35,8 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
-import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.treeStructure.Tree
 import java.awt.BorderLayout
-import java.awt.Color
 import java.awt.Dimension
 import java.io.File
 import java.io.IOException
