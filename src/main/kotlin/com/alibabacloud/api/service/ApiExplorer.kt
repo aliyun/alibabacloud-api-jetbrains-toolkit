@@ -1,11 +1,11 @@
 package com.alibabacloud.api.service
 
-import com.alibabacloud.api.service.completion.cacheNameAndVersionFile
 import com.alibabacloud.api.service.constants.ApiConstants
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.RequestUtil
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.ui.CustomTreeCellRenderer
 import com.google.gson.Gson
 import com.google.gson.JsonArray
@@ -23,11 +23,12 @@ import javax.swing.JPanel
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
+
 class ApiExplorer {
     companion object {
         fun explorerTree(data: JsonArray, panel: JPanel): Tree {
             val searchField = SearchTextField()
-            searchField.textEditor.emptyText.text = "搜索 API："
+            searchField.textEditor.emptyText.text = I18nUtils.getMsg("toolwindow.search.api")
             searchField.maximumSize = Dimension(Integer.MAX_VALUE, 50)
             panel.add(searchField, BorderLayout.NORTH)
 
@@ -46,6 +47,7 @@ class ApiExplorer {
             SearchHelper.search(null, tree, searchField)
             return tree
         }
+
 
         private fun addNode(data: JsonArray, parent: DefaultMutableTreeNode) {
             for (element in data) {
@@ -71,18 +73,20 @@ class ApiExplorer {
                             if (element.has(ApiConstants.API_DIR_RESPONSE_TITLE) && !element.get(ApiConstants.API_DIR_RESPONSE_TITLE).isJsonNull) {
                                 "$name  ${element.get(ApiConstants.API_DIR_RESPONSE_TITLE).asString}$isDeprecated"
                             } else {
-                                "$name  暂无描述$isDeprecated"
+                                "$name  ${I18nUtils.getMsg("description.not.exist")}$isDeprecated"
                             }
                         val apiNode = DefaultMutableTreeNode(nodeText)
                         parent.add(apiNode)
                     }
                 } else if (element is JsonObject && !element.has(ApiConstants.API_DIR_RESPONSE_NAME) && element.get(
                         ApiConstants.API_DIR_RESPONSE_DIR_ID
-                    ).asInt == 0 && (element.get(ApiConstants.API_DIR_RESPONSE_TITLE).asString == "其它" || element.get(ApiConstants.API_DIR_RESPONSE_TITLE).asString == "Others") && element.get(
+                    ).asInt == 0 && (element.get(ApiConstants.API_DIR_RESPONSE_TITLE).asString == "其它" || element.get(
+                        ApiConstants.API_DIR_RESPONSE_TITLE
+                    ).asString == "Others") && element.get(
                         ApiConstants.API_DIR_RESPONSE_CHILDREN
                     ).asJsonArray.size() > 0
                 ) {
-                    val titleNode = DefaultMutableTreeNode("其他")
+                    val titleNode = DefaultMutableTreeNode(I18nUtils.getMsg("node.others"))
                     parent.add(titleNode)
                     val children = element.get(ApiConstants.API_DIR_RESPONSE_CHILDREN) as JsonArray
                     addNode(children, titleNode)
@@ -91,11 +95,13 @@ class ApiExplorer {
         }
 
         fun apiDocContentTree(project: Project): Pair<MutableMap<String, List<String>>, Tree> {
-            var root = DefaultMutableTreeNode(ApiConstants.TOOLWINDOW_PRODUCT_TREE)
+            var root = DefaultMutableTreeNode(I18nUtils.getMsg("toolwindow.product.tree"))
             val treeModel = DefaultTreeModel(root)
             var nameAndVersionMap = mutableMapOf<String, List<String>>()
             try {
-                val request = RequestUtil.createRequest("https://api.aliyun.com/meta/v1/products.json")
+                val lang = if (I18nUtils.getLocale() == Locale.CHINA) "" else "?language=en_US"
+                val preferLocale = if (lang == "") "" else "-en"
+                val request = RequestUtil.createRequest("https://api.aliyun.com/meta/v1/products.json$lang")
                 var data: JsonArray
 
                 OkHttpClientProvider.instance.newCall(request).execute().use { response ->
@@ -111,18 +117,23 @@ class ApiExplorer {
                             if (!cacheDir.exists()) {
                                 cacheDir.mkdir()
                             }
-                            val cacheTreeFile = File(ApiConstants.CACHE_PATH, "tree1")
+                            val cacheTreeFile = File(ApiConstants.CACHE_PATH, "tree1$preferLocale")
                             CacheUtil.cleanExceedCache()
+                            val nameAndVersionFile = if (I18nUtils.getLocale() == Locale.CHINA) {
+                                File(ApiConstants.CACHE_PATH, "nameAndVersion1")
+                            } else {
+                                File(ApiConstants.CACHE_PATH, "nameAndVersion1-en")
+                            }
                             try {
-                                CacheUtil.writeMapCache(cacheNameAndVersionFile, nameAndVersionMap)
+                                CacheUtil.writeMapCache(nameAndVersionFile, nameAndVersionMap)
                                 CacheUtil.writeTreeCache(cacheTreeFile, Tree(treeModel))
                             } catch (e: IOException) {
-                                cacheNameAndVersionFile.delete()
+                                nameAndVersionFile.delete()
                                 cacheTreeFile.delete()
                                 NormalNotification.showMessage(
                                     project,
                                     NotificationGroups.CACHE_NOTIFICATION_GROUP,
-                                    "缓存写入失败",
+                                    I18nUtils.getMsg("cache.write.fail"),
                                     "",
                                     NotificationType.ERROR
                                 )
@@ -132,8 +143,8 @@ class ApiExplorer {
                         NormalNotification.showMessage(
                             project,
                             NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                            "拉取产品列表失败",
-                            "网络请求失败，错误码 ${response.code}, 错误信息 ${response.message}",
+                            I18nUtils.getMsg("product.list.fetch.fail"),
+                            "${I18nUtils.getMsg("request.fail.error.code")} ${response.code}, ${I18nUtils.getMsg("request.fail.error.message")} ${response.message}",
                             NotificationType.ERROR
                         )
                     }
@@ -142,8 +153,8 @@ class ApiExplorer {
                 NormalNotification.showMessage(
                     project,
                     NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                    "拉取产品列表失败",
-                    "请检查网络",
+                    I18nUtils.getMsg("product.list.fetch.fail"),
+                    I18nUtils.getMsg("network.check"),
                     NotificationType.ERROR
                 )
             }
@@ -159,8 +170,8 @@ class ApiExplorer {
                 val node1Name = node1Mutable.userObject.toString()
                 val node2Name = node2Mutable.userObject.toString()
 
-                val isNode1Other = node1Name == "其他"
-                val isNode2Other = node2Name == "其他"
+                val isNode1Other = node1Name == I18nUtils.getMsg("node.others")
+                val isNode2Other = node2Name == I18nUtils.getMsg("node.others")
 
                 return@sortWith when {
                     isNode1Other && isNode2Other -> 0
@@ -187,7 +198,8 @@ class ApiExplorer {
             if (data.size() > 0) {
                 for (product in data) {
                     val groupElement = product.asJsonObject.get("category2Name")
-                    val group = if (groupElement == null || groupElement.isJsonNull) "其他" else groupElement.asString
+                    val group =
+                        if (groupElement == null || groupElement.isJsonNull) I18nUtils.getMsg("node.others") else groupElement.asString
                     val code = product.asJsonObject.get("code").asString
                     val nameElement = product.asJsonObject.get("name")
                     val name = if (nameElement == null || nameElement.isJsonNull) "--" else nameElement.asString
@@ -225,8 +237,8 @@ class ApiExplorer {
                         NormalNotification.showMessage(
                             project,
                             NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                            "拉取 API 列表失败",
-                            "网络请求失败，错误码 ${response.code}, 错误信息 ${response.message}",
+                            I18nUtils.getMsg("api.list.fetch.fail"),
+                            "${I18nUtils.getMsg("request.fail.error.code")} ${response.code}, ${I18nUtils.getMsg("request.fail.error.message")} ${response.message}",
                             NotificationType.ERROR
                         )
                     }
@@ -235,8 +247,8 @@ class ApiExplorer {
                 NormalNotification.showMessage(
                     project,
                     NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                    "拉取 API 列表失败",
-                    "请检查网络",
+                    I18nUtils.getMsg("api.list.fetch.fail"),
+                    I18nUtils.getMsg("network.check"),
                     NotificationType.ERROR
                 )
             }

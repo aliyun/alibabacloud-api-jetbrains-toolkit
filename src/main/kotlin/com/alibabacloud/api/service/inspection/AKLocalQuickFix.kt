@@ -1,5 +1,6 @@
 package com.alibabacloud.api.service.inspection
 
+import com.alibabacloud.i18n.I18nUtils
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.ide.BrowserUtil
@@ -21,7 +22,7 @@ class AKLocalQuickFix : LocalQuickFix {
     }
 
     override fun getFamilyName(): String {
-        return "查看更多凭据管理方式"
+        return I18nUtils.getMsg("credentials.more.info")
     }
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {

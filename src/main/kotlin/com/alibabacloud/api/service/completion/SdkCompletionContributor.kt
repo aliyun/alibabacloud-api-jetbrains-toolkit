@@ -1,10 +1,10 @@
 package com.alibabacloud.api.service.completion
 
 import com.alibabacloud.api.service.OkHttpClientProvider
-import com.alibabacloud.api.service.constants.ApiConstants
 import com.alibabacloud.api.service.constants.CompletionConstants
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.states.ToolkitSettingsState
 import com.google.gson.Gson
 import com.google.gson.JsonArray
@@ -89,8 +89,8 @@ abstract class SdkCompletionContributor : CompletionContributor() {
             notificationService.showMessage(
                 project,
                 NotificationGroups.COMPLETION_NOTIFICATION_GROUP,
-                "请稍候",
-                "如需使用 SDK 示例代码自动补全功能，请等待元数据加载完成(约半分钟)",
+                I18nUtils.getMsg("action.wait"),
+                I18nUtils.getMsg("auto.completion.wait"),
                 NotificationType.INFORMATION
             )
         }
@@ -112,8 +112,9 @@ abstract class SdkCompletionContributor : CompletionContributor() {
         val mediaType = "application/json; charset=utf-8".toMediaType()
         val bodyStr = Gson().toJson(bodyParams)
         val body = bodyStr.toRequestBody(mediaType)
+        val locale = if (I18nUtils.getLocale() == Locale.CHINA) "" else "?language=EN_US"
         return Request.Builder()
-            .url("https://api.aliyun.com/api/product/makeCode").post(body)
+            .url("https://api.aliyun.com/api/product/makeCode$locale").post(body)
             .build()
     }
 
@@ -209,20 +210,20 @@ abstract class SdkCompletionContributor : CompletionContributor() {
                             .get("data")?.asJsonObject?.get("demoSdk")?.asJsonObject
                         val sdkInfo = demoSdkObject?.get(lang)?.asJsonObject
                         demoSdk = sdkInfo?.get("codeSample")?.asString.takeUnless { it.isNullOrBlank() }
-                            ?: "$commentPrefix ${CompletionConstants.NO_SDK} $lang SDK 示例"
+                            ?: "$commentPrefix ${I18nUtils.getMsg("sdk.not.exist.prefix")} $lang ${I18nUtils.getMsg("sdk.not.exist.suffix")}"
                         importList = sdkInfo?.get("importList")?.asJsonArray ?: JsonArray()
                         sdkVersion = sdkInfo?.get("sdkVersion")?.asString ?: ""
                     }
                 } else {
-                    demoSdk = "$commentPrefix ${ApiConstants.CODE_GENERATE_ERROR}"
+                    demoSdk = "$commentPrefix ${I18nUtils.getMsg("sdk.code.sample.generate.error")}"
                 }
             }
         } catch (e: IOException) {
             notificationService.showMessage(
                 project,
                 NotificationGroups.COMPLETION_NOTIFICATION_GROUP,
-                "生成示例代码失败",
-                "请检查网络",
+                I18nUtils.getMsg("code.sample.generate.fail"),
+                I18nUtils.getMsg("network.check"),
                 NotificationType.WARNING
             )
         }
@@ -251,7 +252,7 @@ abstract class SdkCompletionContributor : CompletionContributor() {
                 document.deleteString(startOffset, tailOffset)
             }
         }
-        ProgressManager.getInstance().run(object : Task.Backgroundable(project, "拉取示例代码...", true) {
+        ProgressManager.getInstance().run(object : Task.Backgroundable(project, I18nUtils.getMsg("code.sample.fetch"), true) {
             override fun run(indicator: ProgressIndicator) {
                 indicator.isIndeterminate = true
                 sdkInfo = getDemoSdk(project, document, OkHttpClientProvider.instance, request, lang)

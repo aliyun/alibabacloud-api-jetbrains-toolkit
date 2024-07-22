@@ -4,8 +4,8 @@ import com.alibabacloud.api.service.completion.SdkCompletionContributor
 import com.alibabacloud.api.service.completion.util.LookupElementUtil
 import com.alibabacloud.api.service.completion.util.ProjectStructureUtil
 import com.alibabacloud.api.service.completion.util.PythonPkgInstallUtil
-import com.alibabacloud.api.service.constants.CompletionConstants
 import com.alibabacloud.api.service.constants.NotificationGroups
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.icons.ToolkitIcons
 import com.google.gson.JsonArray
 import com.intellij.codeInsight.completion.CompletionResultSet
@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.impl.PyFormattedStringElementImpl
 import okhttp3.Request
+import java.util.*
 
 class PythonSdkCompletionContributor : SdkCompletionContributor() {
     override fun addElements(
@@ -37,14 +38,15 @@ class PythonSdkCompletionContributor : SdkCompletionContributor() {
         request: Request
     ) {
         val apiInfo = LookupElementUtil.getFormat(key)
+        val description = if (I18nUtils.getLocale() == Locale.CHINA) "::${value}" else ""
         result.addElement(
             LookupElementBuilder.create(key)
                 .withPresentableText(apiInfo.apiName)
-                .withTailText("  ${apiInfo.productName}::${apiInfo.defaultVersion}::$value")
+                .withTailText("  ${apiInfo.productName}::${apiInfo.defaultVersion}$description")
                 .withIcon(ToolkitIcons.LOGO_ICON)
                 .withInsertHandler { insertionContext, _ ->
                     insertHandler(insertionContext, document, request, "python") { sdkInfo ->
-                        if (!sdkInfo[0].asString.contains(CompletionConstants.NO_SDK)) {
+                        if (!sdkInfo[0].asString.contains(I18nUtils.getMsg("sdk.not.exist.prefix"))) {
                             checkAndNotifyDependency(insertionContext, apiInfo.productName, apiInfo.defaultVersion, sdkInfo, "python")
                         }
                     }
@@ -102,11 +104,11 @@ class PythonSdkCompletionContributor : SdkCompletionContributor() {
             val pkgName = "alibabacloud-${productName.lowercase()}${defaultVersion.replace("-", "")}"
             val isPyPkgExists = PythonPkgInstallUtil.isPyPackageExist(project, sdk, pkgName)
             if (!isPyPkgExists && sdk != null) {
-                val content = "${CompletionConstants.IF_AUTO_IMPORT} $pkgName?"
+                val content = "${I18nUtils.getMsg("auto.install.package.ask")} $pkgName?"
                 notificationService.showMessageWithActions(
                     project,
                     NotificationGroups.DEPS_NOTIFICATION_GROUP,
-                    CompletionConstants.IMPORT,
+                    I18nUtils.getMsg("auto.install.package"),
                     content,
                     NotificationType.INFORMATION,
                     yesAction = {

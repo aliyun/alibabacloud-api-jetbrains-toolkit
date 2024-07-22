@@ -6,6 +6,7 @@ import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.RequestUtil
+import com.alibabacloud.i18n.I18nUtils
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
@@ -23,8 +24,7 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
-
-val cacheNameAndVersionFile = File(ApiConstants.CACHE_PATH, "nameAndVersion1")
+import java.util.*
 
 object DataService {
     @Volatile
@@ -51,7 +51,7 @@ object DataService {
             synchronized(this) {
                 if (_javaIndex == null || needToRefresh) {
                     _javaIndex = mutableMapOf()
-                    ProgressManager.getInstance().run(object : Task.Backgroundable(project, "拉取元数据...", true) {
+                    ProgressManager.getInstance().run(object : Task.Backgroundable(project, I18nUtils.getMsg("metadata.fetch"), true) {
                         override fun run(indicator: ProgressIndicator) {
                             try {
                                 val productAndVersion = getProduct(project)
@@ -60,8 +60,8 @@ object DataService {
                                 NormalNotification.showMessage(
                                     project,
                                     NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                                    "拉取元数据失败",
-                                    "请检查网络",
+                                    I18nUtils.getMsg("metadata.fetch.fail"),
+                                    I18nUtils.getMsg("network.check"),
                                     NotificationType.ERROR
                                 )
                             }
@@ -91,7 +91,7 @@ object DataService {
             NormalNotification.showMessage(
                 project,
                 NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                "元数据拉取中",
+                I18nUtils.getMsg("metadata.fetching"),
                 "",
                 NotificationType.INFORMATION
             )
@@ -102,8 +102,13 @@ object DataService {
         val productUrl = "https://api.aliyun.com/meta/v1/products.json"
         val request = RequestUtil.createRequest(productUrl)
         val productAndVersion = mutableMapOf<String, String>()
-        if (cacheNameAndVersionFile.exists() && cacheNameAndVersionFile.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis()) {
-            val cacheNameAndVersionMap = CacheUtil.readMapCache(cacheNameAndVersionFile)
+        val nameAndVersionFile = if (I18nUtils.getLocale() == Locale.CHINA) {
+            File(ApiConstants.CACHE_PATH, "nameAndVersion1")
+        } else {
+            File(ApiConstants.CACHE_PATH, "nameAndVersion1-en")
+        }
+        if (nameAndVersionFile.exists() && nameAndVersionFile.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis()) {
+            val cacheNameAndVersionMap = CacheUtil.readMapCache(nameAndVersionFile)
             for ((_, list) in cacheNameAndVersionMap) {
                 productAndVersion[list[0]] = list[2]
             }
@@ -125,8 +130,8 @@ object DataService {
                         NormalNotification.showMessage(
                             project,
                             NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                            "拉取产品元数据失败",
-                            "网络请求失败，错误码 ${response.code}, 错误信息 ${response.message}",
+                            I18nUtils.getMsg("product.list.fetch.fail"),
+                            "${I18nUtils.getMsg("request.fail.error.code")} ${response.code}, ${I18nUtils.getMsg("request.fail.error.message")} ${response.message}",
                             NotificationType.ERROR
                         )
                     }
@@ -163,10 +168,10 @@ object DataService {
                                         if (titleElement != null && !titleElement.isJsonNull) {
                                             titleElement.asString
                                         } else {
-                                            "暂无描述"
+                                            I18nUtils.getMsg("description.not.exist")
                                         }
                                     } else {
-                                        "暂无描述"
+                                        I18nUtils.getMsg("description.not.exist")
                                     }
                                 _javaIndex!!["$key::$productName::$defaultVersion"] = title
                             }
@@ -175,8 +180,8 @@ object DataService {
                         NormalNotification.showMessage(
                             project,
                             NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                            "拉取 API 元数据失败",
-                            "网络请求失败，错误码 ${response.code}, 错误信息 ${response.message}",
+                            I18nUtils.getMsg("api.data.fetch.fail"),
+                            "${I18nUtils.getMsg("request.fail.error.code")} ${response.code}, ${I18nUtils.getMsg("request.fail.error.message")} ${response.message}",
                             NotificationType.ERROR
                         )
                     }

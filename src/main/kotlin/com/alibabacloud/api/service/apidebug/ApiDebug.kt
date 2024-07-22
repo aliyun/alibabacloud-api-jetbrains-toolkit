@@ -5,6 +5,7 @@ import com.alibabacloud.api.service.constants.ApiConstants
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.util.FormatUtil
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.models.credentials.ConfigureFile
 import com.aliyun.teautil.models.TeaUtilException
 import com.google.gson.Gson
@@ -51,8 +52,8 @@ class ApiDebug {
                         NormalNotification.showMessage(
                             project,
                             NotificationGroups.DEBUG_NOTIFICATION_GROUP,
-                            "需要登录",
-                            "如需 API 调试，请先在左侧工具窗口处配置 AK/SK",
+                            I18nUtils.getMsg("api.debug.need.profile"),
+                            I18nUtils.getMsg("api.debug.need.profile.detail"),
                             NotificationType.WARNING
                         )
                     } else {
@@ -65,10 +66,9 @@ class ApiDebug {
                             accessKeyId,
                             accessKeySecret,
                             project
-                        ).replace(
-                            "\\\"",
-                            "",
-                        )
+                        ).replace("\\\"", "")
+                            .replace("\\n", "\\\n")
+                            .replace("\\r", "\\\r")
                     }
 
                     browser.cefBrowser.executeJavaScript(
@@ -81,8 +81,8 @@ class ApiDebug {
                     NormalNotification.showMessage(
                         project,
                         NotificationGroups.DEBUG_NOTIFICATION_GROUP,
-                        "参数格式错误",
-                        "请检查",
+                        I18nUtils.getMsg("api.debug.param.format.error"),
+                        I18nUtils.getMsg("format.check"),
                         NotificationType.ERROR
                     )
                     return@addHandler JBCefJSQuery.Response(null, 0, "errorMsg")
@@ -224,7 +224,7 @@ class ApiDebug {
             project: Project,
         ): String {
             if (apiDocData.size() <= 0 || endpointList.size() < 0) {
-                return "网络请求失败，请重试"
+                return I18nUtils.getMsg("request.fail")
             }
             val apisObject = apiDocData.get(ApiConstants.DEBUG_APIS).asJsonObject.get(apiName).asJsonObject
             val methods = apisObject.get(ApiConstants.DEBUG_METHODS).asJsonArray
@@ -456,19 +456,23 @@ class ApiDebug {
                 duration = (System.currentTimeMillis() - startTime).toInt()
             } catch (teaUnretryableException: com.aliyun.tea.TeaUnretryableException) {
                 val message = if (teaUnretryableException.message == "Invalid URL host: \"\"") {
-                    "请选择正确的服务地址"
+                    I18nUtils.getMsg("api.debug.select.correct.endpoint")
                 } else {
                     teaUnretryableException.message ?: ""
                 }
                 NormalNotification.showMessage(
-                    project, NotificationGroups.DEBUG_NOTIFICATION_GROUP, "发生错误", message, NotificationType.ERROR
+                    project,
+                    NotificationGroups.DEBUG_NOTIFICATION_GROUP,
+                    I18nUtils.getMsg("api.debug.error"),
+                    message,
+                    NotificationType.ERROR
                 )
             } catch (teaUtilException: TeaUtilException) {
                 NormalNotification.showMessage(
                     project,
                     NotificationGroups.DEBUG_NOTIFICATION_GROUP,
-                    "发生错误",
-                    "参数格式错误，欢迎反馈",
+                    I18nUtils.getMsg("api.debug.error"),
+                    I18nUtils.getMsg("api.debug.param.format.error"),
                     NotificationType.ERROR
                 )
             }

@@ -2,6 +2,7 @@ package com.alibabacloud.toolkit
 
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.settings.ToolkitSettingsConfigurable
 import com.alibabacloud.states.ToolkitSettingsState
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -26,7 +27,7 @@ class ToolkitUpdate : ProjectActivity {
         val enabled = ToolkitSettingsState.getInstance().isAutoUpdateEnabled
         if (enabled) {
             ProgressManager.getInstance()
-                .run(object : Task.Backgroundable(null, ("Updating Alibaba Cloud Developer Toolkit")) {
+                .run(object : Task.Backgroundable(null, (I18nUtils.getMsg("plugin.update"))) {
                     override fun run(indicator: ProgressIndicator) {
                         checkAndUpdate(project, indicator)
                     }
@@ -54,7 +55,7 @@ class ToolkitUpdate : ProjectActivity {
                 project,
                 NotificationGroups.PLUGIN_INSTALLED_NOTIFICATION_GROUP,
                 "Alibaba Cloud Developer Toolkit",
-                "${latestPd.pluginVersion} 版本安装完成，请重启 IDE",
+                "${latestPd.pluginVersion} ${I18nUtils.getMsg("plugin.update.restart")}",
                 NotificationType.INFORMATION,
                 restartAction = {
                     ApplicationManager.getApplication().restart()
@@ -71,7 +72,7 @@ class ToolkitUpdate : ProjectActivity {
                 project,
                 NotificationGroups.PLUGIN_INSTALLED_NOTIFICATION_GROUP,
                 "Alibaba Cloud Developer Toolkit",
-                "插件自动更新失败，请稍后重试",
+                I18nUtils.getMsg("plugin.update.fail"),
                 NotificationType.INFORMATION,
             )
             return
@@ -80,7 +81,7 @@ class ToolkitUpdate : ProjectActivity {
                 project,
                 NotificationGroups.PLUGIN_INSTALLED_NOTIFICATION_GROUP,
                 "Alibaba Cloud Developer Toolkit",
-                "插件自动更新失败，请稍后重试",
+                I18nUtils.getMsg("plugin.update.fail"),
                 NotificationType.INFORMATION,
             )
             return
