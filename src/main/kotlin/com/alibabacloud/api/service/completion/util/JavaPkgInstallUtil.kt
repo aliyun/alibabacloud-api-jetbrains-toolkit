@@ -1,8 +1,8 @@
 package com.alibabacloud.api.service.completion.util
 
-import com.alibabacloud.api.service.constants.CompletionConstants
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
+import com.alibabacloud.i18n.I18nUtils
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -35,7 +35,7 @@ class JavaPkgInstallUtil {
                     NormalNotification.showMessage(
                         project,
                         NotificationGroups.DEPS_NOTIFICATION_GROUP,
-                        CompletionConstants.BEGIN_IMPORT,
+                        I18nUtils.getMsg("BEGIN_INSTALL_PACKAGE"),
                         "",
                         NotificationType.INFORMATION
                     )
@@ -44,8 +44,8 @@ class JavaPkgInstallUtil {
                     NormalNotification.showMessage(
                         project,
                         NotificationGroups.DEPS_NOTIFICATION_GROUP,
-                        CompletionConstants.IMPORT_FAILED,
-                        CompletionConstants.CHECK_NETWORK,
+                        I18nUtils.getMsg("INSTALL_PACKAGE_FAIL"),
+                        I18nUtils.getMsg("CHECK_NETWORK"),
                         NotificationType.ERROR
                     )
                 })

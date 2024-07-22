@@ -4,10 +4,10 @@ import com.alibabacloud.api.service.OkHttpClientProvider
 import com.alibabacloud.api.service.completion.util.JavaPkgInstallUtil
 import com.alibabacloud.api.service.completion.util.ProjectStructureUtil
 import com.alibabacloud.api.service.completion.util.PythonPkgInstallUtil
-import com.alibabacloud.api.service.constants.CompletionConstants
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.util.RequestUtil
+import com.alibabacloud.i18n.I18nUtils
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.intellij.notification.NotificationType
@@ -30,8 +30,8 @@ class AutoInstallPkgUtil {
                 NormalNotification.showMessage(
                     project,
                     NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                    "获取依赖失败",
-                    "请检查网络",
+                    I18nUtils.getMsg("INSTALL_PACKAGE_FAIL"),
+                    I18nUtils.getMsg("CHECK_NETWORK"),
                     NotificationType.ERROR
                 )
             }
@@ -83,8 +83,8 @@ class AutoInstallPkgUtil {
                     NormalNotification.showMessage(
                         project,
                         NotificationGroups.DEPS_NOTIFICATION_GROUP,
-                        "依赖导入失败",
-                        "${CompletionConstants.NO_SDK} Python SDK",
+                        I18nUtils.getMsg("INSTALL_PACKAGE_FAIL"),
+                        "${I18nUtils.getMsg("NO_SDK_PREFIX")} Python ${I18nUtils.getMsg("NO_SDK_SUFFIX")}",
                         NotificationType.INFORMATION
                     )
                 }
@@ -92,7 +92,7 @@ class AutoInstallPkgUtil {
                 NormalNotification.showMessage(
                     project,
                     NotificationGroups.DEPS_NOTIFICATION_GROUP,
-                    "依赖已存在",
+                    I18nUtils.getMsg("PACKAGE_ALREADY_EXIST"),
                     "",
                     NotificationType.INFORMATION
                 )
@@ -112,15 +112,15 @@ class AutoInstallPkgUtil {
                 NormalNotification.showMessage(
                     project,
                     NotificationGroups.DEPS_NOTIFICATION_GROUP,
-                    CompletionConstants.IMPORT_FAILED,
-                    "未识别到 pom.xml（$lang 暂时只支持 Maven 依赖自动导入）",
+                    I18nUtils.getMsg("INSTALL_PACKAGE_FAIL"),
+                    "${I18nUtils.getMsg("NO_POM_PREFIX")}$lang ${I18nUtils.getMsg("NO_POM_SUFFIX")}",
                     NotificationType.WARNING
                 )
             } else if (isDependencyExists) {
                 NormalNotification.showMessage(
                     project,
                     NotificationGroups.DEPS_NOTIFICATION_GROUP,
-                    CompletionConstants.ALREADY_EXIST,
+                    I18nUtils.getMsg("PACKAGE_ALREADY_EXIST"),
                     "",
                     NotificationType.INFORMATION
                 )
@@ -128,8 +128,8 @@ class AutoInstallPkgUtil {
                 NormalNotification.showMessage(
                     project,
                     NotificationGroups.DEPS_NOTIFICATION_GROUP,
-                    CompletionConstants.IMPORT_FAILED,
-                    "${CompletionConstants.NO_SDK} $lang SDK",
+                    I18nUtils.getMsg("INSTALL_PACKAGE_FAIL"),
+                    "${I18nUtils.getMsg("NO_SDK_PREFIX")} $lang ${I18nUtils.getMsg("NO_SDK_SUFFIX")}",
                     NotificationType.INFORMATION
                 )
             }
@@ -165,8 +165,8 @@ class AutoInstallPkgUtil {
                     NormalNotification.showMessage(
                         project,
                         NotificationGroups.DEPS_NOTIFICATION_GROUP,
-                        "暂不支持该语言的依赖自动导入",
-                        "请点击安装方式按钮获取",
+                        I18nUtils.getMsg("INSTALL_PACKAGE_FAIL"),
+                        "${I18nUtils.getMsg("CODE_LANG_NOT_SUPPORT")}${I18nUtils.getMsg("CLICK_BUTTON_FOR_PACKAGE")}",
                         NotificationType.INFORMATION
                     )
                 }

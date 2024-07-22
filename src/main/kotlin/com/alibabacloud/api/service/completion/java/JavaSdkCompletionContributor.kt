@@ -3,8 +3,8 @@ package com.alibabacloud.api.service.completion.java
 import com.alibabacloud.api.service.completion.SdkCompletionContributor
 import com.alibabacloud.api.service.completion.util.JavaPkgInstallUtil
 import com.alibabacloud.api.service.completion.util.LookupElementUtil
-import com.alibabacloud.api.service.constants.CompletionConstants
 import com.alibabacloud.api.service.constants.NotificationGroups
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.icons.ToolkitIcons
 import com.google.gson.JsonArray
 import com.intellij.codeInsight.completion.CompletionResultSet
@@ -39,7 +39,7 @@ class JavaSdkCompletionContributor : SdkCompletionContributor() {
                 .withIcon(ToolkitIcons.LOGO_ICON)
                 .withInsertHandler { insertionContext, _ ->
                     insertHandler(insertionContext, document, request, "java") { sdkInfo ->
-                        if (!sdkInfo[0].asString.contains(CompletionConstants.NO_SDK)) {
+                        if (!sdkInfo[0].asString.contains(I18nUtils.getMsg("NO_SDK_PREFIX"))) {
                             checkAndNotifyDependency(
                                 insertionContext,
                                 apiInfo.productName,
@@ -60,7 +60,7 @@ class JavaSdkCompletionContributor : SdkCompletionContributor() {
                 .withIcon(ToolkitIcons.LOGO_ICON)
                 .withInsertHandler { insertionContext, _ ->
                     insertHandler(insertionContext, document, request, "java-async") { sdkInfo ->
-                        if (!sdkInfo[0].asString.contains(CompletionConstants.NO_SDK)) {
+                        if (!sdkInfo[0].asString.contains(I18nUtils.getMsg("NO_SDK_PREFIX"))) {
                             checkAndNotifyDependency(
                                 insertionContext,
                                 apiInfo.productName,
@@ -99,12 +99,12 @@ class JavaSdkCompletionContributor : SdkCompletionContributor() {
             val isDependencyExists = resList[0]
             val isPomExists = resList[1]
             if (isPomExists && !isDependencyExists) {
-                val content = CompletionConstants.IF_AUTO_IMPORT + (if (lang == "java-async") "alibabacloud-" else "") +
+                val content = I18nUtils.getMsg("IF_AUTO_INSTALL_PACKAGE") + (if (lang == "java-async") " alibabacloud-" else " ") +
                         "${productName.lowercase().replace("-", "_")}${defaultVersion.replace("-", "")}?"
                 notificationService.showMessageWithActions(
                     project,
                     NotificationGroups.DEPS_NOTIFICATION_GROUP,
-                    CompletionConstants.IMPORT,
+                    I18nUtils.getMsg("INSTALL_PACKAGE"),
                     content,
                     NotificationType.INFORMATION,
                     yesAction = {

@@ -2,6 +2,7 @@ package com.alibabacloud.api.service
 
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
+import com.alibabacloud.i18n.I18nUtils
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.intellij.notification.NotificationType
@@ -153,8 +154,8 @@ internal class ApiPageTest {
         verify(normalNotification).showMessage(
             eq(project),
             eq(NotificationGroups.NETWORK_NOTIFICATION_GROUP),
-            eq("获取 endpoint 数据失败"),
-            eq("请检查网络"),
+            eq(I18nUtils.getMsg("FETCH_ENDPOINT_FAIL")),
+            eq(I18nUtils.getMsg("CHECK_NETWORK")),
             eq(NotificationType.ERROR)
         )
         assertTrue(endpointList.size() == 0, "Endpoint list should be empty when IOException is thrown")
@@ -169,8 +170,8 @@ internal class ApiPageTest {
         verify(normalNotification).showMessage(
             eq(project),
             eq(NotificationGroups.NETWORK_NOTIFICATION_GROUP),
-            eq("获取 API 数据失败"),
-            eq("请检查网络"),
+            eq(I18nUtils.getMsg("FETCH_API_FAIL")),
+            eq(I18nUtils.getMsg("CHECK_NETWORK")),
             eq(NotificationType.ERROR)
         )
         assertTrue(apiDocData.size() == 0, "apiDocData should be empty when IOException is thrown")
