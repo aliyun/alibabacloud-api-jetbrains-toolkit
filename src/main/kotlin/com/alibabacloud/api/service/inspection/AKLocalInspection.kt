@@ -1,6 +1,7 @@
 package com.alibabacloud.api.service.inspection
 
 import com.alibabacloud.api.service.constants.AKRegex
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.states.ToolkitSettingsState
 import com.intellij.codeInspection.*
 import com.intellij.psi.PsiElement
@@ -10,7 +11,7 @@ import java.util.regex.Pattern
 
 
 class AKLocalInspection : LocalInspectionTool() {
-    private val problemDescription = "Alibaba Cloud: 不建议明文使用AK!\nAK一旦泄露，会给所属账号下的资源带来巨大风险。"
+    private val problemDescription = "Alibaba Cloud: " + I18nUtils.getMsg("inspections.tips")
 
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
         if (!ToolkitSettingsState.getInstance().state.isAKInspectionEnabled) {

@@ -27,11 +27,8 @@ object ApiConstants {
     )
 
     const val TOOLWINDOW_APIS = "Alibaba Cloud APIs"
-    const val TOOLWINDOW_API_TREE = "Alibaba Cloud API"
-    const val TOOLWINDOW_PRODUCT_TREE = "Alibaba Cloud API"
 
     const val API_DIR_DATA = "data"
-
     const val SDK_MAKE_CODE_DATA = "data"
     const val SDK_MAKE_CODE_DEMO = "demoSdk"
     const val SDK_MAKE_CODE_BODY_API_NAME = "apiName"
@@ -84,7 +81,4 @@ object ApiConstants {
     const val DEBUG_NEW_PARAMS_POSITION_BODY = "body"
     const val DEBUG_NEW_PARAMS_POSITION_HEADER = "header"
     const val DEBUG_NEW_PARAMS_POSITION_FORM_DATA = "formData"
-
-    const val CODE_GENERATE_ERROR = "SDK 示例生成出错，请联系支持群开发同学解决"
-    const val CODE_LANG_NOT_SUPPORT = "暂不支持该语言"
 }

@@ -1,8 +1,8 @@
 package com.alibabacloud.api.service.completion.util
 
-import com.alibabacloud.api.service.constants.CompletionConstants
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
+import com.alibabacloud.i18n.I18nUtils
 import com.intellij.execution.ExecutionException
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
@@ -19,8 +19,8 @@ class PythonPkgInstallUtil {
                 NormalNotification.showMessage(
                     project,
                     NotificationGroups.DEPS_NOTIFICATION_GROUP,
-                    CompletionConstants.IMPORT_FAILED,
-                    "${CompletionConstants.NO_SDK} Python SDK",
+                    I18nUtils.getMsg("auto.install.package.fail"),
+                    "${I18nUtils.getMsg("sdk.not.exist.prefix")} Python ${I18nUtils.getMsg("sdk.not.exist.suffix")}",
                     NotificationType.INFORMATION
                 )
             } else {
@@ -41,8 +41,8 @@ class PythonPkgInstallUtil {
                 NormalNotification.showMessage(
                     project,
                     NotificationGroups.DEPS_NOTIFICATION_GROUP,
-                    "无法安装 Python package",
-                    "未配置 interpreter",
+                    I18nUtils.getMsg("auto.install.package.fail"),
+                    I18nUtils.getMsg("python.no.interpreter"),
                     NotificationType.WARNING
                 )
                 return true
