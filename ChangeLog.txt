@@ -1,3 +1,7 @@
+2024-07-25 Version: 0.0.10
+1. Provide clearer indication of the current user profile.
+2. Enhance documentation popup of OpenAPI.
+
 2024-06-26 Version: 0.0.9
 1. Add user-agent in header.
 2. Cache metadata for code completion.
