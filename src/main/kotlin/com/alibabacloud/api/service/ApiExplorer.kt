@@ -35,41 +35,7 @@ class ApiExplorer {
             val tree = Tree(treeModel)
             val treeRenderer = CustomTreeCellRenderer()
 
-            for (element in data) {
-                if (element is JsonObject && element.has(ApiConstants.API_DIR_RESPONSE_NAME)) {
-                    val name = element.get(ApiConstants.API_DIR_RESPONSE_NAME).toString().replace("\"", "")
-                    val nodeTitle =
-                        element.get(ApiConstants.API_DIR_RESPONSE_NODE_TITLE).toString().replace("\"", "")
-                    val children = element.get(ApiConstants.API_DIR_RESPONSE_CHILDREN) as JsonArray
-                    if (name == "null" && children.size() == 0) {
-                        continue
-                    } else if (name == "null") {
-                        val parentNode = DefaultMutableTreeNode(nodeTitle)
-                        root.add(parentNode)
-                        addChildrenToNode(children, parentNode)
-                    } else {
-                        val isDeprecated = if ((element.get("deprecated")?.asInt ?: 0) == 1) " [Deprecated]" else ""
-                        val nodeText =
-                            if (element.has(ApiConstants.API_DIR_RESPONSE_TITLE) && !element.get(ApiConstants.API_DIR_RESPONSE_TITLE).isJsonNull) {
-                                "$name  ${element.get(ApiConstants.API_DIR_RESPONSE_TITLE).asString}$isDeprecated"
-                            } else {
-                                "$name  暂无描述$isDeprecated"
-                            }
-                        val apiNode = DefaultMutableTreeNode(nodeText)
-                        root.add(apiNode)
-                    }
-                } else if (element is JsonObject && !element.has(ApiConstants.API_DIR_RESPONSE_NAME) && element.get(
-                        ApiConstants.API_DIR_RESPONSE_DIR_ID
-                    ).asInt == 0 && element.get(ApiConstants.API_DIR_RESPONSE_TITLE).asString == "其它" && element.get(
-                        ApiConstants.API_DIR_RESPONSE_CHILDREN
-                    ).asJsonArray.size() > 0
-                ) {
-                    val parentNode = DefaultMutableTreeNode("其它")
-                    root.add(parentNode)
-                    val children = element.get(ApiConstants.API_DIR_RESPONSE_CHILDREN) as JsonArray
-                    addChildrenToNode(children, parentNode)
-                }
-            }
+            addNode(data, root)
 
             tree.cellRenderer = treeRenderer
             tree.isRootVisible = true
@@ -80,18 +46,24 @@ class ApiExplorer {
             return tree
         }
 
-        private fun addChildrenToNode(children: JsonArray, parent: DefaultMutableTreeNode) {
-            for (element in children) {
+        private fun addNode(data: JsonArray, parent: DefaultMutableTreeNode) {
+            for (element in data) {
                 if (element is JsonObject && element.has(ApiConstants.API_DIR_RESPONSE_NAME)) {
                     val name = element.get(ApiConstants.API_DIR_RESPONSE_NAME).toString().replace("\"", "")
-                    val nodeTitle =
-                        element.get(ApiConstants.API_DIR_RESPONSE_NODE_TITLE)?.toString()
-                            ?.replace("\"", "")
-                    if (name == "null" && nodeTitle !== null) {
-                        val childNode = DefaultMutableTreeNode(nodeTitle)
-                        parent.add(childNode)
-                        val grandchildren = element.get(ApiConstants.API_DIR_RESPONSE_CHILDREN) as JsonArray
-                        addChildrenToNode(grandchildren, childNode)
+                    val nodeTitle = element.get(ApiConstants.API_DIR_RESPONSE_NODE_TITLE)?.toString()?.replace("\"", "")
+                    var children = element.get(ApiConstants.API_DIR_RESPONSE_CHILDREN)?.asJsonArray
+                    if (name == "null" && children != null && children.size() == 0) {
+                        continue
+                    } else if (name == "null" && nodeTitle !== null) {
+                        if (nodeTitle != "") {
+                            val titleNode = DefaultMutableTreeNode(nodeTitle)
+                            parent.add(titleNode)
+                            children = element.get(ApiConstants.API_DIR_RESPONSE_CHILDREN) as JsonArray
+                            addNode(children, titleNode)
+                        } else {
+                            children = element.get(ApiConstants.API_DIR_RESPONSE_CHILDREN) as JsonArray
+                            addNode(children, parent)
+                        }
                     } else {
                         val isDeprecated = if ((element.get("deprecated")?.asInt ?: 0) == 1) " [Deprecated]" else ""
                         val nodeText =
@@ -103,6 +75,16 @@ class ApiExplorer {
                         val apiNode = DefaultMutableTreeNode(nodeText)
                         parent.add(apiNode)
                     }
+                } else if (element is JsonObject && !element.has(ApiConstants.API_DIR_RESPONSE_NAME) && element.get(
+                        ApiConstants.API_DIR_RESPONSE_DIR_ID
+                    ).asInt == 0 && (element.get(ApiConstants.API_DIR_RESPONSE_TITLE).asString == "其它" || element.get(ApiConstants.API_DIR_RESPONSE_TITLE).asString == "Others") && element.get(
+                        ApiConstants.API_DIR_RESPONSE_CHILDREN
+                    ).asJsonArray.size() > 0
+                ) {
+                    val titleNode = DefaultMutableTreeNode("其他")
+                    parent.add(titleNode)
+                    val children = element.get(ApiConstants.API_DIR_RESPONSE_CHILDREN) as JsonArray
+                    addNode(children, titleNode)
                 }
             }
         }
