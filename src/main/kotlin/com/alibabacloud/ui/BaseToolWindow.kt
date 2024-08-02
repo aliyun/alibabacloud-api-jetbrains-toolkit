@@ -384,6 +384,60 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         val searchField: SearchTextField
     ) : AnAction() {
         override fun actionPerformed(e: AnActionEvent) {
+            Util.refreshProductPanel(project, contentPanel, searchField)
+            DataService.refreshMeta(project)
+        }
+    }
+
+    private class ViewDocumentationAction : AnAction() {
+        override fun actionPerformed(e: AnActionEvent) {
+            BrowserUtil.browse(URI("https://help.aliyun.com/zh/openapi/user-guide/using-the-alibaba-cloud-developer-toolkit-plugin-in-jetbrains-ides"))
+        }
+    }
+
+    private class ViewSourceCodeAction : AnAction() {
+        override fun actionPerformed(e: AnActionEvent) {
+            BrowserUtil.browse(URI("https://github.com/aliyun/alibabacloud-api-jetbrains-toolkit"))
+        }
+    }
+
+    private class NewIssueAction : AnAction() {
+        override fun actionPerformed(e: AnActionEvent) {
+            BrowserUtil.browse(URI("https://github.com/aliyun/alibabacloud-api-jetbrains-toolkit/issues"))
+        }
+    }
+
+    private class RefreshRightToolWindowAction(
+        val contentManager: ContentManager,
+        val name: String,
+        val defaultVersion: String,
+    ) : AnAction() {
+        override fun actionPerformed(e: AnActionEvent) {
+            val project = e.project ?: return
+            val currentContent = contentManager.selectedContent
+            val apiName = currentContent?.displayName?.substringAfter("API: ") ?: ""
+            if (currentContent != null && currentContent.component is JPanel) {
+                val apiPanel = currentContent.component as JPanel
+                ApiPage.showApiDetail(
+                    currentContent,
+                    contentManager,
+                    apiPanel,
+                    name,
+                    apiName,
+                    defaultVersion,
+                    project,
+                    false,
+                )
+            }
+        }
+    }
+
+    object Util {
+        fun refreshProductPanel(
+            project: Project,
+            contentPanel: JPanel,
+            searchField: SearchTextField
+        ) {
             contentPanel.components.filter { it.name == "productTree" }.forEach {
                 contentPanel.remove(it)
             }
@@ -411,52 +465,6 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                     contentPanel.repaint()
                 }
             })
-
-            DataService.refreshMeta(project)
-        }
-    }
-
-    private class ViewDocumentationAction : AnAction() {
-        override fun actionPerformed(e: AnActionEvent) {
-            BrowserUtil.browse(URI("https://help.aliyun.com/zh/openapi/user-guide/using-the-alibaba-cloud-developer-toolkit-plugin-in-jetbrains-ides"))
-        }
-    }
-
-    private class ViewSourceCodeAction : AnAction() {
-        override fun actionPerformed(e: AnActionEvent) {
-            BrowserUtil.browse(URI("https://github.com/aliyun/alibabacloud-api-jetbrains-toolkit"))
-        }
-    }
-
-    private class NewIssueAction : AnAction() {
-        override fun actionPerformed(e: AnActionEvent) {
-            BrowserUtil.browse(URI("https://github.com/aliyun/alibabacloud-api-jetbrains-toolkit/issues"))
-        }
-    }
-
-
-    private class RefreshRightToolWindowAction(
-        val contentManager: ContentManager,
-        val name: String,
-        val defaultVersion: String,
-    ) : AnAction() {
-        override fun actionPerformed(e: AnActionEvent) {
-            val project = e.project ?: return
-            val currentContent = contentManager.selectedContent
-            val apiName = currentContent?.displayName?.substringAfter("API: ") ?: ""
-            if (currentContent != null && currentContent.component is JPanel) {
-                val apiPanel = currentContent.component as JPanel
-                ApiPage.showApiDetail(
-                    currentContent,
-                    contentManager,
-                    apiPanel,
-                    name,
-                    apiName,
-                    defaultVersion,
-                    project,
-                    false,
-                )
-            }
         }
     }
 }
