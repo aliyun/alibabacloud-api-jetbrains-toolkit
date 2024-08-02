@@ -18,6 +18,7 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.io.File
 import java.io.IOException
+import java.util.*
 import javax.swing.JPanel
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -150,6 +151,33 @@ class ApiExplorer {
             return Pair(nameAndVersionMap, Tree(treeModel))
         }
 
+        private fun sortTreeNodes(node: DefaultMutableTreeNode) {
+            val children = Collections.list(node.children())
+            children.sortWith { node1, node2 ->
+                val node1Mutable = node1 as DefaultMutableTreeNode
+                val node2Mutable = node2 as DefaultMutableTreeNode
+                val node1Name = node1Mutable.userObject.toString()
+                val node2Name = node2Mutable.userObject.toString()
+
+                val isNode1Other = node1Name == "其他"
+                val isNode2Other = node2Name == "其他"
+
+                return@sortWith when {
+                    isNode1Other && isNode2Other -> 0
+                    isNode1Other -> 1
+                    isNode2Other -> -1
+                    else -> node1Name.compareTo(node2Name)
+                }
+            }
+            node.removeAllChildren()
+            for (child in children) {
+                node.add(child as DefaultMutableTreeNode)
+            }
+            for (child in children) {
+                sortTreeNodes(child as DefaultMutableTreeNode)
+            }
+        }
+
         private fun buildProductTree(
             data: JsonArray,
             root: DefaultMutableTreeNode,
@@ -158,9 +186,11 @@ class ApiExplorer {
             val groupMap = mutableMapOf<String, DefaultMutableTreeNode>()
             if (data.size() > 0) {
                 for (product in data) {
-                    val group = product.asJsonObject.get("group").asString
+                    val groupElement = product.asJsonObject.get("category2Name")
+                    val group = if (groupElement == null || groupElement.isJsonNull) "其他" else groupElement.asString
                     val code = product.asJsonObject.get("code").asString
-                    val name = product.asJsonObject.get("name").asString
+                    val nameElement = product.asJsonObject.get("name")
+                    val name = if (nameElement == null || nameElement.isJsonNull) "--" else nameElement.asString
                     val defaultVersion = product.asJsonObject.get("defaultVersion").asString
                     val groupNode = groupMap.getOrPut(group) {
                         val node = DefaultMutableTreeNode(group)
@@ -176,6 +206,7 @@ class ApiExplorer {
                     nameAndVersionMap[name] = list
                 }
             }
+            sortTreeNodes(root)
             return Pair(root, nameAndVersionMap)
         }
 

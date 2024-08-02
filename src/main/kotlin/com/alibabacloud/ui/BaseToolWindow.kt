@@ -137,6 +137,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
 
                 override fun onSuccess() {
                     val scrollPane = FormatUtil.getScrollPane(apiDocContentTree)
+                    scrollPane.name = "productTree"
                     contentPanel.add(scrollPane)
                     productClickListener(project, apiDocContentTree, nameAndVersionMap)
                     SearchHelper.search(nameAndVersionMap, apiDocContentTree, searchField)
