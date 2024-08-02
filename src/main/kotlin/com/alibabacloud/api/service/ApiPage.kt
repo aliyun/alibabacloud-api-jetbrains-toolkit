@@ -13,6 +13,8 @@ import com.alibabacloud.telemetry.ExperienceQuestionnaire
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import com.google.gson.JsonSyntaxException
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
@@ -23,11 +25,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.jcef.JBCefBrowser
+import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefClient
+import com.intellij.ui.jcef.JBCefJSQuery
 import okhttp3.OkHttpClient
+import org.cef.browser.CefBrowser
+import org.cef.browser.CefFrame
+import org.cef.handler.CefLoadHandler
+import org.cef.handler.CefLoadHandlerAdapter
+import org.cef.network.CefRequest
 import java.awt.BorderLayout
 import java.io.File
 import java.io.IOException
+import java.net.URI
 import java.time.LocalDateTime
 import javax.swing.JPanel
 import javax.swing.JSplitPane
@@ -361,6 +371,7 @@ class ApiPage {
                     splitPane.bottomComponent = sdkPanel
                 }
             }
+            executeOpenLink(browser)
         }
 
         fun executeQuestionnaire(project: Project, browser: JBCefBrowser) {
@@ -377,6 +388,74 @@ class ApiPage {
                     properties.setValue(ExperienceQuestionnaire.QUESTIONNAIRE_LAST_PROMPT_KEY, currentDateTime.toString())
                 }
             }
+        }
+
+        private fun executeOpenLink(browser: JBCefBrowser) {
+            val query = JBCefJSQuery.create(browser as JBCefBrowserBase)
+            var returnLink = ""
+            query.addHandler { url: String? ->
+                try {
+                    if (url != null)  {
+                        try {
+                            BrowserUtil.browse(URI(url))
+                        } catch (e: Exception) {
+                            returnLink = url
+                        }
+                    }
+                    return@addHandler JBCefJSQuery.Response("ok")
+                } catch (e: JsonSyntaxException) {
+                    return@addHandler JBCefJSQuery.Response(null, 0, "errorMsg")
+                }
+            }
+
+            browser.jbCefClient.addLoadHandler(
+                object : CefLoadHandlerAdapter() {
+                    override fun onLoadingStateChange(
+                        cefBrowser: CefBrowser,
+                        isLoading: Boolean,
+                        canGoBack: Boolean,
+                        canGoForward: Boolean,
+                    ) {
+                    }
+
+                    override fun onLoadStart(
+                        cefBrowser: CefBrowser,
+                        frame: CefFrame,
+                        transitionType: CefRequest.TransitionType,
+                    ) {
+                    }
+
+                    override fun onLoadEnd(cefBrowser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
+                        cefBrowser.executeJavaScript(
+                            """
+                        openLinkResult($returnLink)
+                        window.openLink = function(arg) {
+                        ${
+                            query.inject(
+                                "arg",
+                                "response => console.log('读取参数成功', (response))",
+                                "(error_code, error_message) => console.log('读取参数失败', error_code, error_message)",
+                            )
+                        }
+                        };
+
+                            """.trimIndent(),
+                            browser.cefBrowser.url,
+                            0,
+                        )
+                    }
+
+                    override fun onLoadError(
+                        cefBrowser: CefBrowser,
+                        frame: CefFrame,
+                        errorCode: CefLoadHandler.ErrorCode,
+                        errorText: String,
+                        failedUrl: String,
+                    ) {
+                    }
+                },
+                browser.cefBrowser,
+            )
         }
     }
 }
