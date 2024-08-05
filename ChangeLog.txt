@@ -1,3 +1,8 @@
+2024-08-05 Version: 0.0.11
+1. Support open url in webview with default browser.
+2. Update cloud products category name.
+3. Fix some issue.
+
 2024-07-25 Version: 0.0.10
 1. Provide clearer indication of the current user profile.
 2. Enhance documentation popup of OpenAPI.
