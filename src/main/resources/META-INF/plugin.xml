@@ -116,6 +116,12 @@
     </actions>
 
     <change-notes><![CDATA[
+    <b>0.0.11 (2024-08-05)</b>
+      <ul>
+        <li>Support open url in webview with default browser.</li>
+        <li>EUpdate cloud products category name.</li>
+        <li>Fix some issue.</li>
+      </ul>
     <b>0.0.10 (2024-07-25)</b>
       <ul>
         <li>Provide clearer indication of the current user profile.</li>
