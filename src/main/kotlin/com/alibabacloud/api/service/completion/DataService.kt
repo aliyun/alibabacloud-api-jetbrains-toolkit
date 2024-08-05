@@ -6,6 +6,7 @@ import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.RequestUtil
+import com.alibabacloud.i18n.I18nUtils
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
@@ -21,8 +22,14 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import java.io.File
 import java.io.IOException
+import java.util.*
 
-val cacheNameAndVersionFile = File(ApiConstants.CACHE_PATH, "nameAndVersion1")
+val locale = if (I18nUtils.getLocale() == Locale.CHINA) "zh" else "en"
+val cacheNameAndVersionFile = if (locale == "zh") {
+    File(ApiConstants.CACHE_PATH, "nameAndVersion1")
+} else {
+    File(ApiConstants.CACHE_PATH, "nameAndVersion1-en")
+}
 
 object DataService {
     @Volatile
@@ -48,7 +55,7 @@ object DataService {
             synchronized(this) {
                 if (_javaIndex == null) {
                     _javaIndex = mutableMapOf()
-                    ProgressManager.getInstance().run(object : Task.Backgroundable(project, "拉取元数据...", true) {
+                    ProgressManager.getInstance().run(object : Task.Backgroundable(project, I18nUtils.getMsg("FETCH_METADATA"), true) {
                         override fun run(indicator: ProgressIndicator) {
                             try {
                                 val productAndVersion = getProduct(project)
@@ -57,8 +64,8 @@ object DataService {
                                 NormalNotification.showMessage(
                                     project,
                                     NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                                    "拉取元数据失败",
-                                    "请检查网络",
+                                    I18nUtils.getMsg("FETCH_METADATA_FAIL"),
+                                    I18nUtils.getMsg("CHECK_NETWORK"),
                                     NotificationType.ERROR
                                 )
                             }
@@ -88,7 +95,7 @@ object DataService {
             NormalNotification.showMessage(
                 project,
                 NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                "元数据拉取中",
+                I18nUtils.getMsg("METADATA_IS_FETCHING"),
                 "",
                 NotificationType.INFORMATION
             )
@@ -122,8 +129,8 @@ object DataService {
                         NormalNotification.showMessage(
                             project,
                             NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                            "拉取产品元数据失败",
-                            "网络请求失败，错误码 ${response.code}, 错误信息 ${response.message}",
+                            I18nUtils.getMsg("FETCH_PRODUCT_FAIL"),
+                            "${I18nUtils.getMsg("REQUEST_FAIL_ERROR_CODE")} ${response.code}, ${I18nUtils.getMsg("REQUEST_FAIL_ERROR_MESSAGE")} ${response.message}",
                             NotificationType.ERROR
                         )
                     }
@@ -160,10 +167,10 @@ object DataService {
                                         if (titleElement != null && !titleElement.isJsonNull) {
                                             titleElement.asString
                                         } else {
-                                            "暂无描述"
+                                            I18nUtils.getMsg("NO_DESCRIPTION")
                                         }
                                     } else {
-                                        "暂无描述"
+                                        I18nUtils.getMsg("NO_DESCRIPTION")
                                     }
                                 _javaIndex!!["$key::$productName::$defaultVersion"] = title
                             }
@@ -172,8 +179,8 @@ object DataService {
                         NormalNotification.showMessage(
                             project,
                             NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                            "拉取 API 元数据失败",
-                            "网络请求失败，错误码 ${response.code}, 错误信息 ${response.message}",
+                            I18nUtils.getMsg("FETCH_API_FAIL"),
+                            "${I18nUtils.getMsg("REQUEST_FAIL_ERROR_CODE")} ${response.code}, ${I18nUtils.getMsg("REQUEST_FAIL_ERROR_MESSAGE")} ${response.message}",
                             NotificationType.ERROR
                         )
                     }

@@ -1,6 +1,8 @@
 package com.alibabacloud.settings
 
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.states.ToolkitSettingsState
+import com.alibabacloud.telemetry.ExperienceQuestionnaire
 import com.alibabacloud.toolkit.ToolkitInfo
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.options.SearchableConfigurable
@@ -20,26 +22,26 @@ class ToolkitSettingsConfigurable : SearchableConfigurable {
 
 
     override fun createComponent(): JComponent = panel {
-        group("自动更新设置") {
+        group(I18nUtils.getMsg("AUTO_UPDATE_SETTINGS")) {
             row {
                 cell(enableToolkitAutoUpdate).applyToComponent {
                     this.isSelected = ToolkitSettingsState.getInstance().isAutoUpdateEnabled
                 }
-                text("自动检查并更新插件版本")
+                text(I18nUtils.getMsg("AUTO_CHECK_AND_UPDATE_PLUGIN"))
             }
         }
-        group("代码补全设置") {
+        group(I18nUtils.getMsg("CODE_COMPLETION_SETTINGS")) {
             row {
                 cell(enableCompletion).applyToComponent {
                     this.isSelected = ToolkitSettingsState.getInstance().isCompletionEnabled
                 }
-                text("自动插入 SDK 示例代码（或通过快捷键 ctrl + cmd + p 切换）")
+                text(I18nUtils.getMsg("AUTO_COMPLETION"))
             }
         }
-        group("用户反馈") {
+        group(I18nUtils.getMsg("CUSTOMER_FEEDBACK")) {
             row {
-                text("<a>反馈链接</a>") {
-                    BrowserUtil.browse("https://g.alicdn.com/aes/tracker-survey-preview/0.0.13/survey.html?pid=fePxMy&id=3494")
+                text("<a>${I18nUtils.getMsg("FEEDBACK_LINK")}</a>") {
+                    BrowserUtil.browse(ExperienceQuestionnaire.QUESTIONNAIRE_LINK)
                 }
             }
         }

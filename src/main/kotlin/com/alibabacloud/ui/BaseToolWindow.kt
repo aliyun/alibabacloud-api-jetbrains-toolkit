@@ -5,13 +5,15 @@ import com.alibabacloud.api.service.ApiPage
 import com.alibabacloud.api.service.SearchHelper
 import com.alibabacloud.api.service.completion.DataService
 import com.alibabacloud.api.service.completion.cacheNameAndVersionFile
+import com.alibabacloud.api.service.completion.locale
 import com.alibabacloud.api.service.constants.ApiConstants
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.FormatUtil
-import com.alibabacloud.credentials.constants.CredentialsConstants
+import com.alibabacloud.constants.PropertiesConstants
 import com.alibabacloud.credentials.util.ConfigFileUtil
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.icons.ToolkitIcons
 import com.alibabacloud.models.credentials.ConfigureFile
 import com.alibabacloud.telemetry.ExperienceQuestionnaire
@@ -23,12 +25,15 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.*
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.content.Content
@@ -42,6 +47,7 @@ import java.io.File
 import java.io.IOException
 import java.net.URI
 import java.time.LocalDateTime
+import java.util.*
 import javax.swing.*
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
@@ -62,7 +68,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         val profilePanel = JPanel()
         profilePanel.layout = BoxLayout(profilePanel, BoxLayout.X_AXIS)
         profilePanel.add(comboBox)
-        profilePanel.border = BorderFactory.createTitledBorder("当前登录用户：")
+        profilePanel.border = BorderFactory.createTitledBorder(I18nUtils.getMsg("CURRENT_USER"))
         contentPanel.add(profilePanel)
 
         val collapsibleInputPanel = CollapsibleInputPanel(project)
@@ -74,35 +80,36 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
 
         val searchField = SearchTextField()
         searchField.name = "searchProduct"
-        searchField.textEditor.emptyText.text = "搜索产品："
+        searchField.textEditor.emptyText.text = I18nUtils.getMsg("SEARCH_PRODUCT")
         searchField.maximumSize = Dimension(Integer.MAX_VALUE, 50)
         contentPanel.add(searchField)
 
         val refreshToolkitAction = RefreshToolkitAction(project, contentPanel, searchField)
         refreshToolkitAction.templatePresentation.icon = AllIcons.Actions.Refresh
-        refreshToolkitAction.templatePresentation.text = "Refresh"
+        refreshToolkitAction.templatePresentation.text = I18nUtils.getMsg("REFRESH")
+
+        // TODO 切换时注意网络情况不要影响正常使用
+        val languageSwitchAction = LanguageSwitchAction(project, profilePanel, searchField, contentPanel)
 
         val viewDocumentationAction = ViewDocumentationAction()
-        viewDocumentationAction.templatePresentation.text = "View Documentation"
-
-        val viewSourceCodeAction = ViewSourceCodeAction()
-        viewSourceCodeAction.templatePresentation.icon = AllIcons.Vcs.Vendors.Github
-        viewSourceCodeAction.templatePresentation.text = "View Source on GitHub"
+        viewDocumentationAction.templatePresentation.text = I18nUtils.getMsg("VIEW_USER_MANUAL")
 
         val newIssueAction = NewIssueAction()
         newIssueAction.templatePresentation.icon = AllIcons.Vcs.Vendors.Github
-        newIssueAction.templatePresentation.text = "New Issue on GitHub"
+        newIssueAction.templatePresentation.text = I18nUtils.getMsg("NEW_ISSUE")
 
-        toolWindow.setTitleActions(listOf(addProfileAction, feedbackAction, refreshToolkitAction))
+        toolWindow.setTitleActions(listOf(addProfileAction, feedbackAction, refreshToolkitAction, languageSwitchAction))
         toolWindow.setAdditionalGearActions(
             DefaultActionGroup().apply {
                 add(viewDocumentationAction)
-                add(viewSourceCodeAction)
                 add(newIssueAction)
             }
         )
 
-        val cacheTreeFile = File(ApiConstants.CACHE_PATH, "tree1")
+        val xx = ApiExplorer.getMacAddress()
+
+        val locale = if (locale == "zh") "" else "-en"
+        val cacheTreeFile = File(ApiConstants.CACHE_PATH, "tree1$locale")
         var cacheNameAndVersionMap: MutableMap<String, List<String>>? = null
         var cacheTree: Tree? = null
         try {
@@ -126,14 +133,15 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         } else {
             var nameAndVersionMap = mutableMapOf<String, List<String>>()
             var apiDocContentTree = Tree()
-            ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Loading API List", true) {
-                override fun run(indicator: ProgressIndicator) {
-                    val explorer = ApiExplorer.apiDocContentTree(project)
-                    nameAndVersionMap = explorer.first
-                    apiDocContentTree = explorer.second
-                    val treeRenderer = ProductTreeCellRenderer()
-                    apiDocContentTree.cellRenderer = treeRenderer
-                }
+            ProgressManager.getInstance()
+                .run(object : Task.Backgroundable(project, I18nUtils.getMsg("LOAD_API_LIST"), true) {
+                    override fun run(indicator: ProgressIndicator) {
+                        val explorer = ApiExplorer.apiDocContentTree(project)
+                        nameAndVersionMap = explorer.first
+                        apiDocContentTree = explorer.second
+                        val treeRenderer = ProductTreeCellRenderer()
+                        apiDocContentTree.cellRenderer = treeRenderer
+                    }
 
                 override fun onSuccess() {
                     val scrollPane = FormatUtil.getScrollPane(apiDocContentTree)
@@ -163,11 +171,11 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         if (config != null) {
             comboBox.selectedItem = config.current
         } else {
-            comboBox.selectedItem = CredentialsConstants.CREATE_USER
+            comboBox.selectedItem = I18nUtils.getMsg("NEW_PROFILE")
         }
         comboBox.addActionListener {
             val selectedProfile = comboBox.selectedItem as String
-            if (selectedProfile == CredentialsConstants.CREATE_USER) {
+            if (selectedProfile == I18nUtils.getMsg("NEW_PROFILE")) {
                 collapsibleInputPanel.clearFields()
                 collapsibleInputPanel.expandForAddProfile()
             } else {
@@ -223,9 +231,11 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                         productName = it.destructured.component2()
                     }
                     val defaultVersion = nameAndVersionMap[productNameCN]?.get(2) ?: ""
+                    val locale = if (locale == "zh") "" else "&lang=EN_US"
+                    val preferLocale = if (locale == "") "" else "-en"
                     val apiUrl =
-                        "https://api.aliyun.com/api/product/apiDir?product=$productName&version=$defaultVersion"
-                    val cacheApiDataFile = File(ApiConstants.CACHE_PATH, "$productName-api-list")
+                        "https://api.aliyun.com/api/product/apiDir?product=$productName&version=$defaultVersion$locale"
+                    val cacheApiDataFile = File(ApiConstants.CACHE_PATH, "$productName-api-list$preferLocale")
                     val cacheApiData: JsonArray?
                     var apiData: JsonArray? = null
 
@@ -238,7 +248,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                     }
                     if (apiData == null) {
                         apiData = ApiExplorer.getApiListRequest(project, apiUrl)
-                        val cacheApiListFile = File(ApiConstants.CACHE_PATH, "$productName-api-list")
+                        val cacheApiListFile = File(ApiConstants.CACHE_PATH, "$productName-api-list$preferLocale")
                         if (apiData.size() > 0) {
                             try {
                                 CacheUtil.writeApiListCache(cacheApiListFile, apiData)
@@ -247,7 +257,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                                 NormalNotification.showMessage(
                                     project,
                                     NotificationGroups.CACHE_NOTIFICATION_GROUP,
-                                    "缓存写入失败",
+                                    I18nUtils.getMsg("WRITE_CACHE_FAIL"),
                                     "",
                                     NotificationType.ERROR
                                 )
@@ -285,7 +295,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                             )
                             val refreshAction = listOf(refreshRightToolWindowAction)
                             refreshRightToolWindowAction.templatePresentation.icon = AllIcons.Actions.Refresh
-                            refreshRightToolWindowAction.templatePresentation.text = "Refresh API Doc"
+                            refreshRightToolWindowAction.templatePresentation.text = I18nUtils.getMsg("REFRESH_API_DOC")
                             toolWindow.setTitleActions(refreshAction)
 
                             if (selectedApi.isLeaf) {
@@ -352,7 +362,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
 
             val scrollPane = FormatUtil.getScrollPane(panel)
             content =
-                toolWindow.contentManager.factory.createContent(scrollPane, ApiConstants.TOOLWINDOW_API_TREE, false)
+                toolWindow.contentManager.factory.createContent(scrollPane, I18nUtils.getMsg("TOOLWINDOW_API_TREE"), false)
             contentManager.addContent(content)
             contentManager.setSelectedContent(content, true)
         }
@@ -362,19 +372,19 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
     }
 
     private class AddProfileAction(private val collapsibleInputPanel: CollapsibleInputPanel) :
-        AnAction(CredentialsConstants.CREATE_USER, CredentialsConstants.CREATE_USER, AllIcons.General.User) {
+        AnAction(I18nUtils.getMsg("NEW_PROFILE"), I18nUtils.getMsg("NEW_PROFILE"), AllIcons.General.User) {
         override fun actionPerformed(e: AnActionEvent) {
             collapsibleInputPanel.clearFields()
             collapsibleInputPanel.expandForAddProfile()
         }
     }
 
-    private class FeedbackAction : AnAction("Feedback", "Feedback", AllIcons.Actions.Help) {
+    private class FeedbackAction : AnAction("Feedback", I18nUtils.getMsg("FEEDBACK"), AllIcons.Actions.Help) {
         override fun actionPerformed(e: AnActionEvent) {
-            BrowserUtil.browse(URI("https://g.alicdn.com/aes/tracker-survey-preview/0.0.13/survey.html?pid=fePxMy&id=3494"))
+            BrowserUtil.browse(URI(ExperienceQuestionnaire.QUESTIONNAIRE_LINK))
             val properties = PropertiesComponent.getInstance()
-            properties.setValue(ExperienceQuestionnaire.QUESTIONNAIRE_EXPIRATION_KEY, 30 * 24, 30 * 24)
-            properties.setValue(ExperienceQuestionnaire.QUESTIONNAIRE_LAST_PROMPT_KEY, LocalDateTime.now().toString())
+            properties.setValue(PropertiesConstants.QUESTIONNAIRE_EXPIRATION_KEY, 30 * 24, 30 * 24)
+            properties.setValue(PropertiesConstants.QUESTIONNAIRE_LAST_PROMPT_KEY, LocalDateTime.now().toString())
         }
     }
 
@@ -384,35 +394,47 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         val searchField: SearchTextField
     ) : AnAction() {
         override fun actionPerformed(e: AnActionEvent) {
-            contentPanel.components.filter { it.name == "productTree" }.forEach {
-                contentPanel.remove(it)
-            }
-            contentPanel.revalidate()
-            contentPanel.repaint()
-
-            var nameAndVersionMap = mutableMapOf<String, List<String>>()
-            var apiDocContentTree = Tree()
-            ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Loading API List", true) {
-                override fun run(indicator: ProgressIndicator) {
-                    val explorer = ApiExplorer.apiDocContentTree(project)
-                    nameAndVersionMap = explorer.first
-                    apiDocContentTree = explorer.second
-                }
-
-                override fun onSuccess() {
-                    val treeRenderer = ProductTreeCellRenderer()
-                    apiDocContentTree.cellRenderer = treeRenderer
-                    val scrollPane = FormatUtil.getScrollPane(apiDocContentTree)
-                    scrollPane.name = "productTree"
-                    contentPanel.add(scrollPane)
-                    BaseToolWindow().productClickListener(project, apiDocContentTree, nameAndVersionMap)
-                    SearchHelper.search(nameAndVersionMap, apiDocContentTree, searchField)
-                    contentPanel.revalidate()
-                    contentPanel.repaint()
-                }
-            })
+            Util.refreshProductPanel(project, contentPanel, searchField)
 
             DataService.refreshMeta(project)
+        }
+    }
+
+    private class LanguageSwitchAction(
+        val project: Project,
+        val profilePanel: JPanel,
+        val searchField: SearchTextField,
+        val contentPanel: JPanel
+    ) : ToggleAction(I18nUtils.getMsg("LANGUAGE_SWITCH")) {
+        private val chineseIcon = IconLoader.getIcon("/icons/product.svg", javaClass)
+        private val englishIcon = IconLoader.getIcon("/icons/api.svg", javaClass)
+        private val properties = PropertiesComponent.getInstance()
+
+        init {
+            templatePresentation.icon = if (locale == "zh") chineseIcon else englishIcon
+        }
+
+        override fun isSelected(e: AnActionEvent): Boolean {
+            return I18nUtils.getLocale() == Locale.CHINA
+        }
+
+        override fun setSelected(e: AnActionEvent, state: Boolean) {
+            invokeLater {
+                if (state) {
+                    e.presentation.icon = chineseIcon
+                    properties.setValue(PropertiesConstants.PREFERENCE_LANGUAGE, "zh_CN", "default")
+                } else {
+                    e.presentation.icon = englishIcon
+                    properties.setValue(PropertiesConstants.PREFERENCE_LANGUAGE, "en_US", "default")
+                }
+                profilePanel.border = BorderFactory.createTitledBorder(I18nUtils.getMsg("CURRENT_USER"))
+                profilePanel.revalidate()
+                profilePanel.repaint()
+                searchField.textEditor.emptyText.text = I18nUtils.getMsg("SEARCH_PRODUCT")
+                searchField.revalidate()
+                searchField.repaint()
+                Util.refreshProductPanel(project, contentPanel, searchField)
+            }
         }
     }
 
@@ -422,18 +444,11 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         }
     }
 
-    private class ViewSourceCodeAction : AnAction() {
-        override fun actionPerformed(e: AnActionEvent) {
-            BrowserUtil.browse(URI("https://github.com/aliyun/alibabacloud-api-jetbrains-toolkit"))
-        }
-    }
-
     private class NewIssueAction : AnAction() {
         override fun actionPerformed(e: AnActionEvent) {
             BrowserUtil.browse(URI("https://github.com/aliyun/alibabacloud-api-jetbrains-toolkit/issues"))
         }
     }
-
 
     private class RefreshRightToolWindowAction(
         val contentManager: ContentManager,
@@ -457,6 +472,43 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                     false,
                 )
             }
+        }
+    }
+
+    object Util {
+        fun refreshProductPanel(
+            project: Project,
+            contentPanel: JPanel,
+            searchField: SearchTextField
+        ) {
+            contentPanel.components.filter { it.name == "productTree" }.forEach {
+                contentPanel.remove(it)
+            }
+            contentPanel.revalidate()
+            contentPanel.repaint()
+
+            var nameAndVersionMap = mutableMapOf<String, List<String>>()
+            var apiDocContentTree = Tree()
+            ProgressManager.getInstance()
+                .run(object : Task.Backgroundable(project, I18nUtils.getMsg("LOAD_API_LIST"), true) {
+                    override fun run(indicator: ProgressIndicator) {
+                        val explorer = ApiExplorer.apiDocContentTree(project)
+                        nameAndVersionMap = explorer.first
+                        apiDocContentTree = explorer.second
+                    }
+
+                    override fun onSuccess() {
+                        val treeRenderer = ProductTreeCellRenderer()
+                        apiDocContentTree.cellRenderer = treeRenderer
+                        val scrollPane = FormatUtil.getScrollPane(apiDocContentTree)
+                        scrollPane.name = "productTree"
+                        contentPanel.add(scrollPane)
+                        BaseToolWindow().productClickListener(project, apiDocContentTree, nameAndVersionMap)
+                        SearchHelper.search(nameAndVersionMap, apiDocContentTree, searchField)
+                        contentPanel.revalidate()
+                        contentPanel.repaint()
+                    }
+                })
         }
     }
 }

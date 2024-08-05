@@ -9,6 +9,8 @@ import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.api.service.util.RequestUtil
 import com.alibabacloud.api.service.util.ResourceUtil
+import com.alibabacloud.constants.PropertiesConstants
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.telemetry.ExperienceQuestionnaire
 import com.google.gson.Gson
 import com.google.gson.JsonArray
@@ -207,7 +209,7 @@ class ApiPage {
                             notificationService.showMessage(
                                 project,
                                 NotificationGroups.CACHE_NOTIFICATION_GROUP,
-                                "缓存写入失败",
+                                I18nUtils.getMsg("WRITE_CACHE_FAIL"),
                                 "",
                                 NotificationType.ERROR
                             )
@@ -236,7 +238,7 @@ class ApiPage {
                             notificationService.showMessage(
                                 project,
                                 NotificationGroups.CACHE_NOTIFICATION_GROUP,
-                                "缓存写入失败",
+                                I18nUtils.getMsg("WRITE_CACHE_FAIL"),
                                 "",
                                 NotificationType.ERROR
                             )
@@ -263,7 +265,7 @@ class ApiPage {
                                 notificationService.showMessage(
                                     project,
                                     NotificationGroups.CACHE_NOTIFICATION_GROUP,
-                                    "缓存写入失败",
+                                    I18nUtils.getMsg("WRITE_CACHE_FAIL"),
                                     "",
                                     NotificationType.ERROR
                                 )
@@ -275,8 +277,8 @@ class ApiPage {
                         notificationService.showMessage(
                             project,
                             NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                            "获取 API 数据失败",
-                            "网络请求失败，错误码 ${response.code}, 错误信息 ${response.message}",
+                            I18nUtils.getMsg("FETCH_API_FAIL"),
+                            "${I18nUtils.getMsg("REQUEST_FAIL_ERROR_CODE")} ${response.code}, ${I18nUtils.getMsg("REQUEST_FAIL_ERROR_MESSAGE")} ${response.message}",
                             NotificationType.ERROR
                         )
                     }
@@ -286,8 +288,8 @@ class ApiPage {
                 notificationService.showMessage(
                     project,
                     NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                    "获取 API 数据失败",
-                    "请检查网络",
+                    I18nUtils.getMsg("FETCH_API_FAIL"),
+                    I18nUtils.getMsg("CHECK_NETWORK"),
                     NotificationType.ERROR
                 )
             }
@@ -312,8 +314,8 @@ class ApiPage {
                         notificationService.showMessage(
                             project,
                             NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                            "获取 endpoint 数据失败",
-                            "网络请求失败，错误码 ${response.code}, 错误信息 ${response.message}",
+                            I18nUtils.getMsg("FETCH_ENDPOINT_FAIL"),
+                            "${I18nUtils.getMsg("REQUEST_FAIL_ERROR_CODE")} ${response.code}, ${I18nUtils.getMsg("REQUEST_FAIL_ERROR_MESSAGE")} ${response.message}",
                             NotificationType.ERROR
                         )
                     }
@@ -322,8 +324,8 @@ class ApiPage {
                 notificationService.showMessage(
                     project,
                     NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                    "获取 endpoint 数据失败",
-                    "请检查网络",
+                    I18nUtils.getMsg("FETCH_ENDPOINT_FAIL"),
+                    I18nUtils.getMsg("CHECK_NETWORK"),
                     NotificationType.ERROR
                 )
             }
@@ -380,12 +382,12 @@ class ApiPage {
                 val currentDateTime = LocalDateTime.now()
                 if (isNotice == "0" || isNotice == null) {
                     // 用户选择填写问卷
-                    properties.setValue(ExperienceQuestionnaire.QUESTIONNAIRE_EXPIRATION_KEY, 14 * 24, 14 * 24)
-                    properties.setValue(ExperienceQuestionnaire.QUESTIONNAIRE_LAST_PROMPT_KEY, currentDateTime.toString())
+                    properties.setValue(PropertiesConstants.QUESTIONNAIRE_EXPIRATION_KEY, 14 * 24, 14 * 24)
+                    properties.setValue(PropertiesConstants.QUESTIONNAIRE_LAST_PROMPT_KEY, currentDateTime.toString())
                 } else {
                     // 用户选择关掉弹窗
-                    properties.setValue(ExperienceQuestionnaire.QUESTIONNAIRE_EXPIRATION_KEY, 1 * 24, 14 * 24)
-                    properties.setValue(ExperienceQuestionnaire.QUESTIONNAIRE_LAST_PROMPT_KEY, currentDateTime.toString())
+                    properties.setValue(PropertiesConstants.QUESTIONNAIRE_EXPIRATION_KEY, 1 * 24, 14 * 24)
+                    properties.setValue(PropertiesConstants.QUESTIONNAIRE_LAST_PROMPT_KEY, currentDateTime.toString())
                 }
             }
         }

@@ -1,6 +1,7 @@
 package com.alibabacloud.api.service
 
 import com.alibabacloud.api.service.util.FormatUtil
+import com.alibabacloud.i18n.I18nUtils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory

@@ -4,8 +4,8 @@ import com.alibabacloud.api.service.completion.SdkCompletionContributor
 import com.alibabacloud.api.service.completion.util.LookupElementUtil
 import com.alibabacloud.api.service.completion.util.ProjectStructureUtil
 import com.alibabacloud.api.service.completion.util.PythonPkgInstallUtil
-import com.alibabacloud.api.service.constants.CompletionConstants
 import com.alibabacloud.api.service.constants.NotificationGroups
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.icons.ToolkitIcons
 import com.google.gson.JsonArray
 import com.intellij.codeInsight.completion.CompletionResultSet
@@ -44,7 +44,7 @@ class PythonSdkCompletionContributor : SdkCompletionContributor() {
                 .withIcon(ToolkitIcons.LOGO_ICON)
                 .withInsertHandler { insertionContext, _ ->
                     insertHandler(insertionContext, document, request, "python") { sdkInfo ->
-                        if (!sdkInfo[0].asString.contains(CompletionConstants.NO_SDK)) {
+                        if (!sdkInfo[0].asString.contains(I18nUtils.getMsg("NO_SDK_PREFIX"))) {
                             checkAndNotifyDependency(insertionContext, apiInfo.productName, apiInfo.defaultVersion, sdkInfo, "python")
                         }
                     }
@@ -102,11 +102,11 @@ class PythonSdkCompletionContributor : SdkCompletionContributor() {
             val pkgName = "alibabacloud-${productName.lowercase()}${defaultVersion.replace("-", "")}"
             val isPyPkgExists = PythonPkgInstallUtil.isPyPackageExist(project, sdk, pkgName)
             if (!isPyPkgExists && sdk != null) {
-                val content = "${CompletionConstants.IF_AUTO_IMPORT} $pkgName?"
+                val content = "${I18nUtils.getMsg("IF_AUTO_INSTALL_PACKAGE")} $pkgName?"
                 notificationService.showMessageWithActions(
                     project,
                     NotificationGroups.DEPS_NOTIFICATION_GROUP,
-                    CompletionConstants.IMPORT,
+                    I18nUtils.getMsg("INSTALL_PACKAGE"),
                     content,
                     NotificationType.INFORMATION,
                     yesAction = {

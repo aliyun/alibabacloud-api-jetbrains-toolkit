@@ -7,6 +7,7 @@ import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.sdksample.util.AutoInstallPkgUtil
 import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.api.service.util.RequestUtil
+import com.alibabacloud.i18n.I18nUtils
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
@@ -91,8 +92,8 @@ class SdkSample {
             when (ideName) {
                 "PyCharm" -> {
                     val demoSdkPy =
-                        if (demoSdkObject.size() == 0) ApiConstants.CODE_GENERATE_ERROR else demoSdkObject.get("python")?.asString
-                            ?: ApiConstants.CODE_LANG_NOT_SUPPORT
+                        if (demoSdkObject.size() == 0) I18nUtils.getMsg("CODE_GENERATE_ERROR") else demoSdkObject.get("python")?.asString
+                            ?: I18nUtils.getMsg("CODE_LANG_NOT_SUPPORT")
                     editor = createEditorWithPsiFile(project, apiName, demoSdkPy, "python")
                     langComboBox.selectedItem = "Python"
                     installUrl =
@@ -101,8 +102,8 @@ class SdkSample {
 
                 "GoLand" -> {
                     val demoSdkGo =
-                        if (demoSdkObject.size() == 0) ApiConstants.CODE_GENERATE_ERROR else demoSdkObject.get("go")?.asString
-                            ?: ApiConstants.CODE_LANG_NOT_SUPPORT
+                        if (demoSdkObject.size() == 0) I18nUtils.getMsg("CODE_GENERATE_ERROR") else demoSdkObject.get("go")?.asString
+                            ?: I18nUtils.getMsg("CODE_LANG_NOT_SUPPORT")
                     editor = createEditorWithPsiFile(project, apiName, demoSdkGo, "go")
                     langComboBox.selectedItem = "Go"
                     installUrl =
@@ -111,8 +112,8 @@ class SdkSample {
 
                 "WebStorm" -> {
                     val demoSdkTs =
-                        if (demoSdkObject.size() == 0) ApiConstants.CODE_GENERATE_ERROR else demoSdkObject.get("typescript")?.asString
-                            ?: ApiConstants.CODE_LANG_NOT_SUPPORT
+                        if (demoSdkObject.size() == 0) I18nUtils.getMsg("CODE_GENERATE_ERROR") else demoSdkObject.get("typescript")?.asString
+                            ?: I18nUtils.getMsg("CODE_LANG_NOT_SUPPORT")
                     editor = createEditorWithPsiFile(project, apiName, demoSdkTs, "typescript")
                     langComboBox.selectedItem = "TypeScript"
                     installUrl =
@@ -121,8 +122,8 @@ class SdkSample {
 
                 else -> {
                     val demoSdkJava =
-                        if (demoSdkObject.size() == 0) ApiConstants.CODE_GENERATE_ERROR else demoSdkObject.get("java")?.asString
-                            ?: ApiConstants.CODE_LANG_NOT_SUPPORT
+                        if (demoSdkObject.size() == 0) I18nUtils.getMsg("CODE_GENERATE_ERROR") else demoSdkObject.get("java")?.asString
+                            ?: I18nUtils.getMsg("CODE_LANG_NOT_SUPPORT")
                     editor = createEditorWithPsiFile(project, apiName, demoSdkJava, "java")
                     langComboBox.selectedItem = "Java"
                     installUrl =
@@ -130,10 +131,10 @@ class SdkSample {
                 }
             }
 
-            val installButton = sdkSampleButton("安装方式") { installUrl }
-            val codeButton = sdkSampleButton("查看源码") { codeUrl }
+            val installButton = sdkSampleButton(I18nUtils.getMsg("INSTALL_PACKAGE")) { installUrl }
+            val codeButton = sdkSampleButton(I18nUtils.getMsg("VIEW_SOURCE")) { codeUrl }
 
-            val openFileButton = JButton("在IDE中打开").apply {
+            val openFileButton = JButton(I18nUtils.getMsg("OPEN_IN_IDE")).apply {
                 addActionListener {
                     val fileDocumentManager = FileDocumentManager.getInstance()
                     val document = editor!!.document
@@ -161,8 +162,10 @@ class SdkSample {
                         }"
 
                     val demoSdkLang =
-                        if (demoSdkObject.size() == 0) "获取示例代码失败，请重试" else demoSdkObject.get(selectedLang.lowercase())?.asString
-                            ?: "暂不支持该语言"
+                        if (demoSdkObject.size() == 0) I18nUtils.getMsg("OBTAIN_CODE_SAMPLE_FAIL") else demoSdkObject.get(
+                            selectedLang.lowercase()
+                        )?.asString
+                            ?: I18nUtils.getMsg("CODE_LANG_NOT_SUPPORT")
 
                     if (editor?.isDisposed == false) {
                         EditorFactory.getInstance().releaseEditor(editor!!)
@@ -174,7 +177,7 @@ class SdkSample {
                 }
             }
 
-            val importDependencyButton = JButton("自动导入依赖").apply {
+            val importDependencyButton = JButton(I18nUtils.getMsg("INSTALL_PACKAGE")).apply {
                 addActionListener {
                     val selectedLang = langComboBox.selectedItem as String
                     val lang = selectedLang.lowercase()
@@ -245,8 +248,8 @@ class SdkSample {
                 NormalNotification.showMessage(
                     project,
                     NotificationGroups.SDK_NOTIFICATION_GROUP,
-                    "请求超时",
-                    "获取SDK示例代码超时，请重新生成示例",
+                    I18nUtils.getMsg("REQUEST_TIMEOUT"),
+                    I18nUtils.getMsg("OBTAIN_CODE_SAMPLE_FAIL"),
                     NotificationType.WARNING
                 )
             }

@@ -1,5 +1,6 @@
 package com.alibabacloud.action
 
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.states.ToolkitSettingsState
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -19,9 +20,9 @@ class CodeSnippetsAction : AnAction() {
         }
         val settings = ToolkitSettingsState.getInstance()
         if (settings.state.isCompletionEnabled) {
-            e.presentation.text = "Disable Alibaba Cloud SDK code auto-completion"
+            e.presentation.text = I18nUtils.getMsg("DISABLE_AUTO_COMPLETION")
         } else {
-            e.presentation.text = "Enable Alibaba Cloud SDK code auto-completion"
+            e.presentation.text = I18nUtils.getMsg("ENABLE_AUTO_COMPLETION")
         }
     }
 }

@@ -3,6 +3,7 @@ package com.alibabacloud.ui
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.credentials.constants.CredentialsConstants
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.models.credentials.ConfigureFile
 import com.google.gson.Gson
 import com.intellij.notification.NotificationType
@@ -22,7 +23,7 @@ class CollapsibleInputPanel(private val project: Project) : JPanel() {
     private val profileNameField = JBTextField()
     private val akField = JBTextField()
     private val skField = JPasswordField()
-    private val showPasswordCheckBox = JCheckBox("显示").apply {
+    private val showPasswordCheckBox = JCheckBox(I18nUtils.getMsg("DISPLAY")).apply {
         addActionListener {
             skField.echoChar = if (isSelected) Char(0) else '•'
         }
@@ -33,7 +34,7 @@ class CollapsibleInputPanel(private val project: Project) : JPanel() {
     }
     private val regionField = JBTextField()
     private val confirmButton = JButton()
-    private val cancelButton = JButton("取消").apply {
+    private val cancelButton = JButton(I18nUtils.getMsg("CANCEL")).apply {
         addActionListener {
             collapsePanel()
         }
@@ -82,7 +83,7 @@ class CollapsibleInputPanel(private val project: Project) : JPanel() {
 
 
         confirmButton.addActionListener {
-            if (confirmButton.text == "添加配置") {
+            if (confirmButton.text == I18nUtils.getMsg("CONFIRM")) {
                 saveProfile()
             }
         }
@@ -101,7 +102,7 @@ class CollapsibleInputPanel(private val project: Project) : JPanel() {
             NormalNotification.showMessage(
                 project,
                 NotificationGroups.CONFIG_NOTIFICATION_GROUP,
-                "该 profile name 已存在",
+                I18nUtils.getMsg("PROFILE_ALREADY_EXIST"),
                 "",
                 NotificationType.ERROR
             )
@@ -112,8 +113,8 @@ class CollapsibleInputPanel(private val project: Project) : JPanel() {
     }
 
     private fun saveProfile() {
-        confirmButton.text = "添加配置"
-        if (confirmButton.text == "添加配置") {
+        confirmButton.text = I18nUtils.getMsg("CONFIRM")
+        if (confirmButton.text == I18nUtils.getMsg("CONFIRM")) {
             hasValidationError = false
             val profileName = profileNameField.text
             val accessKeyId = akField.text
@@ -124,8 +125,8 @@ class CollapsibleInputPanel(private val project: Project) : JPanel() {
                 NormalNotification.showMessage(
                     project,
                     NotificationGroups.CONFIG_NOTIFICATION_GROUP,
-                    "添加 Profile 失败",
-                    "请填入必填参数",
+                    I18nUtils.getMsg("NEW_PROFILE_FAIL"),
+                    I18nUtils.getMsg("REQUIRED_PARAM"),
                     NotificationType.ERROR
                 )
                 hasValidationError = true
@@ -136,8 +137,8 @@ class CollapsibleInputPanel(private val project: Project) : JPanel() {
                 NormalNotification.showMessage(
                     project,
                     NotificationGroups.CONFIG_NOTIFICATION_GROUP,
-                    "添加 Profile 失败",
-                    "该 profile name 已存在",
+                    I18nUtils.getMsg("NEW_PROFILE_FAIL"),
+                    I18nUtils.getMsg("PROFILE_ALREADY_EXIST"),
                     NotificationType.ERROR
                 )
                 hasValidationError = true
@@ -172,7 +173,7 @@ class CollapsibleInputPanel(private val project: Project) : JPanel() {
             NormalNotification.showMessage(
                 project,
                 NotificationGroups.CONFIG_NOTIFICATION_GROUP,
-                "添加 Profile 成功",
+                I18nUtils.getMsg("NEW_PROFILE_SUCCESS"),
                 "",
                 NotificationType.INFORMATION
             )
@@ -188,7 +189,7 @@ class CollapsibleInputPanel(private val project: Project) : JPanel() {
     }
 
     fun expandForAddProfile() {
-        confirmButton.text = "添加配置"
+        confirmButton.text = I18nUtils.getMsg("CONFIRM")
         profileNameField.isEditable = true
         akField.isEditable = true
         skField.isEditable = true
@@ -215,9 +216,9 @@ class CollapsibleInputPanel(private val project: Project) : JPanel() {
 
     fun showProfiles(profile: ConfigureFile.Profile?) {
         isUserInteraction = false
-        confirmButton.text = "From file: ${CredentialsConstants.CONFIG_DIR}/config.json [只读]"
+        confirmButton.text = "${I18nUtils.getMsg("CONFIG_FILE_PATH")} ${CredentialsConstants.CONFIG_DIR}/config.json"
         confirmButton.addActionListener {
-            if (confirmButton.text != "添加配置") {
+            if (confirmButton.text != I18nUtils.getMsg("CONFIRM")) {
                 val filePath = "${System.getProperty("user.home")}/.aliyun/config.json"
                 val configFile = File(filePath)
                 if (!Desktop.isDesktopSupported() || !Desktop.getDesktop()
@@ -226,8 +227,8 @@ class CollapsibleInputPanel(private val project: Project) : JPanel() {
                     NormalNotification.showMessage(
                         project,
                         NotificationGroups.CONFIG_NOTIFICATION_GROUP,
-                        "打开文件夹失败",
-                        "不支持在文件浏览器中打开文件",
+                        I18nUtils.getMsg("OPEN_FOLDER_FAIL"),
+                        I18nUtils.getMsg("OPEN_FILE_NOT_SUPPORT"),
                         NotificationType.ERROR
                     )
                     return@addActionListener
@@ -238,8 +239,8 @@ class CollapsibleInputPanel(private val project: Project) : JPanel() {
                     NormalNotification.showMessage(
                         project,
                         NotificationGroups.CONFIG_NOTIFICATION_GROUP,
-                        "打开文件夹失败",
-                        "配置文件未找到",
+                        I18nUtils.getMsg("OPEN_FOLDER_FAIL"),
+                        I18nUtils.getMsg("CONFIG_NOT_FOUND"),
                         NotificationType.ERROR
                     )
                 }
