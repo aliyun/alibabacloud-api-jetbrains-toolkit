@@ -7,6 +7,7 @@ import com.alibabacloud.models.credentials.ConfigureFile
 import com.google.gson.Gson
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
+import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.WrapLayout
@@ -14,14 +15,17 @@ import java.awt.BorderLayout
 import java.awt.Desktop
 import java.awt.GridLayout
 import java.io.File
-import javax.swing.*
+import javax.swing.BoxLayout
+import javax.swing.JButton
+import javax.swing.JCheckBox
+import javax.swing.JPanel
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 
 class CollapsibleInputPanel(private val project: Project) : JPanel() {
     private val profileNameField = JBTextField()
     private val akField = JBTextField()
-    private val skField = JPasswordField()
+    private val skField = JBPasswordField()
     private val showPasswordCheckBox = JCheckBox("显示").apply {
         addActionListener {
             skField.echoChar = if (isSelected) Char(0) else '•'
@@ -50,7 +54,7 @@ class CollapsibleInputPanel(private val project: Project) : JPanel() {
         val inputPanel = JPanel(GridLayout(0, 1, 0, 5))
         profileNameField.emptyText.text = "Profile Name:"
         akField.emptyText.text = "Access Key Id:"
-        skField.toolTipText = "Access Key Secret:"
+        skField.emptyText.text = "Access Key Secret:"
         regionField.emptyText.text = "RegionId:"
         skField.echoChar = '•'
 
