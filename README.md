@@ -90,6 +90,13 @@ in the documentation popup to obtain more code samples. Prerequisite: IDE allows
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/enhance.png" style="display: inline-block;">
 </div>
 
+### Inlay Hints for API Info
+Support inlay hints for viewing API Info when coding with Cloud OpenAPI. Click on the hints can navigate you
+to API detail page to view API documentation and code sample, and debug the API.
+<div style="overflow-x: scroll; white-space: nowrap;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/hints.png" style="display: inline-block;">
+</div>
+
 ## Licensing
 
 [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0)

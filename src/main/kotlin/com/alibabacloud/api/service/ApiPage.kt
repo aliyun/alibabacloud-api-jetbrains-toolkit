@@ -113,7 +113,7 @@ class ApiPage {
                 apiPanel.repaint()
             }
 
-            if (cacheContent == null || cacheDocMeta == null || cacheContent.isEmpty() || cacheDocMeta.isEmpty()) {
+            if (!useCache || cacheContent == null || cacheDocMeta == null || cacheContent.isEmpty() || cacheDocMeta.isEmpty()) {
                 val colorList = FormatUtil.adjustColor()
                 val loadingHtml =
                     ResourceUtil.load("/html/loading.html").replace("var(--background-color)", colorList[0])

@@ -10,7 +10,6 @@ import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering.CodeVisionRelativeOrderingFirst
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEntry
 import com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionProvider
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -26,7 +25,7 @@ abstract class ViewApiDocCodeVisionProvider : DaemonBoundCodeVisionProvider {
         get() = "alibabacloud.developer.toolkit"
 
     override val name: String
-        get() = "Alibaba Cloud: View API doc"
+        get() = "Alibaba Cloud: View API Info"
 
     override val groupId: String
         get() = "com.alibabcloud.api.service.inlay"
@@ -102,23 +101,16 @@ abstract class ViewApiDocCodeVisionProvider : DaemonBoundCodeVisionProvider {
         override fun invoke(event: MouseEvent, editor: Editor) {
             val toolWindow = BaseToolWindow().registerToolWindow(project)
             val contentManager = toolWindow.contentManager
-            val refreshRightToolWindowAction = BaseToolWindow.RefreshRightToolWindowAction(
-                contentManager,
-                productName,
-                version,
-            )
-            val refreshAction = listOf(refreshRightToolWindowAction)
-            refreshRightToolWindowAction.templatePresentation.icon = AllIcons.Actions.Refresh
-            refreshRightToolWindowAction.templatePresentation.text = "Refresh API Doc"
-            toolWindow.setTitleActions(refreshAction)
+            BaseToolWindow().setToolWindowActions(contentManager, toolWindow)
 
             val apiPanel = JPanel()
             apiPanel.layout = BoxLayout(apiPanel, BoxLayout.Y_AXIS)
             val apiDocContent = toolWindow.contentManager.factory.createContent(
                 apiPanel,
-                "API: $apiName",
+                "$productName-$apiName",
                 false,
             )
+            apiDocContent.tabName = "$productName::$apiName::$version"
             contentManager.addContent(apiDocContent)
             toolWindow.show()
             ApiPage.showApiDetail(

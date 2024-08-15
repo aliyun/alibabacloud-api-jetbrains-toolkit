@@ -42,7 +42,10 @@ import java.io.File
 import java.io.IOException
 import java.net.URI
 import java.time.LocalDateTime
-import javax.swing.*
+import javax.swing.BorderFactory
+import javax.swing.BoxLayout
+import javax.swing.JPanel
+import javax.swing.JTree
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
 import javax.swing.tree.DefaultMutableTreeNode
@@ -257,20 +260,12 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
 
                     val toolWindow = registerToolWindow(project)
                     val contentManager = toolWindow.contentManager
-                    val (selectionApi, apiTree) = openWebToolWindow(apiData, toolWindow)
+                    val (selectionApi, apiTree) = openWebToolWindow(productName, apiData, toolWindow)
 
                     selectionApi.addTreeSelectionListener {
                         val selectedApi = apiTree.lastSelectedPathComponent as? DefaultMutableTreeNode
                         if (selectedApi != null) {
-                            val refreshRightToolWindowAction = RefreshRightToolWindowAction(
-                                contentManager,
-                                productName,
-                                defaultVersion,
-                            )
-                            val refreshAction = listOf(refreshRightToolWindowAction)
-                            refreshRightToolWindowAction.templatePresentation.icon = AllIcons.Actions.Refresh
-                            refreshRightToolWindowAction.templatePresentation.text = "Refresh API Doc"
-                            toolWindow.setTitleActions(refreshAction)
+                            setToolWindowActions(contentManager, toolWindow)
 
                             if (selectedApi.isLeaf) {
                                 val apiPanel = JPanel()
@@ -279,9 +274,10 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                                 apiName = (selectedApi.userObject as String).split("  ", limit = 2)[0]
                                 apiDocContent = toolWindow.contentManager.factory.createContent(
                                     apiPanel,
-                                    "API: $apiName",
+                                    "$productName-$apiName",
                                     false,
                                 )
+                                apiDocContent!!.tabName = "$productName::$apiName::$defaultVersion"
                                 contentManager.addContent(apiDocContent!!)
 
                                 ApiPage.showApiDetail(
@@ -310,7 +306,23 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         }
     }
 
-    fun registerToolWindow(project: Project): ToolWindow{
+    internal fun setToolWindowActions(
+        contentManager: ContentManager,
+        toolWindow: ToolWindow,
+    ) {
+        val refreshRightToolWindowAction = RefreshRightToolWindowAction(contentManager)
+        refreshRightToolWindowAction.templatePresentation.icon = AllIcons.Actions.Refresh
+        refreshRightToolWindowAction.templatePresentation.text = "Refresh API Doc"
+
+        val closeAllTabsAction = CloseAllTabsAction(contentManager)
+        closeAllTabsAction.templatePresentation.icon = AllIcons.Actions.Close
+        closeAllTabsAction.templatePresentation.text = "Close All Tabs"
+
+        val rightToolWindowActions = listOf(refreshRightToolWindowAction, closeAllTabsAction)
+        toolWindow.setTitleActions(rightToolWindowActions)
+    }
+
+    internal fun registerToolWindow(project: Project): ToolWindow {
         val toolWindow: ToolWindow
         val existToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ApiConstants.TOOLWINDOW_APIS)
         if (existToolWindow == null) {
@@ -319,16 +331,16 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                 anchor = ToolWindowAnchor.RIGHT
                 canCloseContent = true
             }
-            toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(ApiConstants.TOOLWINDOW_APIS, builder)
-            toolWindow.contentManager.removeAllContents(true)
+            toolWindow =
+                ToolWindowManager.getInstance(project).registerToolWindow(ApiConstants.TOOLWINDOW_APIS, builder)
         } else {
             toolWindow = existToolWindow
-            toolWindow.contentManager.removeAllContents(true)
         }
         return toolWindow
     }
 
     private fun openWebToolWindow(
+        productName: String,
         apiData: JsonArray,
         toolWindow: ToolWindow,
     ): Pair<TreeSelectionModel, Tree> {
@@ -338,26 +350,13 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         val contentManager = toolWindow.contentManager
         var content = contentManager.getContent(0)
         val tree: Tree
+        val panel = JPanel(BorderLayout())
+        tree = ApiExplorer.explorerTree(apiData, panel)
+        val scrollPane = FormatUtil.getScrollPane(panel)
 
-        if (content != null && content.component is JScrollPane) {
-            val scrollPane = content.component as JScrollPane
-            val panel = scrollPane.viewport.view as JPanel
-
-            panel.removeAll()
-            tree = ApiExplorer.explorerTree(apiData, panel)
-            panel.revalidate()
-            panel.repaint()
-            contentManager.setSelectedContent(content, true)
-        } else {
-            val panel = JPanel(BorderLayout())
-            tree = ApiExplorer.explorerTree(apiData, panel)
-
-            val scrollPane = FormatUtil.getScrollPane(panel)
-            content =
-                toolWindow.contentManager.factory.createContent(scrollPane, ApiConstants.TOOLWINDOW_API_TREE, false)
-            contentManager.addContent(content)
-            contentManager.setSelectedContent(content, true)
-        }
+        content = toolWindow.contentManager.factory.createContent(scrollPane, "$productName-API概览", false)
+        contentManager.addContent(content)
+        contentManager.setSelectedContent(content, true)
         toolWindow.show()
         val selectionModel = tree.selectionModel
         return Pair(selectionModel, tree)
@@ -436,23 +435,29 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         }
     }
 
+    class CloseAllTabsAction(private val contentManager: ContentManager) : AnAction() {
+        override fun actionPerformed(e: AnActionEvent) {
+            contentManager.removeAllContents(true)
+        }
+    }
 
     class RefreshRightToolWindowAction(
-        val contentManager: ContentManager,
-        val name: String,
-        val defaultVersion: String,
+        private val contentManager: ContentManager,
     ) : AnAction() {
         override fun actionPerformed(e: AnActionEvent) {
             val project = e.project ?: return
             val currentContent = contentManager.selectedContent
-            val apiName = currentContent?.displayName?.substringAfter("API: ") ?: ""
             if (currentContent != null && currentContent.component is JPanel) {
+                val tabName = currentContent.tabName.split("::")
+                val productName = tabName[0]
+                val apiName = tabName[1]
+                val defaultVersion = tabName[2]
                 val apiPanel = currentContent.component as JPanel
                 ApiPage.showApiDetail(
                     currentContent,
                     contentManager,
                     apiPanel,
-                    name,
+                    productName,
                     apiName,
                     defaultVersion,
                     project,
