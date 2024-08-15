@@ -1,5 +1,7 @@
 package com.alibabacloud.api.service.completion.util
 
+import com.alibabacloud.models.api.ApiInfo
+
 class LookupElementUtil {
     companion object {
         internal fun getFormat(key: String): ApiInfo {
@@ -10,6 +12,4 @@ class LookupElementUtil {
             return ApiInfo(apiName, productName, defaultVersion)
         }
     }
-
-    data class ApiInfo(val apiName: String, val productName: String, val defaultVersion: String)
 }

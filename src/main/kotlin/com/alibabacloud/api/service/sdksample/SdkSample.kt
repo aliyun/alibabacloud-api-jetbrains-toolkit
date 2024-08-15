@@ -137,7 +137,6 @@ class SdkSample {
                 addActionListener {
                     val fileDocumentManager = FileDocumentManager.getInstance()
                     val document = editor!!.document
-                    document.setReadOnly(true)
                     val virtualFile = fileDocumentManager.getFile(document)
                     val fileEditorManager = FileEditorManager.getInstance(project)
                     if (virtualFile != null && !fileEditorManager.isFileOpen(virtualFile)) {

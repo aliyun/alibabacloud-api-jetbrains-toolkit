@@ -11,7 +11,7 @@ import java.io.IOException
 
 class GenerateDocUtil {
     companion object {
-        private fun getIndex(): Map<String, String> {
+        internal fun getIndex(): Map<String, String> {
             val completionIndex = CompletionIndexPersistentComponent.getInstance()
             val state = completionIndex.state
             return if (state.completionIndex?.isNotEmpty() == true) {
@@ -21,7 +21,7 @@ class GenerateDocUtil {
             }
         }
 
-        private fun findMatchingKey(keyInfo: String?, index: Map<String, String>): String? {
+        internal fun findMatchingKey(keyInfo: String?, index: Map<String, String>): String? {
             keyInfo ?: return null
             return index.keys.find { key ->
                 val normalizedKey = key.replace("-", "").replace("_", "")
