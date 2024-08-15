@@ -45,6 +45,9 @@
     in the documentation popup to obtain more code samples. Prerequisite: IDE allows documentation popup (check「settings-Editor-General-Code Completion-Show Documentation Popup」).
   </li>
   <li>
+    <strong>Inlay Hints for API Info:</strong> Support inlay hints for viewing API Info when coding with alibaba cloud OpenAPI. Click on the hints can navigate you
+    to API detail page to view API documentation and code sample, and debug the API.
+  <li>
     See the <a href="https://help.aliyun.com/zh/openapi/user-guide/using-the-alibaba-cloud-developer-toolkit-plugin-in-jetbrains-ides">user guide</a>
     for more details. More features are under development, please stay tuned and welcome to submit your questions and suggestions on the
     <a href="https://g.alicdn.com/aes/tracker-survey-preview/0.0.13/survey.html?pid=fePxMy&id=3494">experience questionnaire</a>.

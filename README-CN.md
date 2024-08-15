@@ -85,6 +85,11 @@ GoLand 2022.2 ~ 2024.1
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/enhance.png" style="display: inline-block;">
 </div>
 
+### 内嵌提示
+编写阿里云 OpenAPI 相关代码时，支持在代码中显示内嵌提示，点击可以打开 API 详情页面，进行 API 文档、示例代码的查看以及 API 调试。
+<div style="overflow-x: scroll; white-space: nowrap;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/hints.png" style="display: inline-block;">
+</div>
 
 ## 许可证
 

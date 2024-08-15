@@ -76,7 +76,7 @@ class JavaViewApiDocCodeVisionProviderTest : BasePlatformTestCase() {
             val result = provider.computeForEditor(myFixture.editor, psiFile)
             assertTrue(result.isNotEmpty())
             val hint = (result[0].second as ClickableTextCodeVisionEntry).text
-            assertEquals("Alibaba Cloud: View API doc", hint)
+            assertEquals("Alibaba Cloud: View API Info", hint)
         }
     }
 
