@@ -255,23 +255,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                         }
                     }
 
-                    val existToolWindow =
-                        ToolWindowManager.getInstance(project).getToolWindow(ApiConstants.TOOLWINDOW_APIS)
-                    val toolWindow: ToolWindow
-                    if (existToolWindow == null) {
-                        val builder: RegisterToolWindowTaskBuilder.() -> Unit = {
-                            icon = ToolkitIcons.TOOLWINDOW_ICON
-                            anchor = ToolWindowAnchor.RIGHT
-                            canCloseContent = true
-                        }
-                        toolWindow = ToolWindowManager.getInstance(project)
-                            .registerToolWindow(ApiConstants.TOOLWINDOW_APIS, builder)
-                        toolWindow.contentManager.removeAllContents(true)
-                    } else {
-                        toolWindow = existToolWindow
-                        toolWindow.contentManager.removeAllContents(true)
-                    }
-
+                    val toolWindow = registerToolWindow(project)
                     val contentManager = toolWindow.contentManager
                     val (selectionApi, apiTree) = openWebToolWindow(apiData, toolWindow)
 
@@ -324,6 +308,24 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                 }
             }
         }
+    }
+
+    fun registerToolWindow(project: Project): ToolWindow{
+        val toolWindow: ToolWindow
+        val existToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ApiConstants.TOOLWINDOW_APIS)
+        if (existToolWindow == null) {
+            val builder: RegisterToolWindowTaskBuilder.() -> Unit = {
+                icon = ToolkitIcons.TOOLWINDOW_ICON
+                anchor = ToolWindowAnchor.RIGHT
+                canCloseContent = true
+            }
+            toolWindow = ToolWindowManager.getInstance(project).registerToolWindow(ApiConstants.TOOLWINDOW_APIS, builder)
+            toolWindow.contentManager.removeAllContents(true)
+        } else {
+            toolWindow = existToolWindow
+            toolWindow.contentManager.removeAllContents(true)
+        }
+        return toolWindow
     }
 
     private fun openWebToolWindow(
@@ -435,7 +437,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
     }
 
 
-    private class RefreshRightToolWindowAction(
+    class RefreshRightToolWindowAction(
         val contentManager: ContentManager,
         val name: String,
         val defaultVersion: String,
