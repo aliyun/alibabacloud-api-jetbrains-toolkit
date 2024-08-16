@@ -11,8 +11,13 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
+import com.intellij.json.JsonFileType
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefJSQuery
@@ -115,6 +120,80 @@ class ApiDebug {
                             }
                         };
                         
+                            """.trimIndent(),
+                            browser.cefBrowser.url,
+                            0,
+                        )
+                    }
+
+                    override fun onLoadError(
+                        cefBrowser: CefBrowser,
+                        frame: CefFrame,
+                        errorCode: CefLoadHandler.ErrorCode,
+                        errorText: String,
+                        failedUrl: String,
+                    ) {
+                    }
+                },
+                browser.cefBrowser,
+            )
+        }
+
+        fun executeOpenDebugResult(
+            browser: JBCefBrowser,
+            project: Project
+        ) {
+            val query = JBCefJSQuery.create(browser as JBCefBrowserBase)
+
+            query.addHandler { arg: String? ->
+                try {
+                    val debugResult = Gson().fromJson(arg ?: "[]", List::class.java)
+                    val fileName = debugResult.getOrNull(0)?.toString()?.replace(" ", "") ?: "undefined"
+                    val code = debugResult.getOrNull(1)?.toString() ?: "null"
+                    ApplicationManager.getApplication().invokeLater {
+                        val fileType = JsonFileType.INSTANCE
+                        val virtualFile = LightVirtualFile("$fileName.json", fileType, code)
+                        val fileEditorManager = FileEditorManager.getInstance(project)
+                        if (!fileEditorManager.isFileOpen(virtualFile)) {
+                            val descriptor = OpenFileDescriptor(project, virtualFile)
+                            fileEditorManager.openTextEditor(descriptor, true)
+                        }
+                    }
+                    return@addHandler JBCefJSQuery.Response("ok")
+                } catch (e: Exception) {
+                    return@addHandler JBCefJSQuery.Response(null, 0, "errorMsg")
+                }
+            }
+
+            browser.jbCefClient.addLoadHandler(
+                object : CefLoadHandlerAdapter() {
+                    override fun onLoadingStateChange(
+                        cefBrowser: CefBrowser,
+                        isLoading: Boolean,
+                        canGoBack: Boolean,
+                        canGoForward: Boolean,
+                    ) {
+                    }
+
+                    override fun onLoadStart(
+                        cefBrowser: CefBrowser,
+                        frame: CefFrame,
+                        transitionType: CefRequest.TransitionType,
+                    ) {
+                    }
+
+                    override fun onLoadEnd(cefBrowser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
+                        cefBrowser.executeJavaScript(
+                            """
+                            window.openDebugResult = function(arg, cb) {
+                                ${
+                                query.inject(
+                                    "arg",
+                                    "response => console.log('读取参数成功', (response))",
+                                    "(error_code, error_message) => console.log('读取参数失败', error_code, error_message)",
+                                )
+                            }
+                            };
                             """.trimIndent(),
                             browser.cefBrowser.url,
                             0,

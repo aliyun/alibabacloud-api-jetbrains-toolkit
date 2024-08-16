@@ -349,6 +349,7 @@ class ApiPage {
             bodyParams.add(ApiConstants.SDK_MAKE_CODE_BODY_PARAMS, JsonObject())
 
             ApiDebug.executeDebug(browser, apiDocData, apiName, endpointList, project)
+            ApiDebug.executeOpenDebugResult(browser, project)
             SdkSample.executeSdk(browser) { paramsValue, regionId ->
                 var endpoint = String()
                 if (endpointList.size() > 0) {
