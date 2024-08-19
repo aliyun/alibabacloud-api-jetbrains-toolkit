@@ -1,15 +1,20 @@
 package com.alibabacloud.api.service.util
 
+import com.alibabacloud.api.service.constants.ApiConstants
 import com.google.gson.JsonArray
 import com.google.gson.JsonPrimitive
 import com.intellij.ui.treeStructure.Tree
+import junit.framework.TestCase.assertFalse
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import org.mockito.Mockito.*
 import java.io.File
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
+import kotlin.io.path.createTempDirectory
 
 internal class CacheUtilTest {
 
@@ -65,5 +70,33 @@ internal class CacheUtilTest {
 
         assertEquals(expectedJsonArray, actualJsonArray)
 
+    }
+
+    @Test
+    fun `test clean exceed cache`() {
+        val originalCachePath = ApiConstants.CACHE_PATH
+        val tempDir = createTempDirectory("cleanExceedCacheTest").toFile()
+        ApiConstants.CACHE_PATH = tempDir.absolutePath
+        val maxCacheNum = 5
+        ApiConstants.MAX_CACHE_NUM = maxCacheNum
+
+        for (i in 1..maxCacheNum + 1) {
+            File(tempDir, "test$i.txt").apply {
+                val created = createNewFile()
+                if (created) {
+                    setLastModified(System.currentTimeMillis() - i * 1000)
+                }
+            }
+        }
+
+        CacheUtil.cleanExceedCache()
+
+        val remainingFiles = tempDir.listFiles() ?: emptyArray()
+        assertEquals(maxCacheNum, remainingFiles.size)
+        Assertions.assertFalse(remainingFiles.any { it.name ==  "test6.txt"})
+        tempDir.deleteRecursively()
+
+        ApiConstants.CACHE_PATH = originalCachePath
+        ApiConstants.MAX_CACHE_NUM = 200
     }
 }

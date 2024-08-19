@@ -1,6 +1,7 @@
 package com.alibabacloud.api.service.inlayhints
 
 import com.alibabacloud.api.service.ApiPage
+import com.alibabacloud.api.service.SearchHelper
 import com.alibabacloud.models.api.ApiInfo
 import com.alibabacloud.models.api.ShortApiInfo
 import com.alibabacloud.ui.BaseToolWindow
@@ -99,30 +100,7 @@ abstract class ViewApiDocCodeVisionProvider : DaemonBoundCodeVisionProvider {
         val apiName: String
     ) : Function2<MouseEvent, Editor, Unit> {
         override fun invoke(event: MouseEvent, editor: Editor) {
-            val toolWindow = BaseToolWindow().registerToolWindow(project)
-            val contentManager = toolWindow.contentManager
-            BaseToolWindow().setToolWindowActions(contentManager, toolWindow)
-
-            val apiPanel = JPanel()
-            apiPanel.layout = BoxLayout(apiPanel, BoxLayout.Y_AXIS)
-            val apiDocContent = toolWindow.contentManager.factory.createContent(
-                apiPanel,
-                "$productName-$apiName",
-                false,
-            )
-            apiDocContent.tabName = "$productName::$apiName::$version"
-            contentManager.addContent(apiDocContent)
-            toolWindow.show()
-            ApiPage.showApiDetail(
-                apiDocContent,
-                contentManager,
-                apiPanel,
-                productName,
-                apiName,
-                version,
-                project,
-                true,
-            )
+            SearchHelper.navigateToApiInfo(project, productName, version, apiName)
         }
     }
 }

@@ -1,7 +1,16 @@
 package com.alibabacloud.api.service
 
+import com.alibabacloud.api.service.ApiPage.Companion.notificationService
+import com.alibabacloud.api.service.completion.DataService
+import com.alibabacloud.api.service.completion.UnLoadNotificationState
+import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.util.FormatUtil
+import com.alibabacloud.ui.BaseToolWindow
+import com.alibabacloud.ui.SearchListCellRenderer
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.ComponentPopupBuilder
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.SearchTextField
@@ -13,14 +22,15 @@ import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import javax.swing.BoxLayout
 import javax.swing.DefaultListModel
+import javax.swing.JPanel
 import javax.swing.ListSelectionModel
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
-
 
 class SearchHelper {
     companion object {
@@ -33,6 +43,7 @@ class SearchHelper {
             val searchResultsModel = DefaultListModel<String>()
             val searchResultsList = JBList(searchResultsModel).apply {
                 selectionMode = ListSelectionModel.SINGLE_SELECTION
+                cellRenderer = SearchListCellRenderer()
                 addMouseListener(object : MouseAdapter() {
                     override fun mouseClicked(e: MouseEvent?) {
                         e?.let {
@@ -53,6 +64,7 @@ class SearchHelper {
             val popupBuilder =
                 JBPopupFactory.getInstance().createComponentPopupBuilder(JBScrollPane(searchResultsList), null)
                     .setRequestFocus(false)
+                    .setResizable(true)
 
             val updateSearchResults = {
                 ApplicationManager.getApplication().invokeLater {
@@ -66,20 +78,7 @@ class SearchHelper {
                             getSearchProductElement(searchText, nameAndVersionMap, searchResultsModel)
                         }
 
-                        if (searchResultsModel.size > 0) {
-                            if (popup == null || popup?.isDisposed == true) {
-                                popup = popupBuilder.createPopup().apply {
-                                    size = Dimension(searchField.width, 100)
-                                }
-                            }
-                            if (popup?.isVisible != true) {
-                                val locationOnScreen = searchField.locationOnScreen
-                                val pointToShow = Point(locationOnScreen.x, locationOnScreen.y + searchField.height)
-                                popup?.show(RelativePoint(pointToShow))
-                            }
-                        } else if (popup?.isDisposed == false) {
-                            popup?.cancel()
-                        }
+                        processPopup(searchResultsModel, popupBuilder, searchField)
                     } else if (popup?.isDisposed == false) {
                         popup?.cancel()
                     }
@@ -99,6 +98,114 @@ class SearchHelper {
                     updateSearchResults()
                 }
             })
+        }
+
+        private fun processPopup(
+            searchResultsModel: DefaultListModel<String>,
+            popupBuilder: ComponentPopupBuilder,
+            searchField: SearchTextField
+        ) {
+            if (searchResultsModel.size > 0) {
+                if (popup == null || popup?.isDisposed == true) {
+                    popup = popupBuilder.createPopup().apply {
+                        size = Dimension(searchField.width, 300)
+                    }
+                }
+                if (popup?.isVisible != true) {
+                    val locationOnScreen = searchField.locationOnScreen
+                    val pointToShow = Point(locationOnScreen.x, locationOnScreen.y + searchField.height)
+                    popup?.show(RelativePoint(pointToShow))
+                }
+            } else if (popup?.isDisposed == false) {
+                popup?.cancel()
+            }
+        }
+
+        fun globalSearchApi(project: Project, searchField: SearchTextField) {
+            val searchResultsModel = DefaultListModel<String>()
+            val searchResultsList = JBList(searchResultsModel).apply {
+                selectionMode = ListSelectionModel.SINGLE_SELECTION
+                cellRenderer = SearchListCellRenderer()
+                addMouseListener(object : MouseAdapter() {
+                    override fun mouseClicked(e: MouseEvent?) {
+                        e?.let {
+                            if (it.clickCount == 1) {
+                                val selectedValue = (selectedValue as String).split("::")
+                                navigateToApiInfo(project, selectedValue[2], selectedValue[3], selectedValue[0])
+                                popup?.cancel()
+                            }
+                        }
+                    }
+                })
+            }
+
+            val popupBuilder =
+                JBPopupFactory.getInstance().createComponentPopupBuilder(JBScrollPane(searchResultsList), null)
+                    .setRequestFocus(false)
+                    .setResizable(true)
+
+            fun updateSearchResults() {
+                val searchText = searchField.text.trim()
+                searchResultsModel.clear()
+                if (searchText.length > 3) {
+                    ApplicationManager.getApplication().executeOnPooledThread {
+                        val resultList = mutableListOf<String>()
+                        val regex = Regex(".*${Regex.escape(searchText)}.*", RegexOption.IGNORE_CASE)
+                        if (DataService.isDataLoaded()) {
+                            val javaIndex = DataService.javaIndex
+                            if (javaIndex.isNotEmpty()) {
+                                javaIndex.forEach { (key, value) ->
+                                    if (resultList.size >= 300) {
+                                        return@forEach
+                                    }
+                                    val apiInfo = key.split("::")
+                                    if (regex.containsMatchIn(apiInfo[0])) {
+                                        resultList.add("${apiInfo[0]}::$value::${apiInfo[1]}::${apiInfo[2]}")
+                                    }
+                                }
+                            }
+                        } else {
+                            showUnloadedMessage(project)
+                        }
+
+                        ApplicationManager.getApplication().invokeLater {
+                            searchResultsModel.clear()
+                            resultList.forEach { res -> searchResultsModel.addElement(res) }
+                            processPopup(searchResultsModel, popupBuilder, searchField)
+                        }
+                    }
+                } else if (popup?.isDisposed == false) {
+                    popup?.cancel()
+                    return
+                }
+            }
+
+            searchField.addDocumentListener(object : DocumentListener {
+                override fun insertUpdate(e: DocumentEvent?) {
+                    updateSearchResults()
+                }
+
+                override fun removeUpdate(e: DocumentEvent?) {
+                    updateSearchResults()
+                }
+
+                override fun changedUpdate(e: DocumentEvent?) {
+                    updateSearchResults()
+                }
+            })
+        }
+
+        private fun showUnloadedMessage(project: Project) {
+            if (!UnLoadNotificationState.hasShown) {
+                notificationService.showMessage(
+                    project,
+                    NotificationGroups.COMPLETION_NOTIFICATION_GROUP,
+                    "请稍候",
+                    "如需使用全局 API 搜索功能，请等待元数据加载完成(约半分钟)",
+                    NotificationType.INFORMATION
+                )
+            }
+            UnLoadNotificationState.hasShown = true
         }
 
         private fun getSearchApiElement(tree: Tree, searchText: String, searchResultsModel: DefaultListModel<String>) {
@@ -125,18 +232,18 @@ class SearchHelper {
                 ) {
                     val group = nodePaths[1]
                     val defaultVersion = nodePaths[2]
-                    val result = " [$productNameEn] $productName（推荐版本: $defaultVersion / $group）"
+                    val result = "$productNameEn::$productName::$defaultVersion::$group"
                     searchResultsModel.addElement(result)
                 }
             }
         }
 
         fun navigateToApi(tree: Tree, selectedResult: String) {
-            val pattern = "([^（]+)（([^）]+)）".toRegex()
+            val pattern = """(.*)::(.*)::(.*)""".toRegex()
             val matchResult = pattern.matchEntire(selectedResult)
 
             if (matchResult != null) {
-                val (nodeName, ancestors) = matchResult.destructured
+                val (apiName, apiDescription, ancestors) = matchResult.destructured
                 val ancestorNames = ancestors.split(" / ")
                 val root = tree.model.root as DefaultMutableTreeNode
                 var currentNode: DefaultMutableTreeNode? = root
@@ -145,14 +252,7 @@ class SearchHelper {
                     currentNode = currentNode?.let { FormatUtil.findNode(it, ancestorName) }
                     if (currentNode == null) break
                 }
-
-                val apiNode = currentNode?.let { FormatUtil.findNode(it, nodeName) }
-                apiNode?.let {
-                    val path = TreePath(it.path)
-                    tree.selectionPath = path
-                    tree.expandPath(path)
-                    tree.scrollPathToVisible(path)
-                }
+                expandPath(currentNode, apiName, apiDescription, tree)
             }
         }
 
@@ -163,8 +263,9 @@ class SearchHelper {
                     .filterIsInstance<DefaultMutableTreeNode>().filter { it.userObject.toString() != "API LIST" }
                     .joinToString(" / ") { it.userObject.toString() }
 
+                val nameAndDescription = node.userObject.toString().split("  ")
                 val nodeText =
-                    if (ancestors.isNotEmpty()) "${node.userObject}（$ancestors）" else node.userObject.toString()
+                    if (ancestors.isNotEmpty()) "${nameAndDescription[0]}::${nameAndDescription[1]}::$ancestors" else node.userObject.toString()
                 leafNodes.add(nodeText)
             } else {
                 for (i in 0 until root.childCount) {
@@ -174,21 +275,52 @@ class SearchHelper {
         }
 
         private fun navigateToProduct(tree: Tree, selectedResult: String) {
-            val pattern = """ \[(.*)] (.*)（推荐版本: (.*) / (.*)）""".toRegex()
+            val pattern = """(.*)::(.*)::(.*)::(.*)""".toRegex()
             val matchResult = pattern.find(selectedResult)
 
             if (matchResult != null) {
                 val (code, name, _, group) = matchResult.destructured
                 val root = tree.model.root as DefaultMutableTreeNode
                 val categoryNode = root.let { FormatUtil.findNode(it, group) }
-                val productNode = categoryNode?.let { FormatUtil.findNode(it, "$name  $code") }
-                productNode?.let {
-                    val path = TreePath(it.path)
-                    tree.selectionPath = path
-                    tree.expandPath(path)
-                    tree.scrollPathToVisible(path)
-                }
+                expandPath(categoryNode, name, code, tree)
             }
+        }
+
+        private fun expandPath(node: DefaultMutableTreeNode?, name: String, code: String, tree: Tree) {
+            val productNode = node?.let { FormatUtil.findNode(it, "$name  $code") }
+            productNode?.let {
+                val path = TreePath(it.path)
+                tree.selectionPath = path
+                tree.expandPath(path)
+                tree.scrollPathToVisible(path)
+            }
+        }
+
+        internal fun navigateToApiInfo(project: Project, productName: String, version: String, apiName: String) {
+            val toolWindow = BaseToolWindow().registerToolWindow(project)
+            val contentManager = toolWindow.contentManager
+            BaseToolWindow().setToolWindowActions(contentManager, toolWindow)
+
+            val apiPanel = JPanel()
+            apiPanel.layout = BoxLayout(apiPanel, BoxLayout.Y_AXIS)
+            val apiDocContent = toolWindow.contentManager.factory.createContent(
+                apiPanel,
+                "$productName-$apiName",
+                false,
+            )
+            apiDocContent.tabName = "$productName::$apiName::$version"
+            contentManager.addContent(apiDocContent)
+            toolWindow.show()
+            ApiPage.showApiDetail(
+                apiDocContent,
+                contentManager,
+                apiPanel,
+                productName,
+                apiName,
+                version,
+                project,
+                true,
+            )
         }
     }
 }
