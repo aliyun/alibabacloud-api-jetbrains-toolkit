@@ -4,9 +4,9 @@ import java.io.File
 import java.time.Duration
 
 object ApiConstants {
-    val CACHE_PATH = System.getProperty("user.home") + File.separator + ".api-cache"
+    var CACHE_PATH = System.getProperty("user.home") + File.separator + ".api-cache"
     val ONE_DAY: Duration = Duration.ofDays(1)
-    const val MAX_CACHE_NUM = 200
+    var MAX_CACHE_NUM = 200
 
     val FILE_MAP: Map<String, String> = mapOf(
         "java" to "Sample.java",

@@ -69,12 +69,11 @@ class CacheUtil {
             var files = cacheFolder.listFiles()?.asList()
 
             if (files != null && files.size > ApiConstants.MAX_CACHE_NUM) {
-                files.sortedBy { it.lastModified() }
-
+                files = files.sortedBy { it.lastModified() }
                 while (files?.isNotEmpty() == true && files.size > ApiConstants.MAX_CACHE_NUM) {
                     val oldestFile = files.first()
                     if (oldestFile.delete()) {
-                        files = cacheFolder.listFiles()?.asList() ?: listOf()
+                        files = cacheFolder.listFiles()?.asList() ?: emptyList()
                     } else {
                         break
                     }

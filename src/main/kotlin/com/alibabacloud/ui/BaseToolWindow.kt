@@ -81,7 +81,13 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         searchField.maximumSize = Dimension(Integer.MAX_VALUE, 50)
         contentPanel.add(searchField)
 
-        val refreshToolkitAction = RefreshToolkitAction(project, contentPanel, searchField)
+        val searchApiField = SearchTextField()
+        searchApiField.name = "searchAPI"
+        searchApiField.textEditor.emptyText.text = "搜索 API："
+        searchApiField.maximumSize = Dimension(Integer.MAX_VALUE, 50)
+        contentPanel.add(searchApiField)
+
+        val refreshToolkitAction = RefreshToolkitAction(project, contentPanel, searchField, searchApiField)
         refreshToolkitAction.templatePresentation.icon = AllIcons.Actions.Refresh
         refreshToolkitAction.templatePresentation.text = "Refresh"
 
@@ -126,6 +132,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
             contentPanel.add(scrollPane)
             productClickListener(project, cacheTree, cacheNameAndVersionMap)
             SearchHelper.search(cacheNameAndVersionMap, cacheTree, searchField)
+            SearchHelper.globalSearchApi(project, searchApiField)
         } else {
             var nameAndVersionMap = mutableMapOf<String, List<String>>()
             var apiDocContentTree = Tree()
@@ -144,6 +151,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                     contentPanel.add(scrollPane)
                     productClickListener(project, apiDocContentTree, nameAndVersionMap)
                     SearchHelper.search(nameAndVersionMap, apiDocContentTree, searchField)
+                    SearchHelper.globalSearchApi(project, searchApiField)
                 }
             })
         }
@@ -382,7 +390,8 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
     private class RefreshToolkitAction(
         val project: Project,
         val contentPanel: JPanel,
-        val searchField: SearchTextField
+        val searchField: SearchTextField,
+        val searchApiField: SearchTextField
     ) : AnAction() {
         override fun actionPerformed(e: AnActionEvent) {
             contentPanel.components.filter { it.name == "productTree" }.forEach {
@@ -408,6 +417,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                     contentPanel.add(scrollPane)
                     BaseToolWindow().productClickListener(project, apiDocContentTree, nameAndVersionMap)
                     SearchHelper.search(nameAndVersionMap, apiDocContentTree, searchField)
+                    SearchHelper.globalSearchApi(project, searchApiField)
                     contentPanel.revalidate()
                     contentPanel.repaint()
                 }

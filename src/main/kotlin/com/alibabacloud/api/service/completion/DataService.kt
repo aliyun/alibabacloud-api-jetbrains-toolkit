@@ -9,8 +9,8 @@ import com.alibabacloud.api.service.util.RequestUtil
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.google.gson.reflect.TypeToken
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -21,6 +21,8 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.attribute.BasicFileAttributes
 
 val cacheNameAndVersionFile = File(ApiConstants.CACHE_PATH, "nameAndVersion1")
 
@@ -35,18 +37,21 @@ object DataService {
 
     fun loadMeta(project: Project, isRefresh: Boolean): Map<String, String> {
         isLoading = true
+        val lastModifiedTime = CompletionIndexPersistentComponent.getStorageFileModifiedTime() ?: 0
+        val time = System.currentTimeMillis() - lastModifiedTime
+        val needToRefresh = time > ApiConstants.ONE_DAY.toMillis()
         if (!isRefresh) {
             val completionIndex = CompletionIndexPersistentComponent.getInstance()
             val state = completionIndex.state
             _javaIndex = state.completionIndex
-            if (_javaIndex != null) {
+            if (_javaIndex != null && !needToRefresh) {
                 isLoaded = true
                 isLoading = false
             }
         }
-        if (_javaIndex == null) {
+        if (_javaIndex == null || needToRefresh) {
             synchronized(this) {
-                if (_javaIndex == null) {
+                if (_javaIndex == null || needToRefresh) {
                     _javaIndex = mutableMapOf()
                     ProgressManager.getInstance().run(object : Task.Backgroundable(project, "拉取元数据...", true) {
                         override fun run(indicator: ProgressIndicator) {
@@ -194,10 +199,6 @@ object DataService {
     fun isDataLoaded(): Boolean {
         return isLoaded
     }
-
-    fun String.toToMapStr(): MutableMap<String, String> {
-        return Gson().fromJson(this, object : TypeToken<MutableMap<String, String>>() {}.type)
-    }
 }
 
 object UnLoadNotificationState {
@@ -227,6 +228,15 @@ class CompletionIndexPersistentComponent : PersistentStateComponent<CompletionIn
     companion object {
         fun getInstance(): CompletionIndexPersistentComponent {
             return service()
+        }
+
+        fun getStorageFileModifiedTime(): Long? {
+            val storageFile = PathManager.getOptionsFile("alibabacloud-developer-toolkit-cache")
+            if (storageFile.exists()) {
+                val attributes = Files.readAttributes(storageFile.toPath(), BasicFileAttributes::class.java)
+                return attributes.lastModifiedTime().toMillis()
+            }
+            return null
         }
     }
 }
