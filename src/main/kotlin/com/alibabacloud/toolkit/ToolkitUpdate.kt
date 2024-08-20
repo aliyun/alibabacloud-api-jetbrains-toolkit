@@ -14,15 +14,15 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.VisibleForTesting
 
-class ToolkitUpdate : StartupActivity {
+class ToolkitUpdate : ProjectActivity {
     @VisibleForTesting
-    override fun runActivity(project: Project) {
+    override suspend fun execute(project: Project) {
         val enabled = ToolkitSettingsState.getInstance().isAutoUpdateEnabled
         if (enabled) {
             ProgressManager.getInstance()
