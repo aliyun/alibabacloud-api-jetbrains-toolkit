@@ -1,6 +1,5 @@
 package com.alibabacloud.toolkit
 
-import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.states.ToolkitSettingsState
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
@@ -8,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Before
@@ -29,8 +29,6 @@ class ToolkitUpdateTest {
     private val mockDescriptor = getMockDescriptor(ToolkitInfo.PLUGIN_ID, "0.0.5")
     private var isAutoUpdateEnabled = false
     private lateinit var mockProject: Project
-    private lateinit var normalNotification: NormalNotification
-    private lateinit var mockPd: PluginDownloader
 
     @Before
     fun setup() {
@@ -88,14 +86,13 @@ class ToolkitUpdateTest {
     }
 
     @Test
-    fun `test toolkit auto update consistent with user setting`() {
+    fun `test toolkit auto update consistent with user setting`() = runBlocking {
         mockProject = Mockito.mock(Project::class.java)
         ToolkitSettingsState.getInstance().isAutoUpdateEnabled = false
-        update.runActivity(mockProject)
-        verify(update, never()).checkAndUpdate(any(), any())
-
+        update.execute(mockProject)
+        verify(update, Mockito.never()).checkAndUpdate(any(), any())
         ToolkitSettingsState.getInstance().isAutoUpdateEnabled = true
-        update.runActivity(mockProject)
+        update.execute(mockProject)
         verify(update).checkAndUpdate(any(), any())
     }
 

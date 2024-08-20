@@ -188,6 +188,4 @@
         <li>Provides product explorer and API document view.</li>
       </ul>
     ]]></change-notes>
-
-    <idea-version since-build="222"/>
 </idea-plugin>

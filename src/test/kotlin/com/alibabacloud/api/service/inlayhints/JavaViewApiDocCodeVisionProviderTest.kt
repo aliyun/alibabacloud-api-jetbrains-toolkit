@@ -30,7 +30,7 @@ class JavaViewApiDocCodeVisionProviderTest : BasePlatformTestCase() {
     fun `test computeForEditor adds lenses for valid api`() {
         // java
         val psiFile1 = myFixture.configureByText(
-            "Test.java",
+            "Test1.java",
             """
             public class TestClass {
                 public void testMethod() {
@@ -42,7 +42,7 @@ class JavaViewApiDocCodeVisionProviderTest : BasePlatformTestCase() {
 
         // java
         val psiFile2 = myFixture.configureByText(
-            "Test.java",
+            "Test2.java",
             """
             import com.aliyun.ecs20140526.models.DescribeRegionsRequest;
             public class TestClass {
@@ -55,7 +55,7 @@ class JavaViewApiDocCodeVisionProviderTest : BasePlatformTestCase() {
 
         // java-async
         val psiFile3 = myFixture.configureByText(
-            "Test.java",
+            "Test3.java",
             """
             public class TestClass {
                 public void testMethod() {
@@ -67,7 +67,7 @@ class JavaViewApiDocCodeVisionProviderTest : BasePlatformTestCase() {
 
         // java-async
         val psiFile4 = myFixture.configureByText(
-            "Test.java",
+            "Test4.java",
             """
             import com.aliyun.sdk.service.ecs20140526.models.DescribeRegionsRequest;
             public class TestClass {

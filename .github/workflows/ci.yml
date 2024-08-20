@@ -42,25 +42,9 @@ jobs:
       matrix:
         include:
           - ide_type: 'IU'
-            ide_version: '2022.2'
-            py_version: '222.3345.118'
-            go_version: '222.3345.118'
-          - ide_type: 'IU'
-            ide_version: '2023.1'
-            py_version: '231.8109.175'
-            go_version: '231.8109.175'
-          - ide_type: 'IU'
-            ide_version: '2023.2'
-            py_version: '232.8660.185'
-            go_version: '232.8660.142'
-          - ide_type: 'IU'
-            ide_version: '2023.3'
-            py_version: '233.11799.196'
-            go_version: '233.11799.196'
-          - ide_type: 'IU'
-            ide_version: '2024.1'
-            py_version: '241.14494.158'
-            go_version: '241.14494.158'
+            ide_version: '2024.2'
+            py_core_version: '242.20224.300'
+            go_version: '242.20224.300'
     steps:
 
       - name: Fetch Sources
@@ -78,7 +62,7 @@ jobs:
         run: |
           echo "INTELLIJ_TYPE=${{ matrix.ide_type }}" >> $GITHUB_ENV
           echo "INTELLIJ_VERSION=${{ matrix.ide_version }}" >> $GITHUB_ENV
-          echo "PY_VERSION=${{ matrix.py_version }}" >> $GITHUB_ENV
+          echo "PY_CORE_VERSION=${{ matrix.py_core_version }}" >> $GITHUB_ENV
           echo "GO_VERSION=${{ matrix.go_version }}" >> $GITHUB_ENV
       - name: Run Tests
         run: ./gradlew buildPlugin verifyPlugin check
