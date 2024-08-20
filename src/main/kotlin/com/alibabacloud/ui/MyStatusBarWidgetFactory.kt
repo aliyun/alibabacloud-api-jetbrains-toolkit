@@ -5,16 +5,14 @@ import com.alibabacloud.icons.ToolkitIcons
 import com.alibabacloud.models.credentials.ConfigureFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.TextPanel.WithIconAndArrows
 import com.intellij.ui.ClickListener
-import com.intellij.vcs.commit.NonModalCommitPanel.Companion.showAbove
+import com.intellij.vcsUtil.showAbove
 import java.awt.event.MouseEvent
-import javax.swing.Icon
 import javax.swing.JComponent
 
 class MyStatusBarWidgetFactory : StatusBarWidgetFactory {
@@ -90,7 +88,6 @@ class MyStatusBarWidgetFactory : StatusBarWidgetFactory {
                 .setRenderer(CustomListCellRenderer())
                 .createPopup()
             listPopup.showAbove(this)
-
         }
     }
 }
