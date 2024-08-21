@@ -1,5 +1,6 @@
 package com.alibabacloud.api.service.inlayhints
 
+import com.alibabacloud.api.service.completion.CompletionIndexPersistentComponent
 import com.alibabacloud.api.service.sdksample.util.GenerateDocUtil
 import com.alibabacloud.models.api.ApiInfo
 import com.alibabacloud.models.api.ShortApiInfo
@@ -14,7 +15,8 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
 import java.awt.event.MouseEvent
 
-class JavaViewApiDocCodeVisionProvider : ViewApiDocCodeVisionProvider() {
+class JavaViewApiDocCodeVisionProvider(private val completionIndex: CompletionIndexPersistentComponent = CompletionIndexPersistentComponent.getInstance()) :
+    ViewApiDocCodeVisionProvider() {
     override fun isSupportedLanguage(languageId: String): Boolean {
         return "JAVA".equals(languageId, ignoreCase = true)
     }
@@ -44,7 +46,8 @@ class JavaViewApiDocCodeVisionProvider : ViewApiDocCodeVisionProvider() {
                 val api = matchResult.groupValues[4].removeSuffix("Request")
 
                 val keyInfo = api + product
-                val res = GenerateDocUtil.findMatchingKey(keyInfo, GenerateDocUtil.getIndex())?.split("::")
+                val index = GenerateDocUtil.getIndex(completionIndex)
+                val res = GenerateDocUtil.findMatchingKey(keyInfo, index)?.split("::")
                 if (res != null) {
                     return ApiInfo(apiName = res[0], productName = res[1], defaultVersion = res[2])
                 }
@@ -62,20 +65,25 @@ class JavaViewApiDocCodeVisionProvider : ViewApiDocCodeVisionProvider() {
                 val isValidImport: Boolean
                 var apiInfo: ApiInfo? = null
                 var res: List<String>? = null
-                importStatements?.forEach { import ->
+
+                importStatements?.firstOrNull { import ->
                     import.qualifiedName?.let { importQualifiedName ->
                         val importRegex =
                             Regex("""^com\.aliyun(\.sdk\.service)?\.([a-zA-Z0-9_]+)(?:\.models)?(?:\.($api+Request|$))?$""")
                         val matchResult = importRegex.find(importQualifiedName)
                         if (matchResult != null) {
                             val keyInfo = api + matchResult.groupValues[2].replace("_", "")
-                            res = GenerateDocUtil.findMatchingKey(keyInfo, GenerateDocUtil.getIndex())?.split("::")
+                            val index = GenerateDocUtil.getIndex(completionIndex)
+                            res = GenerateDocUtil.findMatchingKey(keyInfo, index)?.split("::")
                             if (res != null) {
                                 apiInfo = ApiInfo(apiName = res!![0], productName = res!![1], defaultVersion = res!![2])
+                                return@let true
                             }
                         }
-                    }
+                        false
+                    } ?: false
                 }
+
                 isValidImport = res != null
                 return apiInfo?.let { ShortApiInfo(it, isValidImport) }
             }

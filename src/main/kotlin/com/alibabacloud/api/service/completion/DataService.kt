@@ -37,11 +37,9 @@ object DataService {
 
     fun loadMeta(project: Project, isRefresh: Boolean): Map<String, String> {
         isLoading = true
-        val lastModifiedTime = CompletionIndexPersistentComponent.getStorageFileModifiedTime() ?: 0
-        val time = System.currentTimeMillis() - lastModifiedTime
-        val needToRefresh = time > ApiConstants.ONE_DAY.toMillis()
+        val completionIndex = CompletionIndexPersistentComponent.getInstance()
+        val needToRefresh = completionIndex.needToRefresh()
         if (!isRefresh) {
-            val completionIndex = CompletionIndexPersistentComponent.getInstance()
             val state = completionIndex.state
             _javaIndex = state.completionIndex
             if (_javaIndex != null && !needToRefresh) {
@@ -225,18 +223,19 @@ class CompletionIndexPersistentComponent : PersistentStateComponent<CompletionIn
         this.state = state
     }
 
+    fun needToRefresh(): Boolean {
+        val storageFile = PathManager.getOptionsFile("alibabacloud-developer-toolkit-cache")
+        val lastModifiedTime = if (storageFile.exists()) {
+            val attributes = Files.readAttributes(storageFile.toPath(), BasicFileAttributes::class.java)
+            attributes.lastModifiedTime().toMillis()
+        } else 0
+        val time = System.currentTimeMillis() - lastModifiedTime
+        return time > ApiConstants.ONE_DAY.toMillis()
+    }
+
     companion object {
         fun getInstance(): CompletionIndexPersistentComponent {
             return service()
-        }
-
-        fun getStorageFileModifiedTime(): Long? {
-            val storageFile = PathManager.getOptionsFile("alibabacloud-developer-toolkit-cache")
-            if (storageFile.exists()) {
-                val attributes = Files.readAttributes(storageFile.toPath(), BasicFileAttributes::class.java)
-                return attributes.lastModifiedTime().toMillis()
-            }
-            return null
         }
     }
 }

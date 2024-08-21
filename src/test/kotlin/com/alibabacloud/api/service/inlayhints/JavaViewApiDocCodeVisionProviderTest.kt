@@ -1,5 +1,6 @@
 package com.alibabacloud.api.service.inlayhints
 
+import com.alibabacloud.api.service.completion.CompletionIndexPersistentComponent
 import com.alibabacloud.models.api.ApiInfo
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
@@ -8,13 +9,22 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiClass
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.mockito.Mockito.mock
+import org.mockito.kotlin.spy
+import org.mockito.kotlin.whenever
 
 class JavaViewApiDocCodeVisionProviderTest : BasePlatformTestCase() {
     private lateinit var provider: JavaViewApiDocCodeVisionProvider
+    private lateinit var spyCompletionIndex: CompletionIndexPersistentComponent
 
     override fun setUp() {
         super.setUp()
-        provider = JavaViewApiDocCodeVisionProvider()
+        val completionIndex = CompletionIndexPersistentComponent.getInstance()
+        spyCompletionIndex = spy(completionIndex)
+        spyCompletionIndex.state.completionIndex = mutableMapOf(
+            "DescribeRegions::Ecs::2014-05-26" to "查询可以使用的阿里云地域"
+        )
+        whenever(spyCompletionIndex.needToRefresh()).thenReturn(false)
+        provider = JavaViewApiDocCodeVisionProvider(spyCompletionIndex)
     }
 
     fun `test computeForEditor adds lenses for valid api`() {
@@ -93,6 +103,7 @@ class JavaViewApiDocCodeVisionProviderTest : BasePlatformTestCase() {
             """.trimIndent()
         )
 
+        // null import
         val psiFile2 = myFixture.configureByText(
             "Test.java",
             """
