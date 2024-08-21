@@ -11,10 +11,9 @@ import java.io.IOException
 
 class GenerateDocUtil {
     companion object {
-        internal fun getIndex(): Map<String, String> {
-            val completionIndex = CompletionIndexPersistentComponent.getInstance()
+        internal fun getIndex(completionIndex: CompletionIndexPersistentComponent = CompletionIndexPersistentComponent.getInstance()): Map<String, String> {
             val state = completionIndex.state
-            return if (state.completionIndex?.isNotEmpty() == true) {
+            return if (state.completionIndex?.isNotEmpty() == true && !completionIndex.needToRefresh()) {
                 state.completionIndex!!
             } else {
                 if (DataService.isDataLoaded()) DataService.javaIndex else emptyMap()

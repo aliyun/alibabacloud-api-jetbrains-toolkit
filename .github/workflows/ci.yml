@@ -42,17 +42,25 @@ jobs:
       matrix:
         include:
           - ide_type: 'IU'
-            ide_version: '2022.2.5'
-            py_version: '222.4554.10'
-            go_version: '222.4459.24'
+            ide_version: '2022.2'
+            py_version: '222.3345.118'
+            go_version: '222.3345.118'
           - ide_type: 'IU'
-            ide_version: '2023.3.7'
+            ide_version: '2023.1'
+            py_version: '231.8109.175'
+            go_version: '231.8109.175'
+          - ide_type: 'IU'
+            ide_version: '2023.2'
+            py_version: '232.8660.185'
+            go_version: '232.8660.142'
+          - ide_type: 'IU'
+            ide_version: '2023.3'
             py_version: '233.11799.196'
             go_version: '233.11799.196'
           - ide_type: 'IU'
             ide_version: '2024.1'
-            py_version: '241.14494.127'
-            go_version: '241.14494.127'
+            py_version: '241.14494.158'
+            go_version: '241.14494.158'
     steps:
 
       - name: Fetch Sources
