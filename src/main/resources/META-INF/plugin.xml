@@ -120,10 +120,17 @@
     </actions>
 
     <change-notes><![CDATA[
+    <b>0.0.12-222-241 (2024-08-21)</b>
+      <ul>
+        <li>Support java inlay hints for view API info when coding.</li>
+        <li>Support global search for OpenAPI and optimize UI of search results.</li>
+        <li>Support open API debug result in IDE.</li>
+        <li>Fix general bugs.</li>
+      </ul>
     <b>0.0.11 (2024-08-05)</b>
       <ul>
         <li>Support open url in webview with default browser.</li>
-        <li>EUpdate cloud products category name.</li>
+        <li>Update cloud products category name.</li>
         <li>Fix some issue.</li>
       </ul>
     <b>0.0.10 (2024-07-25)</b>
