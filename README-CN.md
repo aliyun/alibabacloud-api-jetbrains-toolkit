@@ -45,7 +45,7 @@ GoLand 2022.2 ~ 2024.1
 ### 云产品 & API 搜索
 展示云产品的树状视图，搜索框可以快速导航到对应产品或 API。可通过窗口上方的刷新按钮刷新云产品列表或 API 文档页面。
 
-![Search](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/search.png)
+![Search](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/all_search.png)
 
 ### API 文档 & API 调试
 单击某个 API 将打开一个新窗口，显示相应的 API 文档，包括接口描述、请求参数、响应参数和错误码等。
