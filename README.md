@@ -47,7 +47,7 @@ A tree-view of Alibaba Cloud products with search, quickly navigate you to the c
 
 Refresh the product list or API detail page by clicking the refresh button in the window toolbar.
 
-![Search](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/search.png)
+![Search](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/all_search.png)
 
 ### API Document and Debug
 Clicking on an API can navigate you to a new tab which displays the corresponding API document,

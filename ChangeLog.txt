@@ -1,3 +1,10 @@
+2024-08-21 Version: 0.0.12-242
+1. Support 2024.2 IntelliJ version.
+2. Support java inlay hints for view API info when coding.
+3. Support global search for OpenAPI and optimize UI of search results.
+4. Support open API debug result in IDE.
+5. Fix general bugs.
+
 2024-08-05 Version: 0.0.11
 1. Support open url in webview with default browser.
 2. Update cloud products category name.
