@@ -44,7 +44,7 @@ class ToolkitSettingsConfigurable : SearchableConfigurable {
                     this.isSelected = ToolkitSettingsState.getInstance().isAKInspectionEnabled
                 }
                 text(
-                    "<html>开启明文AK/SK检查（强烈建议保持开启）<br/><br/>" +
+                    "开启明文AK/SK检查（强烈建议保持开启）<br/><br/>" +
                             "<font color='gray' size='-1'>阿里云主账号拥有资源的全部权限，AK一旦泄露，会给系统带来巨大风险，不建议通过明文使用。</font><br/>" +
                             "<font color='gray' size='-1'>我们只通过正则匹配您代码中的明文AK/SK，不会进行任何保存/上传。</font><br/>"
                 )

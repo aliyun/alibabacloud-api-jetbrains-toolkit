@@ -1,10 +1,8 @@
 package com.alibabacloud.api.service.inlayhints
 
-import com.alibabacloud.api.service.ApiPage
 import com.alibabacloud.api.service.SearchHelper
 import com.alibabacloud.models.api.ApiInfo
 import com.alibabacloud.models.api.ShortApiInfo
-import com.alibabacloud.ui.BaseToolWindow
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
@@ -18,8 +16,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
 import java.awt.event.MouseEvent
-import javax.swing.BoxLayout
-import javax.swing.JPanel
 
 abstract class ViewApiDocCodeVisionProvider : DaemonBoundCodeVisionProvider {
     override val id: String

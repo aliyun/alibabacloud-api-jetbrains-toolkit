@@ -1,6 +1,7 @@
 package com.alibabacloud.action
 
 import com.alibabacloud.states.ToolkitSettingsState
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
@@ -23,5 +24,9 @@ class CodeSnippetsAction : AnAction() {
         } else {
             e.presentation.text = "Enable Alibaba Cloud SDK code auto-completion"
         }
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.EDT
     }
 }
