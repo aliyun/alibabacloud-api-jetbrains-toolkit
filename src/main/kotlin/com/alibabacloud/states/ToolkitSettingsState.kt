@@ -10,7 +10,8 @@ import com.intellij.openapi.components.*
 class ToolkitSettingsState : PersistentStateComponent<ToolkitSettingsState.State>, ToolkitSettings {
     data class State(
         var isCompletionEnabled: Boolean = true,
-        var isAutoUpdateEnabled: Boolean = true
+        var isAutoUpdateEnabled: Boolean = true,
+        var isAKInspectionEnabled: Boolean = true
     )
 
     private var toolkitState = State()
@@ -33,6 +34,12 @@ class ToolkitSettingsState : PersistentStateComponent<ToolkitSettingsState.State
             toolkitState.isAutoUpdateEnabled = isAutoUpdateEnabled
         }
 
+    override var isAKInspectionEnabled: Boolean
+        get() = state.isAKInspectionEnabled
+        set(isAKInspectionEnabled) {
+            toolkitState.isAKInspectionEnabled = isAKInspectionEnabled
+        }
+
 
     companion object {
         fun getInstance(): ToolkitSettingsState {
@@ -44,4 +51,5 @@ class ToolkitSettingsState : PersistentStateComponent<ToolkitSettingsState.State
 interface ToolkitSettings {
     var isCompletionEnabled: Boolean
     var isAutoUpdateEnabled: Boolean
+    var isAKInspectionEnabled: Boolean
 }
