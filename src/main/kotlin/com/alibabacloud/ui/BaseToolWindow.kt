@@ -20,6 +20,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -425,11 +426,19 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
 
             DataService.refreshMeta(project)
         }
+
+        override fun getActionUpdateThread(): ActionUpdateThread {
+            return ActionUpdateThread.EDT
+        }
     }
 
     private class ViewDocumentationAction : AnAction() {
         override fun actionPerformed(e: AnActionEvent) {
             BrowserUtil.browse(URI("https://help.aliyun.com/zh/openapi/user-guide/using-the-alibaba-cloud-developer-toolkit-plugin-in-jetbrains-ides"))
+        }
+
+        override fun getActionUpdateThread(): ActionUpdateThread {
+            return ActionUpdateThread.EDT
         }
     }
 
@@ -437,17 +446,29 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         override fun actionPerformed(e: AnActionEvent) {
             BrowserUtil.browse(URI("https://github.com/aliyun/alibabacloud-api-jetbrains-toolkit"))
         }
+
+        override fun getActionUpdateThread(): ActionUpdateThread {
+            return ActionUpdateThread.EDT
+        }
     }
 
     private class NewIssueAction : AnAction() {
         override fun actionPerformed(e: AnActionEvent) {
             BrowserUtil.browse(URI("https://github.com/aliyun/alibabacloud-api-jetbrains-toolkit/issues"))
         }
+
+        override fun getActionUpdateThread(): ActionUpdateThread {
+            return ActionUpdateThread.EDT
+        }
     }
 
     class CloseAllTabsAction(private val contentManager: ContentManager) : AnAction() {
         override fun actionPerformed(e: AnActionEvent) {
             contentManager.removeAllContents(true)
+        }
+
+        override fun getActionUpdateThread(): ActionUpdateThread {
+            return ActionUpdateThread.EDT
         }
     }
 
