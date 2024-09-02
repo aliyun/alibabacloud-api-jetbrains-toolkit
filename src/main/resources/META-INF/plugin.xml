@@ -97,6 +97,14 @@
         <lang.documentationProvider implementationClass="com.alibabacloud.api.service.sdksample.document.CodeSampleDocumentProvider" language="Python" order="first"/>
         <lang.documentationProvider implementationClass="com.alibabacloud.api.service.sdksample.document.CodeSampleDocumentProvider" language="go" order="first"/>
         <codeInsight.daemonBoundCodeVisionProvider implementation="com.alibabacloud.api.service.inlayhints.JavaViewApiDocCodeVisionProvider"/>
+        <localInspection shortName="AKLocalInspection"
+                         enabledByDefault="true"
+                         level="ERROR"
+                         implementationClass="com.alibabacloud.api.service.inspection.AKLocalInspection">
+            <displayName>AK Inspection</displayName>
+            <groupDisplayName>Alibaba Cloud Inspections</groupDisplayName>
+            <description>This inspection checks for insecure use of AK in code directly.</description>
+        </localInspection>
     </extensions>
 
     <extensions defaultExtensionNs="alibabacloud.cli">
