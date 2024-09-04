@@ -10,6 +10,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 
 class AKLocalQuickFix : LocalQuickFix {
+    companion object {
+        val credentialsLink = mapOf(
+            "java" to "https://help.aliyun.com/document_detail/378657.html",
+            "python" to "https://help.aliyun.com/document_detail/378659.html",
+            "go" to "https://help.aliyun.com/document_detail/378661.html",
+            "php" to "https://help.aliyun.com/document_detail/311677.html",
+            "js" to "https://help.aliyun.com/document_detail/378664.html"
+        )
+    }
+
     override fun getFamilyName(): String {
         return "查看更多凭据管理方式"
     }
@@ -17,9 +27,16 @@ class AKLocalQuickFix : LocalQuickFix {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val psiElement = descriptor.psiElement
         val document = getDocument(project, psiElement)
+        val docLink = when (psiElement.language.id.lowercase()) {
+                "python" -> credentialsLink["python"]
+                "go" -> credentialsLink["go"]
+                "javascript" -> credentialsLink["js"]
+                "php" -> credentialsLink["php"]
+                else -> credentialsLink["java"]
+            } ?: credentialsLink["java"]
 
         document?.let {
-            BrowserUtil.browse("https://help.aliyun.com/document_detail/378657.html")
+            BrowserUtil.browse(docLink ?: credentialsLink["java"]!!)
         }
     }
 
