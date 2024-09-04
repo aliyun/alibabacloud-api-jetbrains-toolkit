@@ -101,9 +101,6 @@
                          enabledByDefault="true"
                          level="ERROR"
                          implementationClass="com.alibabacloud.api.service.inspection.AKLocalInspection">
-            <displayName>AK Inspection</displayName>
-            <groupDisplayName>Alibaba Cloud Inspections</groupDisplayName>
-            <description>This inspection checks for insecure use of AK in code directly.</description>
         </localInspection>
     </extensions>
 
