@@ -49,11 +49,11 @@ class AKLocalInspection : LocalInspectionTool() {
     }
 
     override fun getDisplayName(): String {
-        return "Alibaba Cloud AK inspections"
+        return "AK inspections"
     }
 
     override fun getGroupDisplayName(): String {
-        return "Alibaba Cloud AK inspections"
+        return "Alibaba Cloud"
     }
 
 
@@ -122,7 +122,7 @@ class AKLocalInspection : LocalInspectionTool() {
             val keyElement = file.findElementAt(startIndex)
             if (keyElement != null) {
                 val key = removeQuotation(keyElement.text.substringAfter("LTAI"))
-                if (key.length in intArrayOf(12, 16, 18, 20, 22)) {
+                if (!isProblemAlreadyRegistered(holder, keyElement) && key.length in intArrayOf(12, 16, 18, 20, 22)) {
                     holder.registerProblem(
                         keyElement,
                         problemDescription,
