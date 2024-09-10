@@ -13,7 +13,7 @@ class CodeSampleDocumentProvider : DocumentationProvider {
         val doc = when (element.language.id) {
             "JAVA" -> JavaCodeSampleDocument.generateJavaDoc(element)
             "Python" -> PythonCodeSampleDocument.generatePythonDoc(element)
-            "go" ->GoCodeSampleDocument.generateGoDoc(element)
+            "go" -> GoCodeSampleDocument.generateGoDoc(element)
             else -> null
         }
         return doc

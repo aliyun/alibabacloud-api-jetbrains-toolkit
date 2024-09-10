@@ -4,6 +4,7 @@ import com.alibabacloud.api.service.OkHttpClientProvider
 import com.alibabacloud.api.service.completion.CompletionIndexPersistentComponent
 import com.alibabacloud.api.service.completion.DataService
 import com.alibabacloud.api.service.util.RequestUtil
+import com.alibabacloud.i18n.I18nUtils
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
@@ -57,7 +58,7 @@ class GenerateDocUtil {
             val matchResult = pattern.find(productVersion)
             if (matchResult != null) {
                 val (product, _) = matchResult.destructured
-                return "&nbsp;&nbsp;\uD83D\uDCA1 <a href=https://api.aliyun.com/api-tools/demo/${product}>查看更多「${product}」相关代码示例</a>"
+                return "&nbsp;&nbsp;\uD83D\uDCA1 <a href=https://api.aliyun.com/api-tools/demo/${product}>${I18nUtils.getMsg("content.see.more")}「${product}」${I18nUtils.getMsg("code.sample.related")}</a>"
             }
             return null
         }
@@ -72,9 +73,9 @@ class GenerateDocUtil {
                     val product = apiInfo[1]
                     val version = apiInfo[2]
                     return if (hasApiSamples(product, version, apiName)) {
-                        "&nbsp;&nbsp;\uD83D\uDCA1 <a href=https://api.aliyun.com/api/${product}/${version}/${apiName}?tab=CodeSample>查看更多「${apiName}」相关代码示例</a><br><br>&nbsp;&nbsp;&nbsp;${index[matchingKey]}"
+                        "&nbsp;&nbsp;\uD83D\uDCA1 <a href=https://api.aliyun.com/api/${product}/${version}/${apiName}?tab=CodeSample>${I18nUtils.getMsg("SEE_MORE")}「${apiName}」${I18nUtils.getMsg("code.sample.related")}</a><br><br>&nbsp;&nbsp;&nbsp;${index[matchingKey]}"
                     } else {
-                        "&nbsp;&nbsp;\uD83D\uDCA1 <a href=https://api.aliyun.com/api-tools/demo/${product}>查看更多「${product}」相关代码示例</a><br><br>&nbsp;&nbsp;&nbsp;${index[matchingKey]}"
+                        "&nbsp;&nbsp;\uD83D\uDCA1 <a href=https://api.aliyun.com/api-tools/demo/${product}>${I18nUtils.getMsg("content.see.more")}「${product}」${I18nUtils.getMsg("code.sample.related")}</a><br><br>&nbsp;&nbsp;&nbsp;${index[matchingKey]}"
                     }
                 }
             }

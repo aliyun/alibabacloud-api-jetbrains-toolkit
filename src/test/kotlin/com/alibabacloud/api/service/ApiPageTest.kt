@@ -2,6 +2,7 @@ package com.alibabacloud.api.service
 
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
+import com.alibabacloud.i18n.I18nUtils
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.intellij.notification.NotificationType
@@ -106,7 +107,7 @@ internal class ApiPageTest {
         `when`(response.isSuccessful).thenReturn(true)
         val cacheMeta = File(tempDir, "cacheMeta")
         val apiDocData =
-            ApiPage.getApiDocData(project, okHttpClient, "https://example.com/api/apidoc", cacheMeta)
+            ApiPage.getApiDocData(project, okHttpClient, "https://example.com/api/apidoc", "https://example.com/overview/apidoc", cacheMeta)
         assertEquals(apiDocData, Gson().fromJson(sampleResponse, JsonObject::class.java))
     }
 
@@ -133,7 +134,7 @@ internal class ApiPageTest {
         `when`(response.code).thenReturn(500)
         `when`(response.message).thenReturn("Internal Server Error")
         val apiDocData =
-            ApiPage.getApiDocData(project, okHttpClient, "https://example.com/api/apidoc", mock(File::class.java))
+            ApiPage.getApiDocData(project, okHttpClient, "https://example.com/api/apidoc", "https://example.com/overview/apidoc", mock(File::class.java))
 
         verify(normalNotification).showMessage(
             eq(project),
@@ -153,8 +154,8 @@ internal class ApiPageTest {
         verify(normalNotification).showMessage(
             eq(project),
             eq(NotificationGroups.NETWORK_NOTIFICATION_GROUP),
-            eq("获取 endpoint 数据失败"),
-            eq("请检查网络"),
+            eq(I18nUtils.getMsg("endpoint.fetch.fail")),
+            eq(I18nUtils.getMsg("network.check")),
             eq(NotificationType.ERROR)
         )
         assertTrue(endpointList.size() == 0, "Endpoint list should be empty when IOException is thrown")
@@ -164,13 +165,13 @@ internal class ApiPageTest {
     fun `getApiDocData should handle IOException`() {
         `when`(call.execute()).thenThrow(IOException::class.java)
         val apiDocData =
-            ApiPage.getApiDocData(project, okHttpClient, "https://example.com/api/apidoc", mock(File::class.java))
+            ApiPage.getApiDocData(project, okHttpClient, "https://example.com/api/apidoc", "https://example.com/overview/apidoc", mock(File::class.java))
 
         verify(normalNotification).showMessage(
             eq(project),
             eq(NotificationGroups.NETWORK_NOTIFICATION_GROUP),
-            eq("获取 API 数据失败"),
-            eq("请检查网络"),
+            eq(I18nUtils.getMsg("api.data.fetch.fail")),
+            eq(I18nUtils.getMsg("network.check")),
             eq(NotificationType.ERROR)
         )
         assertTrue(apiDocData.size() == 0, "apiDocData should be empty when IOException is thrown")

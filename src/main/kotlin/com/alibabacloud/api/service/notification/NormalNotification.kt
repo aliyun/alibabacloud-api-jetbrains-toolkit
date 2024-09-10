@@ -1,5 +1,6 @@
 package com.alibabacloud.api.service.notification
 
+import com.alibabacloud.i18n.I18nUtils
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -67,21 +68,21 @@ object NormalNotification {
             val notification = NotificationGroupManager.getInstance().getNotificationGroup(group)
                 .createNotification(title, content, type)
 
-            val feedbackNotificationAction = object : NotificationAction("去反馈") {
+            val feedbackNotificationAction = object : NotificationAction(I18nUtils.getMsg("feedback.go")) {
                 override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                     feedbackAction.invoke()
                     notification.expire()
                 }
             }
 
-            val closeNotificationAction = object : NotificationAction("关闭") {
+            val closeNotificationAction = object : NotificationAction(I18nUtils.getMsg("action.close")) {
                 override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                     closeAction.invoke()
                     notification.expire()
                 }
             }
 
-            val noRemindNotificationAction = object : NotificationAction("30天内不再弹出") {
+            val noRemindNotificationAction = object : NotificationAction(I18nUtils.getMsg("questionnaire.no.pop")) {
                 override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                     noRemindAction.invoke()
                     notification.expire()
@@ -109,21 +110,21 @@ object NormalNotification {
             val notification = NotificationGroupManager.getInstance().getNotificationGroup(group)
                 .createNotification(title, content, type)
 
-            val restartNotificationAction = object : NotificationAction("立即重启") {
+            val restartNotificationAction = object : NotificationAction(I18nUtils.getMsg("plugin.update.restart.now")) {
                 override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                     restartAction.invoke()
                     notification.expire()
                 }
             }
 
-            val restartLaterNotificationAction = object : NotificationAction("稍后重启") {
+            val restartLaterNotificationAction = object : NotificationAction(I18nUtils.getMsg("plugin.update.restart.later")) {
                 override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                     restartLaterAction.invoke()
                     notification.expire()
                 }
             }
 
-            val updateSettingsNotificationAction = object : NotificationAction("自动更新设置") {
+            val updateSettingsNotificationAction = object : NotificationAction(I18nUtils.getMsg("plugin.auto.update.settings")) {
                 override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                     updateSettingsAction.invoke()
                     notification.expire()
