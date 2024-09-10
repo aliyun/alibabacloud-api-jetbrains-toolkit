@@ -20,10 +20,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -377,14 +373,23 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
     }
 
     private class AddProfileAction(private val collapsibleInputPanel: CollapsibleInputPanel) :
-        AnAction(I18nUtils.getMsg("credentials.new.profile"), I18nUtils.getMsg("credentials.new.profile"), AllIcons.General.User) {
+        AnAction(
+            I18nUtils.getMsg("credentials.new.profile"),
+            I18nUtils.getMsg("credentials.new.profile"),
+            IconLoader.getIcon("/icons/new_profile.svg", BaseToolWindow::class.java)
+        ) {
         override fun actionPerformed(e: AnActionEvent) {
             collapsibleInputPanel.clearFields()
             collapsibleInputPanel.expandForAddProfile()
         }
     }
 
-    private class FeedbackAction : AnAction(I18nUtils.getMsg("action.feedback"), I18nUtils.getMsg("action.feedback"), AllIcons.Actions.Help) {
+    private class FeedbackAction :
+        AnAction(
+            I18nUtils.getMsg("action.feedback"),
+            I18nUtils.getMsg("action.feedback"),
+            IconLoader.getIcon("/icons/feedback.svg", BaseToolWindow::class.java)
+        ) {
         override fun actionPerformed(e: AnActionEvent) {
             BrowserUtil.browse(URI(ExperienceQuestionnaire.QUESTIONNAIRE_LINK))
             val properties = PropertiesComponent.getInstance()
@@ -408,7 +413,6 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         }
     }
 
-    // TOOD 记录用户选择，优先级大于IDE本身设置?
     private class LanguageSwitchAction(
         val project: Project,
         val profilePanel: JPanel,

@@ -2,13 +2,23 @@
 <html lang="en">
 <script type="text/javascript">
     window.definitions = encodeURI(JSON.stringify($DEFS));
+    window.language = "$LANGUAGE"
 </script>
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Alibaba Cloud API Toolkit UI</title>
-    <input type="hidden" id="router-meta-data" value="${encodeURI(JSON.stringify(pageConfig))}">
-    <link rel="stylesheet" href="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/static/css/v0.0.11/vendor.css">
+    <input type="hidden" id="router-meta-data" value="${encodeURI(JSON.stringify(pageConfig))}"/>
+    <link rel="stylesheet" href="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/static/css/v0.0.13/vendor.css"/>
+    <style>
+        :root {
+            --vscode-foreground: #333333 !important;
+            --vscode-body-background: #3c3f41 !important;
+            --vscode-table-header-background: #f1f1f2 !important;
+            --vscode-descriptionForeground: rgb(102, 102, 102) !important;
+            --vscode-editor-background: #ffffff !important;
+        }
+    </style>
 </head>
 <body>
 <div id="root"></div>
@@ -16,6 +26,6 @@
     document.getElementById('router-meta-data').value = encodeURI(JSON.stringify($APIMETA))
     const acquireVsCodeApi = () => {}
 </script>
-<script src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/static/css/v0.0.12/vendor.js"></script>
+<script src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/static/css/v0.0.13/vendor.js"></script>
 </body>
 </html>
