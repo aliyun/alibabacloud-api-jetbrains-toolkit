@@ -20,10 +20,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -46,12 +42,14 @@ import java.io.IOException
 import java.net.URI
 import java.time.LocalDateTime
 import java.util.*
-import javax.swing.*
+import javax.swing.BorderFactory
+import javax.swing.BoxLayout
+import javax.swing.JPanel
+import javax.swing.JTree
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeSelectionModel
-
 
 class BaseToolWindow : ToolWindowFactory, DumbAware {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
@@ -151,14 +149,14 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                         apiDocContentTree.cellRenderer = treeRenderer
                     }
 
-                override fun onSuccess() {
-                    val scrollPane = FormatUtil.getScrollPane(apiDocContentTree)
-                    scrollPane.name = "productTree"
-                    contentPanel.add(scrollPane)
-                    productClickListener(project, apiDocContentTree, nameAndVersionMap)
-                    SearchHelper.search(nameAndVersionMap, apiDocContentTree, searchField)
-                    SearchHelper.globalSearchApi(project, searchApiField)
-                }
+                    override fun onSuccess() {
+                        val scrollPane = FormatUtil.getScrollPane(apiDocContentTree)
+                        scrollPane.name = "productTree"
+                        contentPanel.add(scrollPane)
+                        productClickListener(project, apiDocContentTree, nameAndVersionMap)
+                        SearchHelper.search(nameAndVersionMap, apiDocContentTree, searchField)
+                        SearchHelper.globalSearchApi(project, searchApiField)
+                    }
             })
         }
 
@@ -363,7 +361,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         toolWindow.setIcon(icon)
 
         val contentManager = toolWindow.contentManager
-        var content = contentManager.getContent(0)
+        val content: Content?
         val tree: Tree
         val panel = JPanel(BorderLayout())
         tree = ApiExplorer.explorerTree(apiData, panel)
@@ -378,14 +376,23 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
     }
 
     private class AddProfileAction(private val collapsibleInputPanel: CollapsibleInputPanel) :
-        AnAction(I18nUtils.getMsg("credentials.new.profile"), I18nUtils.getMsg("credentials.new.profile"), AllIcons.General.User) {
+        AnAction(
+            I18nUtils.getMsg("credentials.new.profile"),
+            I18nUtils.getMsg("credentials.new.profile"),
+            IconLoader.getIcon("/icons/new_profile.svg", BaseToolWindow::class.java)
+        ) {
         override fun actionPerformed(e: AnActionEvent) {
             collapsibleInputPanel.clearFields()
             collapsibleInputPanel.expandForAddProfile()
         }
     }
 
-    private class FeedbackAction : AnAction(I18nUtils.getMsg("action.feedback"), I18nUtils.getMsg("action.feedback"), AllIcons.Actions.Help) {
+    private class FeedbackAction :
+        AnAction(
+            I18nUtils.getMsg("action.feedback"),
+            I18nUtils.getMsg("action.feedback"),
+            IconLoader.getIcon("/icons/feedback.svg", BaseToolWindow::class.java)
+        ) {
         override fun actionPerformed(e: AnActionEvent) {
             BrowserUtil.browse(URI(ExperienceQuestionnaire.QUESTIONNAIRE_LINK))
             val properties = PropertiesComponent.getInstance()
@@ -409,7 +416,6 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         }
     }
 
-    // TOOD 记录用户选择，优先级大于IDE本身设置?
     private class LanguageSwitchAction(
         val project: Project,
         val profilePanel: JPanel,
