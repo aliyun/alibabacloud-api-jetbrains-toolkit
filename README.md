@@ -97,6 +97,22 @@ to API detail page to view API documentation and code sample, and debug the API.
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/hints.png" style="display: inline-block;">
 </div>
 
+### Plaintext AK Inspections and Warning
+Support inspections of plaintext AK pairs in code. The warning given will not affect the normal operation of your code.
+We only use regular expressions to match the plaintext AK in your code and will not save or upload anything.
+
+>An Alibaba Cloud account has full access to all resources of the account. AccessKey pair leaks of an Alibaba Cloud account 
+pose critical threats to the system. It is not recommended to use AK in plaintext. 
+
+<div style="overflow-x: scroll; white-space: nowrap;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/ak-inspections.png" style="display: inline-block;">
+</div>
+
+You can close this inspections in settings (strongly recommended to keep it enabled):
+<div style="overflow-x: scroll; white-space: nowrap;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/close-ak.png" style="display: inline-block;">
+</div>
+
 ## Licensing
 
 [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0)
