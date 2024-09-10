@@ -1,3 +1,10 @@
+2024-09-10 Version: 0.0.13-242
+1. Support plaintext AK inspections in code.
+2. Fix OLD_EDT deprecate issue.
+3. Support open real code sample file in IDE.
+4. Support i18n.
+5. Fix general bugs.
+
 2024-08-21 Version: 0.0.12-222-241
 1. Support java inlay hints for view API info when coding.
 2. Support global search for OpenAPI and optimize UI of search results.
