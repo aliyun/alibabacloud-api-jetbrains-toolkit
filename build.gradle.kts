@@ -82,20 +82,6 @@ intellijPlatform {
         privateKey = providers.environmentVariable("PRIVATE_KEY")
         password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
     }
-
-//    tasks {
-//        withType<JavaCompile> {
-//            sourceCompatibility = "17"
-//            targetCompatibility = "17"
-//        }
-//        withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-//            kotlinOptions.jvmTarget = "17"
-//        }
-//
-//        test {
-//            useJUnitPlatform()
-//        }
-//    }
 }
 
 koverReport {
