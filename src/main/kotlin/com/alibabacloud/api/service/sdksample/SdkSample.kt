@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -26,6 +25,9 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightVirtualFile
@@ -46,6 +48,7 @@ import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.io.File
 import java.io.IOException
 import java.net.URI
 import javax.swing.BorderFactory
@@ -53,6 +56,7 @@ import javax.swing.JButton
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 import javax.swing.border.Border
+
 
 class SdkSample {
     companion object {
@@ -86,7 +90,12 @@ class SdkSample {
             scrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
 
             var installUrl: String
-            var codeUrl = "https://github.com/aliyun/alibabacloud-java-sdk/tree/master/${productName.lowercase()}-${defaultVersion.replace("-", "")}"
+            var codeUrl = "https://github.com/aliyun/alibabacloud-java-sdk/tree/master/${productName.lowercase()}-${
+                defaultVersion.replace(
+                    "-",
+                    ""
+                )
+            }"
 
             when (ideName) {
                 "PyCharm" -> {
@@ -135,14 +144,28 @@ class SdkSample {
 
             val openFileButton = JButton("在IDE中打开").apply {
                 addActionListener {
-                    val fileDocumentManager = FileDocumentManager.getInstance()
                     val document = editor!!.document
-                    val virtualFile = fileDocumentManager.getFile(document)
-                    val fileEditorManager = FileEditorManager.getInstance(project)
-                    if (virtualFile != null && !fileEditorManager.isFileOpen(virtualFile)) {
-                        val descriptor = OpenFileDescriptor(project, virtualFile)
-                        fileEditorManager.openTextEditor(descriptor, true)
+                    val content = document.getText(TextRange(0, document.textLength))
+                    val fileName = if (content.contains("package demo;")) {
+                        "$apiName.java"
+                    } else if (content.contains("package com.aliyun.sample;")) {
+                        "Sample.java"
+                    } else if (content.contains("'use strict';")) {
+                        "client.js"
+                    } else if (content.contains("export default class Client {")) {
+                        "client.ts"
+                    } else if (content.contains("package main")) {
+                        "client.go"
+                    } else if (content.contains("namespace AlibabaCloud\\SDK\\Sample;")) {
+                        "Sample.php"
+                    } else if (content.contains("def __init__")) {
+                        "Sample.py"
+                    } else if (content.contains("using System;")) {
+                        "Sample.cs"
+                    } else {
+                        "Sample.txt"
                     }
+                    createAndOpenRealFile(project, content, fileName)
                 }
             }
 
@@ -193,6 +216,29 @@ class SdkSample {
             sdkPanel.add(headScrollPane, BorderLayout.NORTH)
             sdkPanel.add(scrollPane, BorderLayout.CENTER)
             sdkPanel.minimumSize = Dimension(0, 0)
+        }
+
+        private fun createAndOpenRealFile(project: Project, content: String, fileName: String) {
+            var filePath = File(project.basePath, fileName)
+            var index = 1
+
+            while (filePath.exists()) {
+                val newFileName = "${fileName.substringBeforeLast('.')}$index.${fileName.substringAfterLast('.')}"
+                filePath = File(project.basePath, newFileName)
+                index++
+            }
+
+            filePath.writeText(content)
+
+            val virtualFile: VirtualFile? = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(filePath)
+
+            if (virtualFile != null) {
+                val fileEditorManager = FileEditorManager.getInstance(project)
+                val descriptor = OpenFileDescriptor(project, virtualFile)
+                fileEditorManager.openTextEditor(descriptor, true)
+            } else {
+                throw IOException("在IDE中打开失败")
+            }
         }
 
         private fun sdkSampleButton(buttonText: String, getButtonUrl: () -> String): JButton {
