@@ -44,18 +44,16 @@ class FormatUtil {
         fun adjustColor(): List<String> {
             val defaults = UIManager.getDefaults()
             val backgroundColor: Color = defaults.getColor("Panel.background")
+            val darker = backgroundColor.darker()
             val textColor: Color = defaults.getColor("Label.foreground")
-            val backgroundCss = java.lang.String.format("#%06x", backgroundColor.rgb and 0xFFFFFF)
-            val textCss = java.lang.String.format("#%06x", textColor.rgb and 0xFFFFFF)
+            val backgroundCss = String.format("#%06x", backgroundColor.rgb and 0xFFFFFF)
+            val textCss = String.format("#%06x", textColor.rgb and 0xFFFFFF)
+            val darkerCss = String.format("#%06x", darker.rgb and 0xFFFFFF)
 
-            val darkerRed = backgroundColor.red - 20 and 0xFF
-            val darkerGreen = backgroundColor.green - 20 and 0xFF
-            val darkerBlue = backgroundColor.blue - 20 and 0xFF
-            val darkerBackgroundCss = String.format("#%02x%02x%02x", darkerRed, darkerGreen, darkerBlue)
             val colorList = mutableListOf<String>()
             colorList.add(backgroundCss)
             colorList.add(textCss)
-            colorList.add(darkerBackgroundCss)
+            colorList.add(darkerCss)
             return colorList
         }
 

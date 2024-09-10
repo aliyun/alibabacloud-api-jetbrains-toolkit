@@ -1,5 +1,6 @@
 package com.alibabacloud.action
 
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.states.ToolkitSettingsState
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
@@ -43,10 +44,10 @@ internal class CodeSnippetsActionTest : BasePlatformTestCase() {
 
         settings.isCompletionEnabled = true
         action.update(anActionEvent)
-        assertEquals("Disable Alibaba Cloud SDK code auto-completion", anActionEvent.presentation.text)
+        assertEquals(I18nUtils.getMsg("code.completion.disable"), anActionEvent.presentation.text)
 
         settings.isCompletionEnabled = false
         action.update(anActionEvent)
-        assertEquals("Enable Alibaba Cloud SDK code auto-completion", anActionEvent.presentation.text)
+        assertEquals(I18nUtils.getMsg("code.completion.enable"), anActionEvent.presentation.text)
     }
 }

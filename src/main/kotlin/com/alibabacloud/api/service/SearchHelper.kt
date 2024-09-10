@@ -5,6 +5,7 @@ import com.alibabacloud.api.service.completion.DataService
 import com.alibabacloud.api.service.completion.UnLoadNotificationState
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.util.FormatUtil
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.ui.BaseToolWindow
 import com.alibabacloud.ui.SearchListCellRenderer
 import com.intellij.notification.NotificationType
@@ -22,6 +23,7 @@ import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.util.*
 import javax.swing.BoxLayout
 import javax.swing.DefaultListModel
 import javax.swing.JPanel
@@ -160,7 +162,11 @@ class SearchHelper {
                                     }
                                     val apiInfo = key.split("::")
                                     if (regex.containsMatchIn(apiInfo[0])) {
-                                        resultList.add("${apiInfo[0]}::$value::${apiInfo[1]}::${apiInfo[2]}")
+                                        if (I18nUtils.getLocale() == Locale.CHINA) {
+                                            resultList.add("${apiInfo[0]}::$value::${apiInfo[1]}::${apiInfo[2]}")
+                                        } else {
+                                            resultList.add("${apiInfo[0]}::::${apiInfo[1]}::${apiInfo[2]}")
+                                        }
                                     }
                                 }
                             }
@@ -200,8 +206,8 @@ class SearchHelper {
                 notificationService.showMessage(
                     project,
                     NotificationGroups.COMPLETION_NOTIFICATION_GROUP,
-                    "请稍候",
-                    "如需使用全局 API 搜索功能，请等待元数据加载完成(约半分钟)",
+                    I18nUtils.getMsg("action.wait"),
+                    I18nUtils.getMsg("global.api.search.wait"),
                     NotificationType.INFORMATION
                 )
             }

@@ -1,6 +1,8 @@
 package com.alibabacloud.settings
 
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.states.ToolkitSettingsState
+import com.alibabacloud.telemetry.ExperienceQuestionnaire
 import com.alibabacloud.toolkit.ToolkitInfo
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.options.SearchableConfigurable
@@ -22,38 +24,38 @@ class ToolkitSettingsConfigurable : SearchableConfigurable {
 
 
     override fun createComponent(): JComponent = panel {
-        group("自动更新设置") {
+        group(I18nUtils.getMsg("plugin.auto.update.settings")) {
             row {
                 cell(enableToolkitAutoUpdate).applyToComponent {
                     this.isSelected = ToolkitSettingsState.getInstance().isAutoUpdateEnabled
                 }
-                text("自动检查并更新插件版本")
+                text(I18nUtils.getMsg("plugin.auto.update.yes"))
             }
         }
-        group("代码补全设置") {
+        group(I18nUtils.getMsg("code.completion.settings")) {
             row {
                 cell(enableCompletion).applyToComponent {
                     this.isSelected = ToolkitSettingsState.getInstance().isCompletionEnabled
                 }
-                text("自动插入 SDK 示例代码（或通过快捷键 ctrl + cmd + p 切换）")
+                text(I18nUtils.getMsg("settings.code.completion.enable"))
             }
         }
-        group("明文AK/SK检查设置") {
+        group(I18nUtils.getMsg("settings.inspections.ak")) {
             row {
                 cell(enableAKInspection).applyToComponent {
                     this.isSelected = ToolkitSettingsState.getInstance().isAKInspectionEnabled
                 }
                 text(
-                    "开启明文AK/SK检查（强烈建议保持开启）<br/><br/>" +
-                            "<font color='gray' size='-1'>阿里云主账号拥有资源的全部权限，AK一旦泄露，会给系统带来巨大风险，不建议通过明文使用。</font><br/>" +
-                            "<font color='gray' size='-1'>我们只通过正则匹配您代码中的明文AK/SK，不会进行任何保存/上传。</font><br/>"
+                    "${I18nUtils.getMsg("inspections.ak.enable")}<br/><br/>" +
+                            "<font color='gray' size='-1'>${I18nUtils.getMsg("inspections.ak.recommend")}</font><br/>" +
+                            "<font color='gray' size='-1'>${I18nUtils.getMsg("inspections.ak.no.save")}</font><br/>"
                 )
             }
         }
-        group("用户反馈") {
+        group(I18nUtils.getMsg("settings.feedback")) {
             row {
-                text("<a>反馈链接</a>") {
-                    BrowserUtil.browse("https://g.alicdn.com/aes/tracker-survey-preview/0.0.13/survey.html?pid=fePxMy&id=3494")
+                text("<a>${I18nUtils.getMsg("settings.feedback.link")}</a>") {
+                    BrowserUtil.browse(ExperienceQuestionnaire.QUESTIONNAIRE_LINK)
                 }
             }
         }

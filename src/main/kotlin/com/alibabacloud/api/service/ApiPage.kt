@@ -9,11 +9,10 @@ import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.api.service.util.RequestUtil
 import com.alibabacloud.api.service.util.ResourceUtil
+import com.alibabacloud.constants.PropertiesConstants
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.telemetry.ExperienceQuestionnaire
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
-import com.google.gson.JsonSyntaxException
+import com.google.gson.*
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
@@ -29,6 +28,7 @@ import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefClient
 import com.intellij.ui.jcef.JBCefJSQuery
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefLoadHandler
@@ -39,6 +39,7 @@ import java.io.File
 import java.io.IOException
 import java.net.URI
 import java.time.LocalDateTime
+import java.util.*
 import javax.swing.JPanel
 import javax.swing.JSplitPane
 
@@ -68,9 +69,11 @@ class ApiPage {
             if (!cacheDir.exists()) {
                 cacheDir.mkdir()
             }
-            val cacheFile = File(ApiConstants.CACHE_PATH, "$productName-$defaultVersion-$apiName.html")
-            val cacheMeta = File(ApiConstants.CACHE_PATH, "${productName}Meta")
-            val cacheEndpoints = File(ApiConstants.CACHE_PATH, "${productName}Endpoints")
+
+            val locale = if (I18nUtils.getLocale() == Locale.CHINA) "" else "-en"
+            val cacheFile = File(ApiConstants.CACHE_PATH, "$productName-$defaultVersion-$apiName$locale.html")
+            val cacheMeta = File(ApiConstants.CACHE_PATH, "${productName}Meta$locale")
+            val cacheEndpoints = File(ApiConstants.CACHE_PATH, "${productName}Endpoints$locale")
             var cacheContent: String? = null
             var cacheDocMeta: String? = null
             val cacheEndpointList: String?
@@ -78,7 +81,12 @@ class ApiPage {
             val sdkPanel = JPanel(BorderLayout())
             val splitPane = JSplitPane(JSplitPane.VERTICAL_SPLIT)
 
-            if (useCache && cacheFile.exists() && cacheMeta.exists() && cacheEndpoints.exists() && cacheFile.length() > 0 && cacheMeta.length() > 0 && cacheEndpoints.length() > 0 && cacheFile.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis() && cacheMeta.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis() && cacheEndpoints.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis()) {
+            if (useCache && cacheFile.exists() && cacheMeta.exists() && cacheEndpoints.exists()
+                && cacheFile.length() > 0 && cacheMeta.length() > 0 && cacheEndpoints.length() > 0
+                && cacheFile.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis()
+                && cacheMeta.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis()
+                && cacheEndpoints.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis()
+            ) {
                 try {
                     cacheContent = cacheFile.readText()
                     browser.loadHTML(cacheContent)
@@ -129,12 +137,18 @@ class ApiPage {
 
                 ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Loading API Doc", true) {
                     override fun run(indicator: ProgressIndicator) {
-                        val apiDocUrl =
-                            "https://api.aliyun.com/meta/v1/products/$productName/versions/$defaultVersion/api-docs.json"
+                        val isCN = I18nUtils.getLocale() == Locale.CHINA
+                        val apiLocale = if (isCN) "ZH_CN" else "EN_US"
+                        val endpointLocale = if (isCN) "zh-CN" else "en-US"
+                        val apiDocsUrl =
+                            "https://api.aliyun.com/meta/v1/products/$productName/versions/$defaultVersion/overview.json?language=$apiLocale"
+                        val overviewUrl =
+                            "https://api.aliyun.com/meta/v1/products/$productName/versions/$defaultVersion/api-docs.json?language=$apiLocale"
                         val endpointUrl =
-                            "https://api.aliyun.com/meta/v1/products/$productName/endpoints.json?language=zh-CN"
+                            "https://api.aliyun.com/meta/v1/products/$productName/endpoints.json?language=$endpointLocale"
 
-                        val apiDocData = getApiDocData(project, OkHttpClientProvider.instance, apiDocUrl, cacheMeta)
+                        val apiDocData =
+                            getApiDocData(project, OkHttpClientProvider.instance, apiDocsUrl, overviewUrl, cacheMeta)
                         val endpointList = getEndpointList(project, OkHttpClientProvider.instance, endpointUrl)
 
                         execute(
@@ -152,7 +166,6 @@ class ApiPage {
                         executeQuestionnaire(project, browser)
 
                         val apiMeta = apiDocData.get(ApiConstants.DEBUG_APIS).asJsonObject.get(apiName).asJsonObject
-
                         val ext = JsonObject()
                         ext.add("errorCodes", apiMeta.get("errorCodes"))
                         ext.add("extraInfo", apiMeta.get("extraInfo"))
@@ -176,7 +189,28 @@ class ApiPage {
                         spec.addProperty("name", apiName)
                         spec.add("description", apiMeta.get("description"))
                         spec.add("method", apiMeta.get("method"))
+                        if (!isCN && apiMeta.has("parameters")) {
+                            val paramsArray = apiMeta.get("parameters").asJsonArray
+                            for (param in paramsArray) {
+                                val paramObj = param.asJsonObject
+                                if (paramObj.has("schema")) {
+                                    val schema = paramObj.get("schema").asJsonObject
+                                    repairCnInfoInEn(schema)
+                                }
+                            }
+                        }
                         spec.add("parameters", apiMeta.get("parameters"))
+
+                        if (!isCN && apiMeta.has("responses")) {
+                            val response = apiMeta.get("responses").asJsonObject
+                            if (response.has("200")) {
+                                val responseParams = response.get("200").asJsonObject
+                                if (responseParams.has("schema")) {
+                                    val schema = responseParams.get("schema").asJsonObject
+                                    repairCnInfoInEn(schema)
+                                }
+                            }
+                        }
                         spec.add("responses", apiMeta.get("responses"))
                         spec.add("summary", apiMeta.get("summary"))
                         spec.add("title", apiMeta.get("title"))
@@ -196,7 +230,10 @@ class ApiPage {
                             apiDocData.get(ApiConstants.API_DOC_RESP_COMPONENTS).asJsonObject.get(ApiConstants.API_DOC_RESP_SCHEMAS).asJsonObject
 
                         val templateHtml = ResourceUtil.load("/html/index.html")
-                        modifiedHtml = templateHtml.replace("\$APIMETA", "$apiParams").replace("\$DEFS", "$definitions")
+                        modifiedHtml = templateHtml.replace("\$APIMETA", "$apiParams")
+                            .replace("\$DEFS", "$definitions")
+                            .replace("\$LANGUAGE", if (isCN) "cn" else "en")
+
                         try {
                             CacheUtil.cleanExceedCache()
                             cacheFile.writeText(modifiedHtml)
@@ -207,7 +244,7 @@ class ApiPage {
                             notificationService.showMessage(
                                 project,
                                 NotificationGroups.CACHE_NOTIFICATION_GROUP,
-                                "缓存写入失败",
+                                I18nUtils.getMsg("cache.write.fail"),
                                 "",
                                 NotificationType.ERROR
                             )
@@ -236,7 +273,7 @@ class ApiPage {
                             notificationService.showMessage(
                                 project,
                                 NotificationGroups.CACHE_NOTIFICATION_GROUP,
-                                "缓存写入失败",
+                                I18nUtils.getMsg("cache.write.fail"),
                                 "",
                                 NotificationType.ERROR
                             )
@@ -246,52 +283,117 @@ class ApiPage {
             }
         }
 
-        fun getApiDocData(project: Project, instance: OkHttpClient, apiDocUrl: String, cacheMeta: File): JsonObject {
-            var apiDocData = JsonObject()
-            var apiDocResponse: String
-            val request = RequestUtil.createRequest(apiDocUrl)
-            try {
-                instance.newCall(request).execute().use { response ->
-                    if (response.isSuccessful) {
-                        val responseBody = response.body?.string()
-                        if (responseBody != null) {
-                            apiDocResponse = responseBody
-                            try {
-                                CacheUtil.cleanExceedCache()
-                                cacheMeta.writeText(apiDocResponse)
-                            } catch (e: IOException) {
-                                notificationService.showMessage(
-                                    project,
-                                    NotificationGroups.CACHE_NOTIFICATION_GROUP,
-                                    "缓存写入失败",
-                                    "",
-                                    NotificationType.ERROR
-                                )
-                            }
-                            val docResponse = Gson().fromJson(responseBody, JsonObject::class.java)
-                            apiDocData = docResponse
+        private fun repairCnInfoInEn(element: JsonElement) {
+            if (element is JsonObject) {
+                for (key in element.keySet()) {
+                    val value = element.get(key)
+                    if (key == "title" && value != null && value is JsonPrimitive) {
+                        if (containsChinese(value.asString)) {
+                            element.addProperty(key, "")
                         }
-                    } else {
-                        notificationService.showMessage(
-                            project,
-                            NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                            "获取 API 数据失败",
-                            "网络请求失败，错误码 ${response.code}, 错误信息 ${response.message}",
-                            NotificationType.ERROR
-                        )
                     }
+                    repairCnInfoInEn(value)
                 }
+            }
+        }
+
+        private fun containsChinese(text: String): Boolean {
+            val chineseRegex = Regex("[\\u4e00-\\u9fa5]")
+            return chineseRegex.containsMatchIn(text)
+        }
+
+        fun getApiDocData(
+            project: Project,
+            instance: OkHttpClient,
+            apiDocsUrl: String,
+            overviewUrl: String,
+            cacheMeta: File
+        ): JsonObject {
+            val apiDocsData: JsonObject
+            val overviewData: JsonObject
+            val apiMetaData = JsonObject()
+            val apiDocsRequest = RequestUtil.createRequest(apiDocsUrl)
+            val overviewRequest = RequestUtil.createRequest(overviewUrl)
+            try {
+                apiDocsData = doRequest(project, instance, apiDocsRequest)
+                overviewData = doRequest(project, instance, overviewRequest)
+                mergeJsonObjects(apiMetaData, apiDocsData, overviewData)
+
+                try {
+                    CacheUtil.cleanExceedCache()
+                    cacheMeta.writeText(Gson().toJson(apiMetaData))
+                } catch (e: IOException) {
+                    notificationService.showMessage(
+                        project,
+                        NotificationGroups.CACHE_NOTIFICATION_GROUP,
+                        I18nUtils.getMsg("cache.write.fail"),
+                        "",
+                        NotificationType.ERROR
+                    )
+                }
+
             } catch (e: IOException) {
                 cacheMeta.delete()
                 notificationService.showMessage(
                     project,
                     NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                    "获取 API 数据失败",
-                    "请检查网络",
+                    I18nUtils.getMsg("api.data.fetch.fail"),
+                    I18nUtils.getMsg("network.check"),
                     NotificationType.ERROR
                 )
             }
-            return apiDocData
+            return apiMetaData
+        }
+
+        private fun doRequest(project: Project, instance: OkHttpClient, request: Request): JsonObject {
+            var data = JsonObject()
+            instance.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val responseBody = response.body?.string()
+                    if (responseBody != null) {
+                        val docResponse = Gson().fromJson(responseBody, JsonObject::class.java)
+                        data = docResponse
+                    }
+                } else {
+                    notificationService.showMessage(
+                        project,
+                        NotificationGroups.NETWORK_NOTIFICATION_GROUP,
+                        I18nUtils.getMsg("api.data.fetch.fail"),
+                        "${I18nUtils.getMsg("request.fail.error.code")} ${response.code}, ${I18nUtils.getMsg("request.fail.error.message")} ${response.message}",
+                        NotificationType.ERROR
+                    )
+                }
+            }
+            return data
+        }
+
+        private fun mergeJsonObjects(target: JsonObject, source1: JsonObject, source2: JsonObject) {
+            source1.keySet().forEach { key ->
+                target.add(key, source1[key])
+            }
+
+            source2.keySet().forEach { key ->
+                if (!target.has(key)) {
+                    target.add(key, source2[key])
+                } else {
+                    val existingElement = target[key]
+                    val newElement = source2[key]
+
+                    when {
+                        existingElement is JsonObject && newElement is JsonObject -> {
+                            mergeJsonObjects(existingElement, existingElement, newElement)
+                        }
+
+                        existingElement is JsonArray && newElement is JsonArray -> {
+                            newElement.forEach { item ->
+                                if (!existingElement.contains(item)) {
+                                    existingElement.add(item)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         fun getEndpointList(project: Project, instance: OkHttpClient, endpointUrl: String): JsonArray {
@@ -312,8 +414,8 @@ class ApiPage {
                         notificationService.showMessage(
                             project,
                             NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                            "获取 endpoint 数据失败",
-                            "网络请求失败，错误码 ${response.code}, 错误信息 ${response.message}",
+                            I18nUtils.getMsg("endpoint.fetch.fail"),
+                            "${I18nUtils.getMsg("request.fail.error.code")} ${response.code}, ${I18nUtils.getMsg("request.fail.error.message")} ${response.message}",
                             NotificationType.ERROR
                         )
                     }
@@ -322,8 +424,8 @@ class ApiPage {
                 notificationService.showMessage(
                     project,
                     NotificationGroups.NETWORK_NOTIFICATION_GROUP,
-                    "获取 endpoint 数据失败",
-                    "请检查网络",
+                    I18nUtils.getMsg("endpoint.fetch.fail"),
+                    I18nUtils.getMsg("network.check"),
                     NotificationType.ERROR
                 )
             }
@@ -380,13 +482,13 @@ class ApiPage {
                 val properties = PropertiesComponent.getInstance()
                 val currentDateTime = LocalDateTime.now()
                 if (isNotice == "0" || isNotice == null) {
-                    // 用户选择填写问卷
-                    properties.setValue(ExperienceQuestionnaire.QUESTIONNAIRE_EXPIRATION_KEY, 14 * 24, 14 * 24)
-                    properties.setValue(ExperienceQuestionnaire.QUESTIONNAIRE_LAST_PROMPT_KEY, currentDateTime.toString())
+                    // fill the questionnaire
+                    properties.setValue(PropertiesConstants.QUESTIONNAIRE_EXPIRATION_KEY, 14 * 24, 14 * 24)
+                    properties.setValue(PropertiesConstants.QUESTIONNAIRE_LAST_PROMPT_KEY, currentDateTime.toString())
                 } else {
-                    // 用户选择关掉弹窗
-                    properties.setValue(ExperienceQuestionnaire.QUESTIONNAIRE_EXPIRATION_KEY, 1 * 24, 14 * 24)
-                    properties.setValue(ExperienceQuestionnaire.QUESTIONNAIRE_LAST_PROMPT_KEY, currentDateTime.toString())
+                    // close dialog
+                    properties.setValue(PropertiesConstants.QUESTIONNAIRE_EXPIRATION_KEY, 1 * 24, 14 * 24)
+                    properties.setValue(PropertiesConstants.QUESTIONNAIRE_LAST_PROMPT_KEY, currentDateTime.toString())
                 }
             }
         }
@@ -396,7 +498,7 @@ class ApiPage {
             var returnLink = ""
             query.addHandler { url: String? ->
                 try {
-                    if (url != null)  {
+                    if (url != null) {
                         try {
                             BrowserUtil.browse(URI(url))
                         } catch (e: Exception) {
