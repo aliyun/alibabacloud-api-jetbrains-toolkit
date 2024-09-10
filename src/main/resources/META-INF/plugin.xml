@@ -127,6 +127,14 @@
     </actions>
 
     <change-notes><![CDATA[
+    <b>0.0.13-242 (2024-09-10)</b>
+      <ul>
+        <li>Support plaintext AK inspections in code.</li>
+        <li>Fix OLD_EDT deprecate issue.</li>
+        <li>Support open real code sample file in IDE.</li>
+        <li>Support i18n.</li>
+        <li>Fix general bugs.</li>
+      </ul>
     <b>0.0.12-222-241 (2024-08-21)</b>
       <ul>
         <li>Support java inlay hints for view API info when coding.</li>

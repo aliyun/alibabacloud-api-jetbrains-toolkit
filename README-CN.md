@@ -91,6 +91,20 @@ GoLand 2022.2 ~ 2024.1
     <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/hints.png" style="display: inline-block;">
 </div>
 
+### 明文 AK 检测与警告
+支持检测代码中的明文 AK 敏感信息，给出的警告并不会影响代码的正常运行。我们只通过正则匹配您代码中的明文AK，不会进行任何保存/上传。
+
+>阿里云主账号拥有资源的全部权限，AK一旦泄露，会给系统带来巨大风险,建议不要通过明文使用 AK。
+
+<div style="overflow-x: scroll; white-space: nowrap;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/ak-inspections.png" style="display: inline-block;">
+</div>
+
+您可以在设置中关闭此功能（强烈建议保持开启）
+<div style="overflow-x: scroll; white-space: nowrap;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/close-ak.png" style="display: inline-block;">
+</div>
+
 ## 许可证
 
 [Apache-2.0](http://www.apache.org/licenses/LICENSE-2.0)
