@@ -82,6 +82,12 @@ intellijPlatform {
         privateKey = providers.environmentVariable("PRIVATE_KEY")
         password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
     }
+
+    tasks {
+        test {
+            useJUnitPlatform()
+        }
+    }
 }
 
 koverReport {

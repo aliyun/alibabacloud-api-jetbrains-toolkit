@@ -320,8 +320,10 @@ class ApiPage {
                 mergeJsonObjects(apiMetaData, apiDocsData, overviewData)
 
                 try {
-                    CacheUtil.cleanExceedCache()
-                    cacheMeta.writeText(Gson().toJson(apiMetaData))
+                    if (apiDocsData.size() > 0 && overviewData.size() > 0) {
+                        CacheUtil.cleanExceedCache()
+                        cacheMeta.writeText(Gson().toJson(apiMetaData))
+                    }
                 } catch (e: IOException) {
                     notificationService.showMessage(
                         project,
