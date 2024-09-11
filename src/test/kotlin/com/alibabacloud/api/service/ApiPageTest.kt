@@ -19,8 +19,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.Mock
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.`when`
+import org.mockito.Mockito.*
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
@@ -136,7 +135,7 @@ internal class ApiPageTest {
         val apiDocData =
             ApiPage.getApiDocData(project, okHttpClient, "https://example.com/api/apidoc", "https://example.com/overview/apidoc", mock(File::class.java))
 
-        verify(normalNotification).showMessage(
+        verify(normalNotification, times(2)).showMessage(
             eq(project),
             any(),
             any(),
