@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.ui.JBColor
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.jcef.JBCefBrowser
@@ -230,9 +231,23 @@ class ApiPage {
                             apiDocData.get(ApiConstants.API_DOC_RESP_COMPONENTS).asJsonObject.get(ApiConstants.API_DOC_RESP_SCHEMAS).asJsonObject
 
                         val templateHtml = ResourceUtil.load("/html/index.html")
+                        val isBright = JBColor.isBright()
                         modifiedHtml = templateHtml.replace("\$APIMETA", "$apiParams")
                             .replace("\$DEFS", "$definitions")
                             .replace("\$LANGUAGE", if (isCN) "cn" else "en")
+                            .replace("#FOREGROUND", colorList[1])  // text
+                            .replace("#BODY_BACKGROUND", colorList[0])  // background
+                            .replace("#HEADER_BACKGROUND", colorList[3]) // brighter
+                            .replace("#EDITOR_BACKGROUND", colorList[0])  // background
+                            .replace("#PAGE_BACKGROUND", colorList[3])  // brighter
+                            .replace("#BADGE_BACKGROUND", colorList[3])  // brighter
+                            .replace("#TAG_BACKGROUND", colorList[3])  // brighter
+                            .replace("#TAG_TEXT", colorList[1])  // brighter
+                            .replace("\$THEME", if (isBright) "light" else "dark")
+                            .replace(
+                                "\$ISLIGHT",
+                                if (isBright) "" else "<link rel=\"stylesheet\" href=\"https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/static/css/v0.0.14/dark.css\"/>"
+                            )
 
                         try {
                             CacheUtil.cleanExceedCache()
