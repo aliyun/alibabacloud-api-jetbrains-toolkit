@@ -9,6 +9,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import java.io.IOException
+import java.util.*
 
 class GenerateDocUtil {
     companion object {
@@ -72,10 +73,11 @@ class GenerateDocUtil {
                     val apiName = apiInfo[0]
                     val product = apiInfo[1]
                     val version = apiInfo[2]
+                    val desc = if (I18nUtils.getLocale() == Locale.CHINA) "<br><br>&nbsp;&nbsp;&nbsp;${index[matchingKey]}" else ""
                     return if (hasApiSamples(product, version, apiName)) {
-                        "&nbsp;&nbsp;\uD83D\uDCA1 <a href=https://api.aliyun.com/api/${product}/${version}/${apiName}?tab=CodeSample>${I18nUtils.getMsg("content.see.more")}「${apiName}」${I18nUtils.getMsg("code.sample.related")}</a><br><br>&nbsp;&nbsp;&nbsp;${index[matchingKey]}"
+                        "&nbsp;&nbsp;\uD83D\uDCA1 <a href=https://api.aliyun.com/api/${product}/${version}/${apiName}?tab=CodeSample>${I18nUtils.getMsg("content.see.more")}「${apiName}」${I18nUtils.getMsg("code.sample.related")}</a>$desc"
                     } else {
-                        "&nbsp;&nbsp;\uD83D\uDCA1 <a href=https://api.aliyun.com/api-tools/demo/${product}>${I18nUtils.getMsg("content.see.more")}「${product}」${I18nUtils.getMsg("code.sample.related")}</a><br><br>&nbsp;&nbsp;&nbsp;${index[matchingKey]}"
+                        "&nbsp;&nbsp;\uD83D\uDCA1 <a href=https://api.aliyun.com/api-tools/demo/${product}>${I18nUtils.getMsg("content.see.more")}「${product}」${I18nUtils.getMsg("code.sample.related")}</a>$desc"
                     }
                 }
             }
