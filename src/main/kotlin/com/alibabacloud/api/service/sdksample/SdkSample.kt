@@ -1,6 +1,7 @@
 package com.alibabacloud.api.service.sdksample
 
 import com.alibabacloud.api.service.OkHttpClientProvider
+import com.alibabacloud.api.service.SdkDetail
 import com.alibabacloud.api.service.constants.ApiConstants
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
@@ -26,6 +27,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -33,6 +35,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JBCefBrowserBase
@@ -44,19 +48,15 @@ import org.cef.browser.CefFrame
 import org.cef.handler.CefLoadHandler
 import org.cef.handler.CefLoadHandlerAdapter
 import org.cef.network.CefRequest
-import java.awt.BorderLayout
-import java.awt.Dimension
-import java.awt.FlowLayout
+import java.awt.*
+import java.awt.datatransfer.StringSelection
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.io.File
 import java.io.IOException
 import java.net.URI
 import java.util.*
-import javax.swing.BorderFactory
-import javax.swing.JButton
-import javax.swing.JPanel
-import javax.swing.ScrollPaneConstants
+import javax.swing.*
 import javax.swing.border.Border
 
 
@@ -68,7 +68,8 @@ class SdkSample {
             productName: String,
             project: Project,
             sdkPanel: JPanel,
-            demoSdkObject: JsonObject
+            demoSdkObject: JsonObject,
+            sdkInfoData: MutableMap<String, SdkDetail>
         ) {
             sdkPanel.removeAll()
             sdkPanel.revalidate()
@@ -141,6 +142,14 @@ class SdkSample {
                 }
             }
 
+            val sdkInfoButton = JButton(I18nUtils.getMsg("code.sample.sdk.info.button"))
+            val language = langComboBox.selectedItem?.toString()?.lowercase() ?: "java"
+            var sdkDetail = sdkInfoData[language] ?: SdkDetail("null", "null", "null", "null")
+
+            sdkInfoButton.addActionListener {
+                sdkInfoPanel(sdkInfoButton, headPanel, sdkDetail)
+            }
+
             val installButton = sdkSampleButton(I18nUtils.getMsg("code.sample.install.method.button")) { installUrl }
             val codeButton = sdkSampleButton(I18nUtils.getMsg("code.sample.view.source.button")) { codeUrl }
 
@@ -175,6 +184,10 @@ class SdkSample {
                 ApplicationManager.getApplication().invokeLater {
                     val selectedLang = langComboBox.selectedItem as String
                     val lang = selectedLang.lowercase()
+                    sdkDetail = sdkInfoData[lang] ?: SdkDetail("null", "null", "null", "null")
+                    sdkInfoButton.addActionListener {
+                        sdkInfoPanel(sdkInfoButton, headPanel, sdkDetail)
+                    }
                     installUrl =
                         "https://api.aliyun.com/api-tools/sdk/$productName?version=$defaultVersion&language=$lang-tea"
                     codeUrl =
@@ -212,6 +225,7 @@ class SdkSample {
 
             scrollPane.setViewportView(editor!!.component)
             headPanel.add(langComboBox)
+            headPanel.add(sdkInfoButton)
             headPanel.add(installButton)
             headPanel.add(codeButton)
             headPanel.add(openFileButton)
@@ -220,6 +234,79 @@ class SdkSample {
             sdkPanel.add(headScrollPane, BorderLayout.NORTH)
             sdkPanel.add(scrollPane, BorderLayout.CENTER)
             sdkPanel.minimumSize = Dimension(0, 0)
+        }
+
+        private fun sdkInfoPanel(sdkInfoButton: JButton, headPanel: JPanel, sdkDetail: SdkDetail) {
+            val contentPanel = JBPanel<JBPanel<*>>(BorderLayout())
+            contentPanel.preferredSize = Dimension(300, 200)
+
+            val nameTitle = I18nUtils.getMsg("code.sample.sdk.package.name")
+            val nameValue = "<span style='color: yellow;'>${sdkDetail.sdkName}</span>"
+
+            val versionTitle = I18nUtils.getMsg("code.sample.sdk.package.version")
+            val versionValue = "<span style='color: yellow;'>${sdkDetail.sdkPkgVersion}</span>"
+
+            val platformTitle = I18nUtils.getMsg("code.sample.sdk.package.management.platform")
+            val platformValue = "<span style='color: yellow;'>${sdkDetail.sdkPkgManagementPlatform}</span>"
+
+            val commandTitle = I18nUtils.getMsg("code.sample.sdk.package.install.command")
+            val commandValue = sdkDetail.sdkInstallationCommand
+
+            val supplement = "<span style='color: gray; font-size: smaller;'>${I18nUtils.getMsg("code.sample.sdk.package.supplement")}</span>"
+
+            val contentHtml =
+                """
+                    <html>
+                        <body style='font-family: Arial, sans-serif; font-size: 9px;margin: 10px;'>
+                            <table style='width: calc(100% - 20px); white-space: nowrap;'>
+                                <tr>
+                                    <td style='text-align: left;'>$nameTitle</td>
+                                    <td style='text-align: left; padding-left: 10px;'>$nameValue</td>
+                                </tr>
+                                <tr>
+                                    <td style='text-align: left;'>$versionTitle</td>
+                                    <td style='text-align: left; padding-left: 10px;'>$versionValue</td>
+                                </tr>
+                                <tr>
+                                    <td style='text-align: left;'>$platformTitle</td>
+                                    <td style='text-align: left; padding-left: 10px;'>$platformValue</td>
+                                </tr>
+                                <tr>
+                                    <td style='text-align: left;'>$commandTitle</td>
+                                    <td style='text-align: left; padding-left: 10px;'>$commandValue</td>
+                                </tr>
+                            </table>
+                            <br/>
+                            $supplement
+                        </body>
+                    </html>
+                """.trimIndent()
+
+
+
+            val contentTextPane = JTextPane().apply {
+                contentType = "text/html"
+                text = contentHtml
+                isEditable = false
+                preferredSize = Dimension(300, 200)
+            }
+
+            val scrollPane1 = JBScrollPane(contentTextPane).apply {
+                horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+                verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
+            }
+            scrollPane1.preferredSize = Dimension(300, 200)
+            contentPanel.add(scrollPane1, BorderLayout.CENTER)
+
+            val popup = JBPopupFactory.getInstance()
+                .createComponentPopupBuilder(contentPanel, contentPanel)
+                .setRequestFocus(true)
+                .setCancelOnClickOutside(true)
+                .setMovable(true)
+                .createPopup()
+
+            val location = sdkInfoButton.locationOnScreen
+            popup.showInScreenCoordinates(headPanel, Point(location.x, location.y + sdkInfoButton.height))
         }
 
         private fun createAndOpenRealFile(project: Project, content: String, fileName: String) {
