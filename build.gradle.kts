@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.alibabacloud"
-version = "0.0.14-222-241"
+version = "0.0.15-222-241"
 
 repositories {
     mavenCentral()

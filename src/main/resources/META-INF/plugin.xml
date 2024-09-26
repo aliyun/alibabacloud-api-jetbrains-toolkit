@@ -127,6 +127,10 @@
     </actions>
 
     <change-notes><![CDATA[
+    <b>0.0.15-222-241 (2024-09-25)</b>
+      <ul>
+        <li>Add SDK installation information when generate code sample.</li>
+      </ul>
     <b>0.0.14-222-241 (2024-09-23)</b>
       <ul>
         <li>Support upgrade maven package when existed.</li>

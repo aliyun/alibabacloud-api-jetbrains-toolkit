@@ -28,7 +28,7 @@ GoLand 2022.2 ~ 2024.1
 
 
 ## 插件 UI 导览
-![UI](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/ui-guide.png)
+![UI](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/cn/ui-15-zh.png)
 
 ## 功能
 
@@ -38,14 +38,14 @@ GoLand 2022.2 ~ 2024.1
 * 如果您已经安装了[阿里云 CLI](https://help.aliyun.com/document_detail/123181.html?spm=a2c4g.121544.0.0.2d7e76e3XWMs4u)，您可以切换、查看已有用户。
 * 如果未安装阿里云 CLI，需要时您可以通过点击“New Profile”添加用户配置。
   <div style="overflow-x: scroll; white-space: nowrap;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/new-profile.png" style="display: inline-block;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/view-profile.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/cn/new-profile-15-cn.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/cn/view-profile-15-cn.png" style="display: inline-block;">
   </div>
 
 ### 云产品 & API 搜索
 展示云产品的树状视图，搜索框可以快速导航到对应产品或 API。可通过窗口上方的刷新按钮刷新云产品列表或 API 文档页面。
 
-![Search](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/all_search.png)
+![Search](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/cn/search-15-cn.png)
 
 ### API 文档 & API 调试
 单击某个 API 将打开一个新窗口，显示相应的 API 文档，包括接口描述、请求参数、响应参数和错误码等。
@@ -53,16 +53,15 @@ GoLand 2022.2 ~ 2024.1
 支持对照参数列表进行便捷的 IDE 内 API 调试。(**如需调试 API 请提前配置用户信息。**)
 
 <div style="overflow-x: scroll; white-space: nowrap;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-doc.png" style="display: inline-block;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/debug.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/cn/api-doc-15-cn.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/cn/api-debug-15-cn.png" style="display: inline-block;">
 </div>
 
 ### SDK 示例代码
 支持查看和快速打开 SDK 示例代码，支持 Maven 和 Python 依赖的自动导入。
 
 <div style="overflow-x: scroll; white-space: nowrap;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/code-sample.png" style="display: inline-block;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/auto-import.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/cn/sdk-code-sample-15-cn.png" style="display: inline-block;">
 </div>
 
 ### Code Snippets
@@ -72,24 +71,22 @@ GoLand 2022.2 ~ 2024.1
 插件启动后约半分钟（拉取元数据）后可使用此功能，如果拉取失败，可手动重新拉取。
 
 <div style="overflow-x: scroll; white-space: nowrap;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/codesnippets.png" style="display: inline-block;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/codesnippets_res.png" style="display: inline-block;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/codesnippets_switch.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/cn/code-snippets-15-cn.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/cn/code-snippets-auto-install-15-cn.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/cn/code-snippets-enable-15-cn.png" style="display: inline-block;">
 </div>
 
 ### 文档增强
+#### 相关代码示例
 编写 SDK 代码时，支持在弹出的文档中展示 OpenAPI 的描述信息及更多相关示例链接，以获得更多示例参考。前提：IDE 允许弹出文档（勾选
 「设置-编辑器-常规-代码补全-显示文档弹出窗口）。
 
 <div style="overflow-x: scroll; white-space: nowrap;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/enhance.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/cn/doc-enhance-15-cn.png" style="display: inline-block;">
 </div>
 
-### 内嵌提示
+#### 内嵌提示
 编写阿里云 OpenAPI 相关代码时，支持在代码中显示内嵌提示，点击可以打开 API 详情页面，进行 API 文档、示例代码的查看以及 API 调试。
-<div style="overflow-x: scroll; white-space: nowrap;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/hints.png" style="display: inline-block;">
-</div>
 
 ### 明文 AK 检测与警告
 支持检测代码中的明文 AK 敏感信息，给出的警告并不会影响代码的正常运行。我们只通过正则匹配您代码中的明文AK，不会进行任何保存/上传。
