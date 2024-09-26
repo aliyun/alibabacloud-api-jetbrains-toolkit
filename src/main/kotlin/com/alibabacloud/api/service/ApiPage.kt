@@ -5,6 +5,7 @@ import com.alibabacloud.api.service.constants.ApiConstants
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.sdksample.SdkSample
+import com.alibabacloud.api.service.sdksample.util.AutoInstallPkgUtil
 import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.api.service.util.RequestUtil
@@ -44,6 +45,12 @@ import java.util.*
 import javax.swing.JPanel
 import javax.swing.JSplitPane
 
+data class SdkDetail(
+    val sdkName: String,
+    val sdkPkgVersion: String,
+    val sdkPkgManagementPlatform: String,
+    val sdkInstallationCommand: String
+)
 
 class ApiPage {
     companion object {
@@ -82,6 +89,9 @@ class ApiPage {
             val sdkPanel = JPanel(BorderLayout())
             val splitPane = JSplitPane(JSplitPane.VERTICAL_SPLIT)
 
+            val sdkInfo = AutoInstallPkgUtil.getLastSdkInfo(project, productName, defaultVersion)
+            val sdkInfoData = getSdkInfoData(sdkInfo)
+
             if (useCache && cacheFile.exists() && cacheMeta.exists() && cacheEndpoints.exists()
                 && cacheFile.length() > 0 && cacheMeta.length() > 0 && cacheEndpoints.length() > 0
                 && cacheFile.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis()
@@ -105,7 +115,8 @@ class ApiPage {
                         productName,
                         endpointList,
                         sdkPanel,
-                        splitPane
+                        splitPane,
+                        sdkInfoData
                     )
                     executeQuestionnaire(project, browser)
                 } catch (_: IOException) {
@@ -161,7 +172,8 @@ class ApiPage {
                             productName,
                             endpointList,
                             sdkPanel,
-                            splitPane
+                            splitPane,
+                            sdkInfoData
                         )
 
                         executeQuestionnaire(project, browser)
@@ -296,6 +308,42 @@ class ApiPage {
                     }
                 })
             }
+        }
+
+        internal fun getSdkInfoData(sdkInfo: JsonObject?) :MutableMap<String, SdkDetail> {
+            val sdkInfoData = mutableMapOf<String, SdkDetail>()
+            if (sdkInfo != null) {
+                for (key in sdkInfo.keySet()) {
+                    if (key.endsWith("-tea")) {
+                        val info = sdkInfo.get(key).asJsonObject
+                        val sdkName = info.get("package_name")?.asString ?: ""
+                        val sdkPkgVersion = info.get("last_version")?.asString ?: ""
+                        val sdkPkgManagementPlatform = info.get("platform")?.asString ?: ""
+                        val command = info.get("install")?.asString ?: ""
+                        val sdkInstallationCommand = if (key == "java-tea" || key == "java-async-tea") {
+                            val gav = command.split(":")
+                            if (gav.size != 3) {
+                                "<span style='color: yellow;'>$command</span>"
+                            } else {
+                                """
+                                    <pre style='white-space: pre; color: yellow;'>
+                                    &lt;dependency&gt;
+                                        &lt;groupId&gt;${gav[0]}&lt;/groupId&gt;
+                                        &lt;artifactId&gt;${gav[1]}&lt;/artifactId&gt;
+                                        &lt;version&gt;${gav[2]}&lt;/version&gt;
+                                    &lt;/dependency&gt;
+                                    </pre>
+                                """.trimIndent()
+                            }
+                        } else {
+                            "<span style='color: yellow;'>$command</span>"
+                        }
+                        val sdkDetail = SdkDetail(sdkName, sdkPkgVersion, sdkPkgManagementPlatform, sdkInstallationCommand)
+                        sdkInfoData[key.replace("-tea", "")] = sdkDetail
+                    }
+                }
+            }
+            return sdkInfoData
         }
 
         private fun repairCnInfoInEn(element: JsonElement) {
@@ -458,7 +506,8 @@ class ApiPage {
             productName: String,
             endpointList: JsonArray,
             sdkPanel: JPanel,
-            splitPane: JSplitPane
+            splitPane: JSplitPane,
+            sdkInfoData: MutableMap<String, SdkDetail>
         ) {
             val bodyParams = JsonObject()
             bodyParams.addProperty(ApiConstants.SDK_MAKE_CODE_BODY_API_NAME, apiName)
@@ -486,7 +535,7 @@ class ApiPage {
 
                 ApplicationManager.getApplication().invokeLater {
                     SdkSample.sdkSamplePanel(
-                        apiName, defaultVersion, productName, project, sdkPanel, demoSdkObject
+                        apiName, defaultVersion, productName, project, sdkPanel, demoSdkObject, sdkInfoData
                     )
                     splitPane.bottomComponent = sdkPanel
                 }

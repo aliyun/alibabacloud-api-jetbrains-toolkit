@@ -79,8 +79,6 @@ internal class ApiPageTest {
 
     @BeforeEach
     fun setUp() {
-        `when`(okHttpClient.newCall(any())).thenReturn(call)
-        `when`(call.execute()).thenReturn(response)
         ApiPage.notificationService = normalNotification
     }
 
@@ -91,6 +89,8 @@ internal class ApiPageTest {
 
     @Test
     fun `getEndpointList should return JsonArray on successful response`() {
+        `when`(okHttpClient.newCall(any())).thenReturn(call)
+        `when`(call.execute()).thenReturn(response)
         `when`(response.body).thenReturn(responseBody)
         `when`(responseBody.string()).thenReturn(sampleResponse)
         `when`(response.isSuccessful).thenReturn(true)
@@ -101,17 +101,27 @@ internal class ApiPageTest {
 
     @Test
     fun `getApiDocData should return JsonObject on successful response`() {
+        `when`(okHttpClient.newCall(any())).thenReturn(call)
+        `when`(call.execute()).thenReturn(response)
         `when`(response.body).thenReturn(responseBody)
         `when`(responseBody.string()).thenReturn(sampleResponse)
         `when`(response.isSuccessful).thenReturn(true)
         val cacheMeta = File(tempDir, "cacheMeta")
         val apiDocData =
-            ApiPage.getApiDocData(project, okHttpClient, "https://example.com/api/apidoc", "https://example.com/overview/apidoc", cacheMeta)
+            ApiPage.getApiDocData(
+                project,
+                okHttpClient,
+                "https://example.com/api/apidoc",
+                "https://example.com/overview/apidoc",
+                cacheMeta
+            )
         assertEquals(apiDocData, Gson().fromJson(sampleResponse, JsonObject::class.java))
     }
 
     @Test
     fun `getEndpointList should handle unsuccessful response`() {
+        `when`(okHttpClient.newCall(any())).thenReturn(call)
+        `when`(call.execute()).thenReturn(response)
         `when`(response.isSuccessful).thenReturn(false)
         `when`(response.code).thenReturn(500)
         `when`(response.message).thenReturn("Internal Server Error")
@@ -129,11 +139,19 @@ internal class ApiPageTest {
 
     @Test
     fun `getApiDocData should handle unsuccessful response`() {
+        `when`(okHttpClient.newCall(any())).thenReturn(call)
+        `when`(call.execute()).thenReturn(response)
         `when`(response.isSuccessful).thenReturn(false)
         `when`(response.code).thenReturn(500)
         `when`(response.message).thenReturn("Internal Server Error")
         val apiDocData =
-            ApiPage.getApiDocData(project, okHttpClient, "https://example.com/api/apidoc", "https://example.com/overview/apidoc", mock(File::class.java))
+            ApiPage.getApiDocData(
+                project,
+                okHttpClient,
+                "https://example.com/api/apidoc",
+                "https://example.com/overview/apidoc",
+                mock(File::class.java)
+            )
 
         verify(normalNotification, times(2)).showMessage(
             eq(project),
@@ -147,6 +165,8 @@ internal class ApiPageTest {
 
     @Test
     fun `getEndpointList should handle IOException`() {
+        `when`(okHttpClient.newCall(any())).thenReturn(call)
+        `when`(call.execute()).thenReturn(response)
         `when`(call.execute()).thenThrow(IOException::class.java)
         val endpointList = ApiPage.getEndpointList(project, okHttpClient, "https://example.com/api/endpoint")
 
@@ -162,9 +182,17 @@ internal class ApiPageTest {
 
     @Test
     fun `getApiDocData should handle IOException`() {
+        `when`(okHttpClient.newCall(any())).thenReturn(call)
+        `when`(call.execute()).thenReturn(response)
         `when`(call.execute()).thenThrow(IOException::class.java)
         val apiDocData =
-            ApiPage.getApiDocData(project, okHttpClient, "https://example.com/api/apidoc", "https://example.com/overview/apidoc", mock(File::class.java))
+            ApiPage.getApiDocData(
+                project,
+                okHttpClient,
+                "https://example.com/api/apidoc",
+                "https://example.com/overview/apidoc",
+                mock(File::class.java)
+            )
 
         verify(normalNotification).showMessage(
             eq(project),
@@ -174,5 +202,35 @@ internal class ApiPageTest {
             eq(NotificationType.ERROR)
         )
         assertTrue(apiDocData.size() == 0, "apiDocData should be empty when IOException is thrown")
+    }
+
+    @Test
+    fun `getSdkInfoData should success`() {
+        val path = javaClass.classLoader.getResource("mockSdkInfo.json")!!.toURI().path
+        val sdkInfoStr = File(path).readText()
+        val sdkInfoJson = Gson().fromJson(sdkInfoStr, JsonObject::class.java)
+        val sdkInfo = ApiPage.getSdkInfoData(sdkInfoJson)
+        assertEquals(11, sdkInfo.size)
+        val javaSdkDetail = sdkInfo["java"]
+        assertEquals("com.aliyun/ecs20140526", javaSdkDetail?.sdkName)
+        assertEquals("5.3.0", javaSdkDetail?.sdkPkgVersion)
+        assertEquals("maven", javaSdkDetail?.sdkPkgManagementPlatform)
+        assertEquals(
+            """
+                <pre style='white-space: pre; color: yellow;'>
+                &lt;dependency&gt;
+                    &lt;groupId&gt;com.aliyun&lt;/groupId&gt;
+                    &lt;artifactId&gt;ecs20140526&lt;/artifactId&gt;
+                    &lt;version&gt;5.3.0&lt;/version&gt;
+                &lt;/dependency&gt;
+                </pre>
+            """.trimIndent(),
+            javaSdkDetail?.sdkInstallationCommand
+        )
+        val pySdkDetail = sdkInfo["python"]
+        assertEquals("alibabacloud_ecs20140526", pySdkDetail?.sdkName)
+        assertEquals("4.3.0", pySdkDetail?.sdkPkgVersion)
+        assertEquals("pypi", pySdkDetail?.sdkPkgManagementPlatform)
+        assertEquals("<span style='color: yellow;'>pip install alibabacloud_ecs20140526==4.3.0</span>", pySdkDetail?.sdkInstallationCommand)
     }
 }
