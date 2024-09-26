@@ -120,7 +120,7 @@ class CollapsibleInputPanel(private val project: Project) : JPanel() {
         confirmButton.text = I18nUtils.getMsg("credentials.new.confirm")
         cancelButton.text = I18nUtils.getMsg("credentials.cancel")
         showPasswordCheckBox.text = I18nUtils.getMsg("credentials.display")
-        if (confirmButton.text == I18nUtils.getMsg("CONFIRM")) {
+        if (confirmButton.text == I18nUtils.getMsg("credentials.new.confirm")) {
             hasValidationError = false
             val profileName = profileNameField.text
             val accessKeyId = akField.text
