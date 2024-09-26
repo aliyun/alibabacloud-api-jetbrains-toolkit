@@ -27,7 +27,7 @@ GoLand 2022.2 ~ 2024.1
 
 
 ## Plugin UI Guide
-![UI](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/ui-guide.png)
+![UI](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/en/ui-15-en.png)
 
 ## Features
 
@@ -38,8 +38,8 @@ If you have installed the Alibaba Cloud CLI, you can reuse its configuration.
 * If you have already installed [Alibaba Cloud CLI](https://help.aliyun.com/document_detail/123181.html?spm=a2c4g.121544.0.0.2d7e76e3XWMs4u), you can switch your existing profiles.
 * Without Alibaba Cloud CLI installed, you can select "New Profile" to new user profiles when needed.
   <div style="overflow-x: scroll; white-space: nowrap;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/new-profile.png" style="display: inline-block;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/view-profile.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/en/new-profile-15-en.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/en/view-profile-15-en.png" style="display: inline-block;">
   </div>
 
 ### Product and API Searching
@@ -47,7 +47,7 @@ A tree-view of Alibaba Cloud products with search, quickly navigate you to the c
 
 Refresh the product list or API detail page by clicking the refresh button in the window toolbar.
 
-![Search](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/all_search.png)
+![Search](https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/en/search-15-en.png)
 
 ### API Document and Debug
 Clicking on an API can navigate you to a new tab which displays the corresponding API document,
@@ -57,16 +57,15 @@ Support convenient API debugging within the IDE against the parameter form. (**P
 in advance if you need debug API.**)
 
 <div style="overflow-x: scroll; white-space: nowrap;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/api-doc.png" style="display: inline-block;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/debug.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/en/api-doc-15-en.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/en/api-debug-15-en.png" style="display: inline-block;">
 </div>
 
 ### SDK Code Sample
 Support viewing, quickly opening SDK code samples and automatic import of Maven and Python dependencies.
 
 <div style="overflow-x: scroll; white-space: nowrap;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/code-sample.png" style="display: inline-block;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/auto-import.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/en/sdk-code-sample-15-en.png" style="display: inline-block;">
 </div>
 
 ### Code Snippets
@@ -76,25 +75,22 @@ by keyboard shortcuts `ctrl + cmd + p` or check in >settings >Alibaba Cloud Deve
 Available about half a minute after plugin started (loading metadata). If the pull fails, you can pull it again manually.
 
 <div style="overflow-x: scroll; white-space: nowrap;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/codesnippets.png" style="display: inline-block;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/codesnippets_res.png" style="display: inline-block;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/codesnippets_switch.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/en/code-snippets-15-en.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/en/code-snippets-auto-install-15-en.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/en/code-snippets-enable-15-en.png" style="display: inline-block;">
 </div>
 
 ### Document Enhancement
+#### Related Code Samples
 When writing SDK code, it supports displaying OpenAPI description information and more relevant example links
 in the documentation popup to obtain more code samples. Prerequisite: IDE allows documentation popup (check
 「settings-Editor-General-Code Completion-Show Documentation Popup」).
 
-<div style="overflow-x: scroll; white-space: nowrap;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/enhance.png" style="display: inline-block;">
-</div>
-
-### Inlay Hints for API Info
+#### Inlay Hints for API Info
 Support inlay hints for viewing API Info when coding with Cloud OpenAPI. Click on the hints can navigate you
 to API detail page to view API documentation and code sample, and debug the API.
 <div style="overflow-x: scroll; white-space: nowrap;">
-    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/hints.png" style="display: inline-block;">
+    <img src="https://aliyunsdk-pages.alicdn.com/plugin_demo/idea/pics/v0.0.15/en/doc-enhance-15-en.png" style="display: inline-block;">
 </div>
 
 ### Plaintext AK Inspections and Warning
