@@ -1,3 +1,7 @@
+2024-09-25 Version: 0.0.15-242
+1. Add SDK installation information when generate code sample.
+2. Fix general bugs.
+
 2024-09-23 Version: 0.0.14-242
 1. Support upgrade maven package when existed.
 2. Webview adapts different themes of IDEs.

@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "com.alibabacloud"
-version = "0.0.14-242"
+version = "0.0.15-242"
 
 kotlin {
     jvmToolchain(17)
