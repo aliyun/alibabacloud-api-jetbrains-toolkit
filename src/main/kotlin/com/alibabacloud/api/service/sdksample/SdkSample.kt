@@ -13,6 +13,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -22,6 +23,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
@@ -55,6 +57,7 @@ import java.awt.event.MouseEvent
 import java.io.File
 import java.io.IOException
 import java.net.URI
+import java.nio.file.Path
 import java.util.*
 import javax.swing.*
 import javax.swing.border.Border
@@ -176,7 +179,7 @@ class SdkSample {
                     } else {
                         "Sample.txt"
                     }
-                    createAndOpenRealFile(project, content, fileName)
+                    createAndFile(content, fileName)
                 }
             }
 
@@ -309,6 +312,7 @@ class SdkSample {
             popup.showInScreenCoordinates(headPanel, Point(location.x, location.y + sdkInfoButton.height))
         }
 
+        @Deprecated("use createAndFile instead")
         private fun createAndOpenRealFile(project: Project, content: String, fileName: String) {
             var filePath = File(project.basePath, fileName)
             var index = 1
@@ -329,6 +333,18 @@ class SdkSample {
                 fileEditorManager.openTextEditor(descriptor, true)
             } else {
                 throw IOException(I18nUtils.getMsg("open.in.ide.fail"))
+            }
+        }
+
+        private fun createAndFile(content: String, fileName: String) {
+            val lightEditService = LightEditService.getInstance()
+            val path = Path.of(fileName)
+            val lightEditorInfo = lightEditService.createNewDocument(path)
+            val myFileEditor = lightEditorInfo.fileEditor
+            if (myFileEditor is TextEditor) {
+                ApplicationManager.getApplication().runWriteAction {
+                    myFileEditor.editor.document.setText(content)
+                }
             }
         }
 
