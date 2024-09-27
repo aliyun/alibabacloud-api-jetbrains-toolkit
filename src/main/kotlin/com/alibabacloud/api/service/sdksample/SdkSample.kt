@@ -13,6 +13,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -22,6 +23,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
@@ -35,7 +37,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.JBColor
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.jcef.JBCefBrowser
@@ -48,13 +49,16 @@ import org.cef.browser.CefFrame
 import org.cef.handler.CefLoadHandler
 import org.cef.handler.CefLoadHandlerAdapter
 import org.cef.network.CefRequest
-import java.awt.*
-import java.awt.datatransfer.StringSelection
+import java.awt.BorderLayout
+import java.awt.Dimension
+import java.awt.FlowLayout
+import java.awt.Point
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.io.File
 import java.io.IOException
 import java.net.URI
+import java.nio.file.Path
 import java.util.*
 import javax.swing.*
 import javax.swing.border.Border
@@ -103,8 +107,9 @@ class SdkSample {
             when (ideName) {
                 "PyCharm" -> {
                     val demoSdkPy =
-                        if (demoSdkObject.size() == 0) I18nUtils.getMsg("sdk.code.sample.generate.error") else demoSdkObject.get("python")?.asString
-                            ?: I18nUtils.getMsg("sdk.code.sample.lang.not.support")
+                        if (demoSdkObject.size() == 0) I18nUtils.getMsg("sdk.code.sample.generate.error") else
+                            demoSdkObject.get("python")?.asString
+                                ?: I18nUtils.getMsg("sdk.code.sample.lang.not.support")
                     editor = createEditorWithPsiFile(project, apiName, demoSdkPy, "python")
                     langComboBox.selectedItem = "Python"
                     installUrl =
@@ -113,8 +118,9 @@ class SdkSample {
 
                 "GoLand" -> {
                     val demoSdkGo =
-                        if (demoSdkObject.size() == 0) I18nUtils.getMsg("sdk.code.sample.generate.error") else demoSdkObject.get("go")?.asString
-                            ?: I18nUtils.getMsg("sdk.code.sample.lang.not.support")
+                        if (demoSdkObject.size() == 0) I18nUtils.getMsg("sdk.code.sample.generate.error") else
+                            demoSdkObject.get("go")?.asString
+                                ?: I18nUtils.getMsg("sdk.code.sample.lang.not.support")
                     editor = createEditorWithPsiFile(project, apiName, demoSdkGo, "go")
                     langComboBox.selectedItem = "Go"
                     installUrl =
@@ -123,8 +129,9 @@ class SdkSample {
 
                 "WebStorm" -> {
                     val demoSdkTs =
-                        if (demoSdkObject.size() == 0) I18nUtils.getMsg("sdk.code.sample.generate.error") else demoSdkObject.get("typescript")?.asString
-                            ?: I18nUtils.getMsg("sdk.code.sample.lang.not.support")
+                        if (demoSdkObject.size() == 0) I18nUtils.getMsg("sdk.code.sample.generate.error") else
+                            demoSdkObject.get("typescript")?.asString
+                                ?: I18nUtils.getMsg("sdk.code.sample.lang.not.support")
                     editor = createEditorWithPsiFile(project, apiName, demoSdkTs, "typescript")
                     langComboBox.selectedItem = "TypeScript"
                     installUrl =
@@ -133,8 +140,9 @@ class SdkSample {
 
                 else -> {
                     val demoSdkJava =
-                        if (demoSdkObject.size() == 0) I18nUtils.getMsg("sdk.code.sample.generate.error") else demoSdkObject.get("java")?.asString
-                            ?: I18nUtils.getMsg("sdk.code.sample.lang.not.support")
+                        if (demoSdkObject.size() == 0) I18nUtils.getMsg("sdk.code.sample.generate.error") else
+                            demoSdkObject.get("java")?.asString
+                                ?: I18nUtils.getMsg("sdk.code.sample.lang.not.support")
                     editor = createEditorWithPsiFile(project, apiName, demoSdkJava, "java")
                     langComboBox.selectedItem = "Java"
                     installUrl =
@@ -176,7 +184,7 @@ class SdkSample {
                     } else {
                         "Sample.txt"
                     }
-                    createAndOpenRealFile(project, content, fileName)
+                    createAndFile(content, fileName)
                 }
             }
 
@@ -282,8 +290,6 @@ class SdkSample {
                     </html>
                 """.trimIndent()
 
-
-
             val contentTextPane = JTextPane().apply {
                 contentType = "text/html"
                 text = contentHtml
@@ -309,6 +315,7 @@ class SdkSample {
             popup.showInScreenCoordinates(headPanel, Point(location.x, location.y + sdkInfoButton.height))
         }
 
+        @Deprecated("use createAndFile instead")
         private fun createAndOpenRealFile(project: Project, content: String, fileName: String) {
             var filePath = File(project.basePath, fileName)
             var index = 1
@@ -329,6 +336,18 @@ class SdkSample {
                 fileEditorManager.openTextEditor(descriptor, true)
             } else {
                 throw IOException(I18nUtils.getMsg("open.in.ide.fail"))
+            }
+        }
+
+        private fun createAndFile(content: String, fileName: String) {
+            val lightEditService = LightEditService.getInstance()
+            val path = Path.of(fileName)
+            val lightEditorInfo = lightEditService.createNewDocument(path)
+            val myFileEditor = lightEditorInfo.fileEditor
+            if (myFileEditor is TextEditor) {
+                ApplicationManager.getApplication().runWriteAction {
+                    myFileEditor.editor.document.setText(content)
+                }
             }
         }
 

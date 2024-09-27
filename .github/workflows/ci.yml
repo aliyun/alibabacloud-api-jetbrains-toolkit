@@ -41,9 +41,12 @@ jobs:
 
       # Setup Gradle
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v3
+        uses: gradle/actions/setup-gradle@v3
         with:
           gradle-home-cache-cleanup: true
+
+#      - name: Check Disk Space
+#        run: df -h
 
       # Set environment variables
       - name: Set IDE Name and Version
@@ -52,6 +55,12 @@ jobs:
           echo "PY_CORE_VERSION=${{ matrix.py_core_version }}" >> $GITHUB_ENV
           echo "GO_VERSION=${{ matrix.go_version }}" >> $GITHUB_ENV
           echo "pluginVerifierHomeDir=~/.pluginVerifier" >> $GITHUB_OUTPUT
+
+#      - name: Free disk space
+#        run: |
+#          sudo rm -rf ~/.gradle/caches/
+#          sudo rm -rf ${{ github.workspace }}/build/tmp/*
+#          sudo rm -rf ${{ github.workspace }}/build/reports/*
 
       # Build plugin
       - name: Build plugin
@@ -78,7 +87,7 @@ jobs:
 
       # Setup Gradle
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v3
+        uses: gradle/actions/setup-gradle@v3
         with:
           gradle-home-cache-cleanup: true
 
