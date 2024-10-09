@@ -74,30 +74,33 @@ class AutoInstallPkgUtil {
 
         }
 
-        private fun installPyPkg(project: Project, productName: String, defaultVersion: String, sdkVersion: String?) {
+        fun installPyPkg(project: Project, productName: String, defaultVersion: String, sdkVersion: String?) {
             val sdk = ProjectStructureUtil.getEditingSdk(project)
             val pkgName = "alibabacloud-${productName.lowercase()}${defaultVersion.replace("-", "")}"
 
-            val isPyPkgExists = PythonPkgInstallUtil.isPyPackageExist(project, sdk, pkgName)
-            if (!isPyPkgExists && sdk != null) {
-                if (sdkVersion != null) {
-                    PythonPkgInstallUtil.pyPackageInstall(project, sdk, pkgName, sdkVersion)
+            val isPyPkgExists = PythonPkgInstallUtil.isPyPackageExist(project, sdk, pkgName, sdkVersion!!)
+            if (sdk != null && !isPyPkgExists[0]) {
+                val content = if (!isPyPkgExists[1]) {
+                    "${I18nUtils.getMsg("auto.install.package.ask")} $pkgName?"
                 } else {
-                    NormalNotification.showMessage(
-                        project,
-                        NotificationGroups.DEPS_NOTIFICATION_GROUP,
-                        I18nUtils.getMsg("auto.install.package.fail"),
-                        "${I18nUtils.getMsg("sdk.not.exist.prefix")} Python ${I18nUtils.getMsg("sdk.not.exist.suffix")}",
-                        NotificationType.INFORMATION
-                    )
+                    I18nUtils.getMsg("auto.install.package.update.ask.prefix") + " $pkgName " +
+                            I18nUtils.getMsg("auto.install.package.update.ask.suffix") + " $sdkVersion?"
                 }
-            } else {
-                NormalNotification.showMessage(
+                NormalNotification.showMessageWithActions(
                     project,
                     NotificationGroups.DEPS_NOTIFICATION_GROUP,
-                    I18nUtils.getMsg("auto.install.package.exist"),
-                    "",
-                    NotificationType.INFORMATION
+                    I18nUtils.getMsg("auto.install.package"),
+                    content,
+                    NotificationType.INFORMATION,
+                    yesAction = {
+                        ProgressManager.getInstance()
+                            .run(object : Task.Backgroundable(project, "", true) {
+                                override fun run(indicator: ProgressIndicator) {
+                                    PythonPkgInstallUtil.pyPackageInstall(project, sdk, pkgName, sdkVersion)
+                                }
+                            })
+                    },
+                    noAction = {}
                 )
             }
         }

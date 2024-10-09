@@ -2,9 +2,6 @@ package com.alibabacloud.api.service.completion.go
 
 import com.alibabacloud.api.service.completion.SdkCompletionContributor
 import com.alibabacloud.api.service.completion.util.LookupElementUtil
-import com.alibabacloud.api.service.completion.util.ProjectStructureUtil
-import com.alibabacloud.api.service.completion.util.PythonPkgInstallUtil
-import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.icons.ToolkitIcons
 import com.goide.psi.GoFile
@@ -13,13 +10,8 @@ import com.google.gson.JsonArray
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiTreeUtil
 import okhttp3.Request
@@ -79,31 +71,5 @@ class GoSdkCompletionContributor : SdkCompletionContributor() {
         sdkInfo: JsonArray,
         lang: String
     ) {
-        ApplicationManager.getApplication().executeOnPooledThread {
-            val project = context.project
-            val sdk = ProjectStructureUtil.getEditingSdk(context)
-            val pkgName = "alibabacloud-${productName.lowercase()}${defaultVersion.replace("-", "")}"
-            val isPyPkgExists = PythonPkgInstallUtil.isPyPackageExist(project, sdk, pkgName)
-            if (!isPyPkgExists && sdk != null) {
-                val content = "${I18nUtils.getMsg("auto.install.package.ask")} $pkgName?"
-                notificationService.showMessageWithActions(
-                    project,
-                    NotificationGroups.DEPS_NOTIFICATION_GROUP,
-                    I18nUtils.getMsg("auto.install.package"),
-                    content,
-                    NotificationType.INFORMATION,
-                    yesAction = {
-                        ProgressManager.getInstance()
-                            .run(object : Task.Backgroundable(project, "installing package $pkgName", true) {
-                                override fun run(indicator: ProgressIndicator) {
-                                    PythonPkgInstallUtil.pyPackageInstall(project, sdk, pkgName, sdkInfo[2].asString)
-
-                                }
-                            })
-                    },
-                    noAction = {}
-                )
-            }
-        }
     }
 }
