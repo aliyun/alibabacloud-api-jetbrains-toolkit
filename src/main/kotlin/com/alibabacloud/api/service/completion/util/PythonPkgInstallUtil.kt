@@ -5,12 +5,15 @@ import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.i18n.I18nUtils
 import com.intellij.execution.ExecutionException
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.packaging.PyPackage
-import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagerUI
 import com.jetbrains.python.packaging.PyRequirementParser
+import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.management.PythonPackageManager
 
 class PythonPkgInstallUtil {
     companion object {
@@ -36,7 +39,9 @@ class PythonPkgInstallUtil {
             override fun finished(list: List<ExecutionException>) {}
         }
 
-        fun isPyPackageExist(project: Project, sdk: Sdk?, pkgName: String): Boolean {
+        fun isPyPackageExist(project: Project, sdk: Sdk?, pkgName: String, sdkVersion: String): MutableList<Boolean> {
+            var isPackageExists = false
+            var needUpdate = false
             if (sdk == null) {
                 NormalNotification.showMessage(
                     project,
@@ -45,14 +50,24 @@ class PythonPkgInstallUtil {
                     I18nUtils.getMsg("python.no.interpreter"),
                     NotificationType.WARNING
                 )
-                return true
+            } else {
+                val packageList = getPackageList(project, sdk)
+                for (pyPky in packageList) {
+                    if (pyPky.name == pkgName) {
+                        if (pyPky.version == sdkVersion) {
+                            isPackageExists = true
+                        } else {
+                            needUpdate = true
+                        }
+                        break
+                    }
+                }
             }
-            val packageList = getPackageList(sdk)
-            return packageList.any { it.name.contains(pkgName) }
+            return mutableListOf(isPackageExists, needUpdate)
         }
 
-        private fun getPackageList(pythonSdk: Sdk): List<PyPackage> {
-            return PyPackageManager.getInstance(pythonSdk).packages ?: return emptyList()
+        private fun getPackageList(project: Project, pythonSdk: Sdk): List<PythonPackage> {
+            return PythonPackageManager.forSdk(project, pythonSdk).installedPackages
         }
     }
 }
