@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Before
@@ -86,7 +86,7 @@ class ToolkitUpdateTest {
     }
 
     @Test
-    fun `test toolkit auto update consistent with user setting`() = runBlocking {
+    fun `test toolkit auto update consistent with user setting`() = runTest {
         mockProject = Mockito.mock(Project::class.java)
         ToolkitSettingsState.getInstance().isAutoUpdateEnabled = false
         update.execute(mockProject)

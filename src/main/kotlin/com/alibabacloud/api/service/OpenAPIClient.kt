@@ -1,15 +1,12 @@
 package com.alibabacloud.api.service
 
+import com.alibabacloud.models.telemetry.DefaultApplicationInfo
 import com.aliyun.credentials.Client
 import com.aliyun.tea.*
 import com.aliyun.tea.TeaModel.validateParams
 import com.aliyun.tea.interceptor.InterceptorChain
 import com.aliyun.teautil.Common
 import com.aliyun.teautil.models.RuntimeOptions
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.extensions.PluginId
 import java.io.InputStream
 
 
@@ -377,14 +374,7 @@ class OpenAPIClient(config: Config) {
          * Get user agent of plugin
          * @return user agent
          */
-        get() = String.format(
-            "Toolkit (%s; %s) alibabacloud-developer-toolkit/%s JetBrains/%s/%s",
-            System.getProperties().getProperty("os.name"),
-            System.getProperties().getProperty("os.arch"),
-            PluginManagerCore.getPlugin(PluginId.getId("alibabacloud.developer.toolkit"))?.version ?: "null",
-            ApplicationInfo.getInstance().fullVersion,
-            ApplicationNamesInfo.getInstance().fullProductName
-        )
+        get() = DefaultApplicationInfo.userAgent
 
     @get:Throws(Exception::class)
     val accessKeyId: String

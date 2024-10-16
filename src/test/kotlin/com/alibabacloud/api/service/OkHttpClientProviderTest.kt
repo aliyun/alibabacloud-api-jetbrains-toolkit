@@ -32,8 +32,9 @@ internal class OkHttpClientProviderTest {
             .url("https://localhost:${wireMock.httpsPort()}/")
             .build()
 
-        val response = client.newCall(request).execute()
-        assertThat(response.isSuccessful).isTrue()
+        client.newCall(request).execute().use { response ->
+            assertThat(response.isSuccessful).isTrue()
+        }
     }
 
     private fun createSelfSignedServer(): WireMockRule {
