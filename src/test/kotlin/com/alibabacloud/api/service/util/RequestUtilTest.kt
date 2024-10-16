@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.PluginId
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
@@ -53,10 +54,7 @@ internal class RequestUtilTest {
 
         assertEquals("GET", request.method)
         assertEquals("$url/", request.url.toString())
-        assertEquals(
-            "Toolkit (Mac OS X; aarch64) alibabacloud-developer-toolkit/0.0.1 JetBrains/2021.1/IntelliJ IDEA",
-            request.header("user-agent")
-        )
+        assertNull(request.header("user-agent"))
     }
 
     @Test
@@ -64,11 +62,49 @@ internal class RequestUtilTest {
         val url = "https://example.com"
         val mediaType = "application/json; charset=utf-8".toMediaType();
         val requestBody = "{'key':'value'}".toRequestBody(mediaType)
-        val request = RequestUtil.createRequest(url, "POST", requestBody)
+        val headers = hashMapOf(
+            "user-agent" to "Toolkit (Mac OS X; aarch64) alibabacloud-developer-toolkit/0.0.1 JetBrains/2021.1/IntelliJ IDEA"
+        )
+        val request = RequestUtil.createRequest(url, "POST", requestBody, headers)
 
         assertEquals("POST", request.method)
         assertEquals("$url/", request.url.toString())
         assertNotNull(request.body)
+        assertEquals(
+            "Toolkit (Mac OS X; aarch64) alibabacloud-developer-toolkit/0.0.1 JetBrains/2021.1/IntelliJ IDEA",
+            request.header("user-agent")
+        )
+    }
+
+    @Test
+    fun `test Telemetry Request is created correctly with body`() {
+        val url = "https://example.com"
+        val mediaType = "application/json; charset=utf-8".toMediaType();
+        val requestBody = "{'key':'value'}".toRequestBody(mediaType)
+        val headers = hashMapOf(
+            "user-agent" to "Toolkit (Mac OS X; aarch64) alibabacloud-developer-toolkit/0.0.1 JetBrains/2021.1/IntelliJ IDEA",
+            "x-plugin-source-ip" to "1a:2b:34:5c:6d:b7",
+            "x-plugin-timestamp" to "1722932858124",
+            "x-plugin-token" to "1234567890abcdefg"
+        )
+
+        val request = RequestUtil.createRequest(url, "POST", requestBody, headers)
+
+        assertEquals("POST", request.method)
+        assertEquals("$url/", request.url.toString())
+        assertNotNull(request.body)
+        assertEquals(
+            "1a:2b:34:5c:6d:b7",
+            request.header("x-plugin-source-ip")
+        )
+        assertEquals(
+            "1722932858124",
+            request.header("x-plugin-timestamp")
+        )
+        assertEquals(
+            "1234567890abcdefg",
+            request.header("x-plugin-token")
+        )
         assertEquals(
             "Toolkit (Mac OS X; aarch64) alibabacloud-developer-toolkit/0.0.1 JetBrains/2021.1/IntelliJ IDEA",
             request.header("user-agent")

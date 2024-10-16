@@ -77,6 +77,8 @@
                                  displayName="Alibaba Cloud Developer Toolkit"
                                  instance="com.alibabacloud.settings.ToolkitSettingsConfigurable"/>
         <applicationService serviceImplementation="com.alibabacloud.api.service.completion.CompletionIndexPersistentComponent"/>
+        <applicationService serviceInterface="com.alibabacloud.telemetry.TelemetryService"
+                            serviceImplementation="com.alibabacloud.telemetry.DefaultTelemetryService"/>
 
         <notificationGroup id="AlibabaCloud API: SDK" displayType="BALLOON"/>
         <notificationGroup id="AlibabaCloud API: Debug" displayType="BALLOON"/>
@@ -87,6 +89,7 @@
         <notificationGroup id="AlibabaCloud API: Cache" displayType="BALLOON"/>
         <notificationGroup id="AlibabaCloud API: Questionnaire" displayType="BALLOON"/>
         <notificationGroup id="Alibaba Cloud Developer Toolkit Update Installed" displayType="BALLOON"/>
+        <notificationGroup id="Alibaba Cloud Developer Toolkit: Telemetry" displayType="BALLOON"/>
         <completion.contributor language="JAVA"
                                 implementationClass="com.alibabacloud.api.service.completion.java.JavaSdkCompletionContributor"/>
         <completion.contributor language="Python"

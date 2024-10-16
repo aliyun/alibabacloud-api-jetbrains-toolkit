@@ -3,6 +3,7 @@ package com.alibabacloud.settings
 import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.states.ToolkitSettingsState
 import com.alibabacloud.telemetry.ExperienceQuestionnaire
+import com.alibabacloud.telemetry.TelemetryService
 import com.alibabacloud.toolkit.ToolkitInfo
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.options.SearchableConfigurable
@@ -11,15 +12,18 @@ import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 
 class ToolkitSettingsConfigurable : SearchableConfigurable {
-    var enableToolkitAutoUpdate: JBCheckBox = JBCheckBox()
-    var enableCompletion: JBCheckBox = JBCheckBox()
-    private var enableAKInspection: JBCheckBox = JBCheckBox()
+    internal var enableToolkitAutoUpdate: JBCheckBox = JBCheckBox()
+    internal var enableCompletion: JBCheckBox = JBCheckBox()
+    internal var enableAKInspection: JBCheckBox = JBCheckBox()
+    internal var enableTelemetry: JBCheckBox = JBCheckBox()
 
     private fun saveBaseSettings() {
         val settingsState = ToolkitSettingsState.getInstance()
         settingsState.isAutoUpdateEnabled = enableToolkitAutoUpdate.isSelected
         settingsState.isCompletionEnabled = enableCompletion.isSelected
         settingsState.isAKInspectionEnabled = enableAKInspection.isSelected
+        settingsState.isTelemetryEnabled = enableTelemetry.isSelected
+        TelemetryService.getInstance().setTelemetryEnabled(enableTelemetry.isSelected)
     }
 
 
@@ -52,6 +56,17 @@ class ToolkitSettingsConfigurable : SearchableConfigurable {
                 )
             }
         }
+        group(I18nUtils.getMsg("telemetry.settings")) {
+            row {
+                cell(enableTelemetry).applyToComponent {
+                    this.isSelected = ToolkitSettingsState.getInstance().isTelemetryEnabled
+                }
+                text(
+                    "${I18nUtils.getMsg("settings.telemetry.enable")}<br/><br/>" +
+                            "<font color='gray' size='-1'>${I18nUtils.getMsg("telemetry.statement")}</font><br/>"
+                )
+            }
+        }
         group(I18nUtils.getMsg("settings.feedback")) {
             row {
                 text("<a>${I18nUtils.getMsg("settings.feedback.link")}</a>") {
@@ -64,7 +79,8 @@ class ToolkitSettingsConfigurable : SearchableConfigurable {
     override fun isModified(): Boolean {
         return enableToolkitAutoUpdate.isSelected != ToolkitSettingsState.getInstance().isAutoUpdateEnabled ||
                 enableCompletion.isSelected != ToolkitSettingsState.getInstance().isCompletionEnabled ||
-                enableAKInspection.isSelected != ToolkitSettingsState.getInstance().isAKInspectionEnabled
+                enableAKInspection.isSelected != ToolkitSettingsState.getInstance().isAKInspectionEnabled ||
+                enableTelemetry.isSelected != ToolkitSettingsState.getInstance().isTelemetryEnabled
     }
 
     override fun apply() {
@@ -76,6 +92,7 @@ class ToolkitSettingsConfigurable : SearchableConfigurable {
         enableToolkitAutoUpdate.isSelected = settingsState.isAutoUpdateEnabled
         enableCompletion.isSelected = settingsState.isCompletionEnabled
         enableAKInspection.isSelected = settingsState.isAKInspectionEnabled
+        enableTelemetry.isSelected = settingsState.isTelemetryEnabled
     }
 
     override fun getDisplayName(): String {
