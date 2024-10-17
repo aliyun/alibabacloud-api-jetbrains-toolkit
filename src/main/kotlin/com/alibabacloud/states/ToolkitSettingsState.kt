@@ -11,7 +11,8 @@ class ToolkitSettingsState : PersistentStateComponent<ToolkitSettingsState.State
     data class State(
         var isCompletionEnabled: Boolean = true,
         var isAutoUpdateEnabled: Boolean = true,
-        var isAKInspectionEnabled: Boolean = true
+        var isAKInspectionEnabled: Boolean = true,
+        var isTelemetryEnabled: Boolean = false,
     )
 
     private var toolkitState = State()
@@ -40,6 +41,12 @@ class ToolkitSettingsState : PersistentStateComponent<ToolkitSettingsState.State
             toolkitState.isAKInspectionEnabled = isAKInspectionEnabled
         }
 
+    override var isTelemetryEnabled: Boolean
+        get() = state.isTelemetryEnabled
+        set(isTelemetryEnabled) {
+            toolkitState.isTelemetryEnabled = isTelemetryEnabled
+        }
+
 
     companion object {
         fun getInstance(): ToolkitSettingsState {
@@ -52,4 +59,5 @@ interface ToolkitSettings {
     var isCompletionEnabled: Boolean
     var isAutoUpdateEnabled: Boolean
     var isAKInspectionEnabled: Boolean
+    var isTelemetryEnabled: Boolean
 }

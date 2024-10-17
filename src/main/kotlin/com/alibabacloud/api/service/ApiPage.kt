@@ -12,7 +12,9 @@ import com.alibabacloud.api.service.util.RequestUtil
 import com.alibabacloud.api.service.util.ResourceUtil
 import com.alibabacloud.constants.PropertiesConstants
 import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
 import com.alibabacloud.telemetry.ExperienceQuestionnaire
+import com.alibabacloud.telemetry.TelemetryService
 import com.google.gson.*
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.PropertiesComponent
@@ -101,6 +103,17 @@ class ApiPage {
                 try {
                     cacheContent = cacheFile.readText()
                     browser.loadHTML(cacheContent)
+                    TelemetryService.getInstance().record(
+                        TelemetryData(
+                            "webview",
+                            "alibabacloud.webview.doc",
+                            if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                            System.currentTimeMillis().toString(),
+                            product = productName,
+                            apiVersion = defaultVersion,
+                            apiName = apiName
+                        )
+                    )
                     cacheDocMeta = cacheMeta.readText()
                     cacheEndpointList = cacheEndpoints.readText()
                     val cacheApiDocData = Gson().fromJson(cacheDocMeta, JsonObject::class.java)
@@ -280,6 +293,17 @@ class ApiPage {
 
                     override fun onSuccess() {
                         browser.loadHTML(modifiedHtml)
+                        TelemetryService.getInstance().record(
+                            TelemetryData(
+                                "webview",
+                                "alibabacloud.webview.doc",
+                                if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                System.currentTimeMillis().toString(),
+                                product = productName,
+                                apiVersion = defaultVersion,
+                                apiName = apiName
+                            )
+                        )
                         apiPanel.removeAll()
 
                         splitPane.apply {
@@ -310,7 +334,7 @@ class ApiPage {
             }
         }
 
-        internal fun getSdkInfoData(sdkInfo: JsonObject?) :MutableMap<String, SdkDetail> {
+        internal fun getSdkInfoData(sdkInfo: JsonObject?): MutableMap<String, SdkDetail> {
             val sdkInfoData = mutableMapOf<String, SdkDetail>()
             if (sdkInfo != null) {
                 for (key in sdkInfo.keySet()) {

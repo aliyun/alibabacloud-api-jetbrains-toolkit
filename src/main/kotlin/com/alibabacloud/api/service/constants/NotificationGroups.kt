@@ -10,4 +10,5 @@ object NotificationGroups {
     const val CACHE_NOTIFICATION_GROUP = "AlibabaCloud API: Cache"
     const val QUESTIONNAIRE_NOTIFICATION_GROUP = "AlibabaCloud API: Questionnaire"
     const val PLUGIN_INSTALLED_NOTIFICATION_GROUP = "Alibaba Cloud Developer Toolkit Update Installed"
+    const val TELEMETRY_DATA_GROUP = "Alibaba Cloud Developer Toolkit: Telemetry"
 }
