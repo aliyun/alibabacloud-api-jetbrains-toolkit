@@ -1,0 +1,201 @@
+{
+    "types": [
+        {
+          "name": "componentId",
+          "type": "string",
+          "allowedValues": [
+            "explorer",
+            "webview",
+            "codeSnippets",
+            "documentation",
+            "settings",
+            "dialogType",
+            "error",
+          ],
+          "required": true,
+          "description": "Name of components"
+        },
+        {
+          "name": "operationId",
+          "type": "string",
+          "allowedValues": [
+            "alibabacloud.explorer.restart",
+            "alibabacloud.explorer.credential",
+            "alibabacloud.explorer.credential.new",
+            "alibabacloud.explorer.credential.switch",
+            "alibabacloud.explorer.product.click",
+            "alibabacloud.explorer.product.clickSubscribe",
+            "alibabacloud.explorer.product.search",
+            "alibabacloud.explorer.api.click",
+            "alibabacloud.explorer.api.search",
+            "alibabacloud.webview.doc",
+            "alibabacloud.webview.doc.refresh",
+            "alibabacloud.webview.debug",
+            "alibabacloud.webview.debug.diagnose",
+            "alibabacloud.webview.debug.result",
+            "alibabacloud.webview.codeSample",
+            "alibabacloud.codeSnippets",
+            "alibabacloud.codeSnippets.auto.import",
+            "alibabacloud.documentation.sdk.sample",
+            "alibabacloud.notification",
+            "alibabacloud.settings",
+            "alibabacloud.error",
+          ],
+          "required": true,
+          "description": "Name of operations"
+        },
+        {
+          "name": "language",
+          "type": "string",
+          "allowedValues": [
+            "zh",
+            "en"
+          ],
+          "required": true,
+          "description": "Language of plugin"
+        },
+        {
+          "name": "timestamp",
+          "type": "string",
+          "required": true,
+          "description": "UTC timestamp"
+        },
+        {
+          "name": "ifLogin",
+          "type": "int",
+          "allowedValues": [
+            0,
+            1
+          ],
+          "description": "Whether the user configures the identity. 1: configured, 0: not configured"
+        },
+        {
+          "name": "position",
+          "type": "string",
+          "allowedValues": [
+            "statusbar",
+            "toolwindow",
+            "toolwindow.combobox",
+            "toolwindow.menu",
+            "webview",
+            "dialogType",
+            "settings",
+            "shortcut",
+            "editor",
+          ],
+          "description": "Name of action positions"
+        },
+        {
+          "name": "product",
+          "type": "string",
+          "description": "Name of cloud products"
+        },
+        {
+          "name": "apiVersion",
+          "type": "string",
+          "description": "Version of API"
+        },
+        {
+          "name": "apiName",
+          "type": "string",
+          "description": "Name of API"
+        },
+        {
+          "name": "dialogType",
+          "type": "string",
+          "allowedValues": [
+            "info",
+            "warn",
+            "error",
+          ],
+          "description": "Type of dialog"
+        },
+        {
+          "name": "result",
+          "type": "string",
+          "description": "Results of operations"
+        },
+        {
+          "name": "duration",
+          "type": "int",
+          "description": "Time cost of operations"
+        },
+        {
+          "name": "diagnose",
+          "type": "int",
+          "allowedValues": [
+            0,
+            1
+          ],
+          "description": "Whether click diagnose after debug, 1: click, 0: not click"
+        },
+        {
+          "name": "debugInBrowser",
+          "type": "int",
+          "allowedValues": [
+            0,
+            1
+          ],
+          "description": "Debug in IDE or browser, 1: browser, 0: IDE"
+        },
+        {
+          "name": "openInIde",
+          "type": "int",
+          "allowedValues": [
+            0,
+            1
+          ],
+          "description": "Whether open result in IDE, 1: open, 0: not open"
+        },
+        {
+          "name": "sdkLanguage",
+          "type": "string",
+          "allowedValues": [
+            "java",
+            "java-async",
+            "typescript",
+            "python",
+            "go",
+            "php",
+            "csharp",
+            "nodejs",
+            "swift"
+          ],
+          "description": "Language of codeSample/codeSnippets/auto install dependency"
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "description": "Title of dialog or settings"
+        },
+        {
+          "name": "content",
+          "type": "string",
+          "description": "Content of dialog"
+        },
+        {
+          "name": "dialogOption",
+          "type": "string",
+          "description": "Selecting result of dialog with options"
+        },
+        {
+          "name": "settingsStatus",
+          "type": "int",
+          "allowedValues": [
+              0,
+              1
+          ],
+          "description": "Whether settings be checked, 1: checked, 0: unchecked"
+        },
+        {
+          "name": "errorType",
+          "type": "string",
+          "description": "Name of errors occurred in plugin"
+        },
+        {
+          "name": "errorMessage",
+          "type": "string",
+          "description": "Message of errors occurred in plugin"
+        },
+    ]
+}
