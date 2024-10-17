@@ -113,24 +113,26 @@ class AutoInstallPkgUtil {
                 val artifactId = commandInfo[2]
                 val content = I18nUtils.getMsg("auto.install.package.update.ask.prefix")  + " $artifactId " +
                         I18nUtils.getMsg("auto.install.package.update.ask.suffix") + " $version?"
-                NormalNotification.showMessageWithActions(
+                NormalNotification.showNotificationWithActions(
                     project,
                     NotificationGroups.DEPS_NOTIFICATION_GROUP,
                     I18nUtils.getMsg("auto.install.package.update"),
                     content,
                     NotificationType.INFORMATION,
-                    yesAction = {
-                        ProgressManager.getInstance()
-                            .run(object : Task.Backgroundable(project, "Importing maven dependencies", true) {
-                                override fun run(indicator: ProgressIndicator) {
-                                    JavaPkgInstallUtil.updateMavenDeps(
-                                        project,
-                                        mavenCommand,
-                                    )
-                                }
-                            })
-                    },
-                    noAction = {}
+                    listOf(
+                        I18nUtils.getMsg("dialog.yes") to {
+                            ProgressManager.getInstance()
+                                .run(object : Task.Backgroundable(project, "Importing maven dependencies", true) {
+                                    override fun run(indicator: ProgressIndicator) {
+                                        JavaPkgInstallUtil.updateMavenDeps(
+                                            project,
+                                            mavenCommand,
+                                        )
+                                    }
+                                })
+                        },
+                        I18nUtils.getMsg("dialog.no") to {}
+                    )
                 )
             } else if (isPomExists && !isDependencyExists && mavenCommand != null) {
                 JavaPkgInstallUtil.importMavenDeps(

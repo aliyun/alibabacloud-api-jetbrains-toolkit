@@ -105,21 +105,23 @@ class PythonSdkCompletionContributor : SdkCompletionContributor() {
             val isPyPkgExists = PythonPkgInstallUtil.isPyPackageExist(project, sdk, pkgName)
             if (!isPyPkgExists && sdk != null) {
                 val content = "${I18nUtils.getMsg("auto.install.package.ask")} $pkgName?"
-                notificationService.showMessageWithActions(
+                notificationService.showNotificationWithActions(
                     project,
                     NotificationGroups.DEPS_NOTIFICATION_GROUP,
                     I18nUtils.getMsg("auto.install.package"),
                     content,
                     NotificationType.INFORMATION,
-                    yesAction = {
-                        ProgressManager.getInstance()
-                            .run(object : Task.Backgroundable(project, "installing package $pkgName", true) {
-                                override fun run(indicator: ProgressIndicator) {
-                                    PythonPkgInstallUtil.pyPackageInstall(project, sdk, pkgName, sdkInfo[2].asString)
-                                }
-                            })
-                    },
-                    noAction = {}
+                    listOf(
+                        I18nUtils.getMsg("dialog.yes") to {
+                            ProgressManager.getInstance()
+                                .run(object : Task.Backgroundable(project, "installing package $pkgName", true) {
+                                    override fun run(indicator: ProgressIndicator) {
+                                        PythonPkgInstallUtil.pyPackageInstall(project, sdk, pkgName, sdkInfo[2].asString)
+                                    }
+                                })
+                        },
+                        I18nUtils.getMsg("dialog.no") to {}
+                    )
                 )
             }
         }

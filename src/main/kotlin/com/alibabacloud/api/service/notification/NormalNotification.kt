@@ -47,6 +47,7 @@ object NormalNotification {
         }
     }
 
+    @Deprecated("use showNotificationWithActions instead")
     fun showMessageWithActions(
         project: Project?,
         group: String,
@@ -80,6 +81,7 @@ object NormalNotification {
         }
     }
 
+    @Deprecated("use showNotificationWithActions instead")
     fun showExperienceQuestionnaire(
         project: Project?,
         group: String,
