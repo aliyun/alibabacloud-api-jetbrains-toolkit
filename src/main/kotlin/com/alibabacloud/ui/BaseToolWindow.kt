@@ -14,7 +14,9 @@ import com.alibabacloud.credentials.util.ConfigFileUtil
 import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.icons.ToolkitIcons
 import com.alibabacloud.models.credentials.ConfigureFile
+import com.alibabacloud.states.ToolkitSettingsState
 import com.alibabacloud.telemetry.ExperienceQuestionnaire
+import com.alibabacloud.telemetry.TelemetryDialog
 import com.google.gson.JsonArray
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
@@ -163,6 +165,10 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         }
 
         ExperienceQuestionnaire(project).checkAndShowNotification()
+        val settings = ToolkitSettingsState.getInstance()
+        if (!settings.state.isTelemetryEnabled) {
+            TelemetryDialog(project).checkAndShowNotification()
+        }
     }
 
     private fun credentialsContentListener(

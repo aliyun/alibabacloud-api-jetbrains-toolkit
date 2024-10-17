@@ -13,6 +13,20 @@ repositories {
     maven("https://repo1.maven.org/maven2/com/aliyun/")
 }
 
+configurations {
+    runtimeClasspath {
+        exclude(group = "org.jetbrains.kotlin")
+        exclude(group = "org.jetbrains.kotlinx")
+    }
+
+    configureEach {
+        exclude("io.netty")
+        exclude(group = "org.slf4j")
+        exclude(group = "org.jetbrains.kotlinx", "kotlinx-coroutines-core-jvm")
+        exclude(group = "org.jetbrains.kotlinx", "kotlinx-coroutines-core")
+    }
+}
+
 dependencies {
     implementation("com.aliyun:tea:1.2.8") {
         exclude(group = "org.slf4j")
@@ -24,14 +38,19 @@ dependencies {
     implementation("com.aliyun:tea-util:0.2.21")
     implementation("com.aliyun:openapiutil:0.2.1")
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
-    testImplementation("org.mockito:mockito-core:5.11.0")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    testImplementation("org.mockito:mockito-core:5.12.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.10.0")
     testImplementation("com.github.tomakehurst:wiremock-jre8:2.35.0")
     testImplementation("org.assertj:assertj-core:3.20.2")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.1")
     testImplementation("org.junit.vintage:junit-vintage-engine:5.10.1")
+    testImplementation("io.mockk:mockk:1.13.10")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.8.0") {
+        exclude(group = "net.java.dev.jna", module = "jna")
+    }
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
 }
 
 intellij {

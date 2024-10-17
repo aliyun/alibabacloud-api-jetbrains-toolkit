@@ -21,6 +21,32 @@ object NormalNotification {
         }
     }
 
+    fun showNotificationWithActions(
+        project: Project?,
+        group: String,
+        title: String,
+        content: String,
+        type: NotificationType,
+        actions: List<Pair<String, () -> Unit>>
+    ) {
+        ApplicationManager.getApplication().invokeLater {
+            val notification = NotificationGroupManager.getInstance().getNotificationGroup(group)
+                .createNotification(title, content, type)
+
+            for ((actionText, action) in actions) {
+                val notificationAction = object : NotificationAction(actionText) {
+                    override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+                        action.invoke()
+                        notification.expire()
+                    }
+                }
+                notification.addAction(notificationAction)
+            }
+
+            notification.notify(project)
+        }
+    }
+
     fun showMessageWithActions(
         project: Project?,
         group: String,
