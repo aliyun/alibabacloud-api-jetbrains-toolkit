@@ -202,8 +202,8 @@ class ApiExplorer {
                         if (groupElement == null || groupElement.isJsonNull) I18nUtils.getMsg("node.others") else groupElement.asString
                     val code = product.asJsonObject.get("code").asString
                     val nameElement = product.asJsonObject.get("name")
-                    val name = if (nameElement == null || nameElement.isJsonNull) "--" else nameElement.asString
-                    val defaultVersion = product.asJsonObject.get("defaultVersion").asString
+                    val name = if (nameElement == null || nameElement.isJsonNull) "--" else nameElement.asString.trim()
+                    val defaultVersion = product.asJsonObject.get("defaultVersion").asString.trim()
                     val groupNode = groupMap.getOrPut(group) {
                         val node = DefaultMutableTreeNode(group)
                         root.add(node)
