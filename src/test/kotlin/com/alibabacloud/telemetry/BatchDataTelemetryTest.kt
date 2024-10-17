@@ -2,6 +2,7 @@ package com.alibabacloud.telemetry
 
 import com.alibabacloud.models.telemetry.DefaultApplicationInfo
 import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.constants.TelemetryConstants
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
@@ -98,7 +99,7 @@ class BatchDataTelemetryTest {
 
         verifyOrder {
             httpClient.newCall(match { request ->
-                request.url.toString() == "https://pre-api-workbench.aliyun.com/plugin/telemetry_token" &&
+                request.url.toString() == TelemetryConstants.TOKEN_URL &&
                         request.method == "GET" &&
                         request.headers["user-agent"] == "Test User Agent" &&
                         request.headers["x-plugin-source-ip"] == "00:00:00:00:00:00"
@@ -106,7 +107,7 @@ class BatchDataTelemetryTest {
             })
 
             httpClient.newCall(match { request ->
-                request.url.toString() == "https://pre-api-workbench.aliyun.com/plugin/report_telemetry_data" &&
+                request.url.toString() == TelemetryConstants.REPORT_URL &&
                         request.method == "POST" &&
                         request.headers["user-agent"] == "Test User Agent" &&
                         request.headers["x-plugin-source-ip"] == "00:00:00:00:00:00" &&

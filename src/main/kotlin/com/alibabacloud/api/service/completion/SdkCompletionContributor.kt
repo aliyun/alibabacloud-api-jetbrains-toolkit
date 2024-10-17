@@ -66,7 +66,7 @@ abstract class SdkCompletionContributor : CompletionContributor() {
         val document = editor.document
         val prefix = result.prefixMatcher.prefix
 
-        if (prefix.isNotEmpty()) {
+        if (prefix.isNotEmpty() && prefix.length > 2) {
             val project = parameters.originalPosition?.project ?: return
             if (DataService.isDataLoaded()) {
                 val javaIndex = DataService.javaIndex

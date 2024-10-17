@@ -105,46 +105,50 @@ class JavaSdkCompletionContributor : SdkCompletionContributor() {
                 val content = I18nUtils.getMsg("auto.install.package.update.ask.prefix") + (if (lang == "java-async") " alibabacloud-" else " ") +
                         "${productName.lowercase().replace("-", "_")}${defaultVersion.replace("-", "")} " +
                         I18nUtils.getMsg("auto.install.package.update.ask.suffix") + " ${sdkInfo[2].asString}?"
-                notificationService.showMessageWithActions(
+                notificationService.showNotificationWithActions(
                     project,
                     NotificationGroups.DEPS_NOTIFICATION_GROUP,
                     I18nUtils.getMsg("auto.install.package.update"),
                     content,
                     NotificationType.INFORMATION,
-                    yesAction = {
-                        ProgressManager.getInstance()
-                            .run(object : Task.Backgroundable(project, "Importing maven dependencies", true) {
-                                override fun run(indicator: ProgressIndicator) {
-                                    JavaPkgInstallUtil.updateMavenDeps(
-                                        project,
-                                        mavenCommand,
-                                    )
-                                }
-                            })
-                    },
-                    noAction = {}
+                    listOf(
+                        I18nUtils.getMsg("dialog.yes") to {
+                            ProgressManager.getInstance()
+                                .run(object : Task.Backgroundable(project, "Importing maven dependencies", true) {
+                                    override fun run(indicator: ProgressIndicator) {
+                                        JavaPkgInstallUtil.updateMavenDeps(
+                                            project,
+                                            mavenCommand,
+                                        )
+                                    }
+                                })
+                        },
+                        I18nUtils.getMsg("dialog.no") to {}
+                    )
                 )
             } else if (isPomExists && !isDependencyExists) {
                 val content = I18nUtils.getMsg("auto.install.package.ask") + (if (lang == "java-async") " alibabacloud-" else " ") +
                         "${productName.lowercase().replace("-", "_")}${defaultVersion.replace("-", "")}?"
-                notificationService.showMessageWithActions(
+                notificationService.showNotificationWithActions(
                     project,
                     NotificationGroups.DEPS_NOTIFICATION_GROUP,
                     I18nUtils.getMsg("auto.install.package"),
                     content,
                     NotificationType.INFORMATION,
-                    yesAction = {
-                        ProgressManager.getInstance()
-                            .run(object : Task.Backgroundable(project, "Importing maven dependencies", true) {
-                                override fun run(indicator: ProgressIndicator) {
-                                    JavaPkgInstallUtil.importMavenDeps(
-                                        project,
-                                        mavenCommand,
-                                    )
-                                }
-                            })
-                    },
-                    noAction = {}
+                    listOf(
+                        I18nUtils.getMsg("dialog.yes") to {
+                            ProgressManager.getInstance()
+                                .run(object : Task.Backgroundable(project, "Importing maven dependencies", true) {
+                                    override fun run(indicator: ProgressIndicator) {
+                                        JavaPkgInstallUtil.importMavenDeps(
+                                            project,
+                                            mavenCommand,
+                                        )
+                                    }
+                                })
+                        },
+                        I18nUtils.getMsg("dialog.no") to {}
+                    )
                 )
             }
         }
