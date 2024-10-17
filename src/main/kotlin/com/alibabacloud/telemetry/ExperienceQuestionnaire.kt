@@ -35,24 +35,28 @@ class ExperienceQuestionnaire(private val project: Project) {
         val timeSinceLastPrompt = ChronoUnit.HOURS.between(lastDateTime, currentDateTime)
 
         if (lastPromptTime == null || timeSinceLastPrompt >= expirationHours) {
-            NormalNotification.showExperienceQuestionnaire(project,
+            NormalNotification.showNotificationWithActions(
+                project,
                 NotificationGroups.QUESTIONNAIRE_NOTIFICATION_GROUP,
                 "Alibaba Cloud Developer Toolkit",
                 I18nUtils.getMsg("feedback.questionnaire"),
                 NotificationType.INFORMATION,
-                feedbackAction = {
-                    BrowserUtil.browse(URI(QUESTIONNAIRE_LINK))
-                    properties.setValue(PropertiesConstants.QUESTIONNAIRE_EXPIRATION_KEY, 30 * 24, 30 * 24)
-                    properties.setValue(PropertiesConstants.QUESTIONNAIRE_LAST_PROMPT_KEY, currentDateTime.toString())
-                },
-                closeAction = {
-                    properties.setValue(PropertiesConstants.QUESTIONNAIRE_EXPIRATION_KEY, 1 * 24, 30 * 24)
-                    properties.setValue(PropertiesConstants.QUESTIONNAIRE_LAST_PROMPT_KEY, currentDateTime.toString())
-                },
-                noRemindAction = {
-                    properties.setValue(PropertiesConstants.QUESTIONNAIRE_EXPIRATION_KEY, 30 * 24, 30 * 24)
-                    properties.setValue(PropertiesConstants.QUESTIONNAIRE_LAST_PROMPT_KEY, currentDateTime.toString())
-                })
+                listOf(
+                    I18nUtils.getMsg("feedback.go") to {
+                        BrowserUtil.browse(URI(QUESTIONNAIRE_LINK))
+                        properties.setValue(PropertiesConstants.QUESTIONNAIRE_EXPIRATION_KEY, 30 * 24, 30 * 24)
+                        properties.setValue(PropertiesConstants.QUESTIONNAIRE_LAST_PROMPT_KEY, currentDateTime.toString())
+                    },
+                    I18nUtils.getMsg("action.close") to {
+                        properties.setValue(PropertiesConstants.QUESTIONNAIRE_EXPIRATION_KEY, 1 * 24, 30 * 24)
+                        properties.setValue(PropertiesConstants.QUESTIONNAIRE_LAST_PROMPT_KEY, currentDateTime.toString())
+                    },
+                    I18nUtils.getMsg("dialog.no.pop") to {
+                        properties.setValue(PropertiesConstants.QUESTIONNAIRE_EXPIRATION_KEY, 30 * 24, 30 * 24)
+                        properties.setValue(PropertiesConstants.QUESTIONNAIRE_LAST_PROMPT_KEY, currentDateTime.toString())
+                    }
+                )
+            )
         }
     }
 

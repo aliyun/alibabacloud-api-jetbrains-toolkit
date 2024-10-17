@@ -4,6 +4,7 @@ import com.alibabacloud.api.service.OkHttpClientProvider
 import com.alibabacloud.api.service.util.RequestUtil
 import com.alibabacloud.models.telemetry.DefaultApplicationInfo
 import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.constants.TelemetryConstants
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.intellij.openapi.diagnostic.Logger
@@ -136,7 +137,7 @@ class DefaultBatchDataTelemetry(
             val macAddr = DefaultApplicationInfo.macAddr
             if (System.currentTimeMillis() - expireTime > (23 * 60 + 55) * 60 * 1000) {
                 val request = RequestUtil.createRequest(
-                    "https://pre-api-workbench.aliyun.com/plugin/telemetry_token",
+                    TelemetryConstants.TOKEN_URL,
                     headers = hashMapOf(
                         "user-agent" to userAgent,
                         "x-plugin-source-ip" to macAddr,
@@ -156,8 +157,7 @@ class DefaultBatchDataTelemetry(
             }
 
             val request = RequestUtil.createRequest(
-                // TODO prod
-                "https://pre-api-workbench.aliyun.com/plugin/report_telemetry_data",
+                TelemetryConstants.REPORT_URL,
                 "POST",
                 requestBody,
                 hashMapOf(
