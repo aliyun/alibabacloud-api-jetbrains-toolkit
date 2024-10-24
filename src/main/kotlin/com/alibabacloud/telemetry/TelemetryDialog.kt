@@ -14,6 +14,7 @@ import java.time.temporal.ChronoUnit
 class TelemetryDialog(private val project: Project) {
     companion object {
         var notificationService: NormalNotification = NormalNotification
+        var telemetryService = TelemetryService.getInstance()
     }
 
     fun checkAndShowNotification() {
@@ -40,7 +41,7 @@ class TelemetryDialog(private val project: Project) {
                             currentDateTime.toString()
                         )
                         ToolkitSettingsState.getInstance().isTelemetryEnabled = true
-                        TelemetryService.getInstance().setTelemetryEnabled(true)
+                        telemetryService.setTelemetryEnabled(true)
                     },
                     I18nUtils.getMsg("dialog.no") to {
                         properties.setValue(PropertiesConstants.TELEMETRY_DIALOG_KEY, 1 * 24, 15 * 24)
@@ -49,7 +50,7 @@ class TelemetryDialog(private val project: Project) {
                             currentDateTime.toString()
                         )
                         ToolkitSettingsState.getInstance().isTelemetryEnabled = false
-                        TelemetryService.getInstance().setTelemetryEnabled(false)
+                        telemetryService.setTelemetryEnabled(false)
                     },
                     I18nUtils.getMsg("dialog.no.pop") to {
                         properties.setValue(PropertiesConstants.TELEMETRY_DIALOG_KEY, 15 * 24, 15 * 24)
@@ -58,7 +59,7 @@ class TelemetryDialog(private val project: Project) {
                             currentDateTime.toString()
                         )
                         ToolkitSettingsState.getInstance().isTelemetryEnabled = false
-                        TelemetryService.getInstance().setTelemetryEnabled(false)
+                        telemetryService.setTelemetryEnabled(false)
                     },
                 )
             )

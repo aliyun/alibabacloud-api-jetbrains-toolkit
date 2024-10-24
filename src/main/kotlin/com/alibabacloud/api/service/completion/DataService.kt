@@ -7,6 +7,8 @@ import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.RequestUtil
 import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
@@ -137,6 +139,17 @@ object DataService {
                     }
                 }
             } catch (e: IOException) {
+                TelemetryService.getInstance().record(
+                    TelemetryData(
+                        "error",
+                        "alibabacloud.error",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "DataService.getProduct",
+                        errorType = "IOException",
+                        errorMessage = e.message
+                    )
+                )
                 throw e
             }
 
@@ -187,6 +200,17 @@ object DataService {
                     }
                 }
             } catch (e: IOException) {
+                TelemetryService.getInstance().record(
+                    TelemetryData(
+                        "error",
+                        "alibabacloud.error",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "DataService.getJavaIndex",
+                        errorType = "IOException",
+                        errorMessage = e.message
+                    )
+                )
                 throw e
             }
         }

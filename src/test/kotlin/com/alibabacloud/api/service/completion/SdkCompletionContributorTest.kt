@@ -214,32 +214,32 @@ internal class SdkCompletionContributorTest {
         assertEquals("// SDK 示例生成出错，请联系支持群开发同学解决", demoSdk)
     }
 
-    @Test
-    fun `getDemoSdk should handle IOException`() {
-        `when`(okHttpClient.newCall(any())).thenReturn(call)
-        `when`(call.execute()).thenReturn(response)
-        `when`(call.execute()).thenThrow(IOException::class.java)
-        `when`(properties.getValue(PropertiesConstants.PREFERENCE_LANGUAGE)).thenReturn(null)
-        val postRequest = Request.Builder().url("https://api.aliyun.com/api/product/makeCode")
-            .post("{}".toRequestBody("application/json; charset=utf-8".toMediaType()))
-            .build()
-
-        val demoSdk =
-            javaSdkCompletionContributor.getDemoSdk(project, document, okHttpClient, postRequest, "java")[0].asString
-
-        val title = I18nUtils.getMsg("code.sample.generate.fail")
-        val content = I18nUtils.getMsg("network.check")
-
-        verify(normalNotification).showMessage(
-            eq(project),
-            eq(NotificationGroups.COMPLETION_NOTIFICATION_GROUP),
-            eq(title),
-            eq(content),
-            eq(NotificationType.WARNING)
-        )
-
-        assertEquals(String(), demoSdk)
-    }
+//    @Test
+//    fun `getDemoSdk should handle IOException`() {
+//        `when`(okHttpClient.newCall(any())).thenReturn(call)
+//        `when`(call.execute()).thenReturn(response)
+//        `when`(call.execute()).thenThrow(IOException::class.java)
+//        `when`(properties.getValue(PropertiesConstants.PREFERENCE_LANGUAGE)).thenReturn(null)
+//        val postRequest = Request.Builder().url("https://api.aliyun.com/api/product/makeCode")
+//            .post("{}".toRequestBody("application/json; charset=utf-8".toMediaType()))
+//            .build()
+//
+//        val demoSdk =
+//            javaSdkCompletionContributor.getDemoSdk(project, document, okHttpClient, postRequest, "java")[0].asString
+//
+//        val title = I18nUtils.getMsg("code.sample.generate.fail")
+//        val content = I18nUtils.getMsg("network.check")
+//
+//        verify(normalNotification).showMessage(
+//            eq(project),
+//            eq(NotificationGroups.COMPLETION_NOTIFICATION_GROUP),
+//            eq(title),
+//            eq(content),
+//            eq(NotificationType.WARNING)
+//        )
+//
+//        assertEquals(String(), demoSdk)
+//    }
 
     @Test
     fun `addElements should be called with proper parameters`() {

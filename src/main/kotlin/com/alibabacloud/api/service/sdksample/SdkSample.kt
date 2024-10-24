@@ -9,6 +9,8 @@ import com.alibabacloud.api.service.sdksample.util.AutoInstallPkgUtil
 import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.api.service.util.RequestUtil
 import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
@@ -153,38 +155,81 @@ class SdkSample {
             val sdkInfoButton = JButton(I18nUtils.getMsg("code.sample.sdk.info.button"))
             val language = langComboBox.selectedItem?.toString()?.lowercase() ?: "java"
             var sdkDetail = sdkInfoData[language] ?: SdkDetail("null", "null", "null", "null")
+            TelemetryService.getInstance().record(
+                TelemetryData(
+                    "webview",
+                    "alibabacloud.webview.codesample",
+                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                    System.currentTimeMillis().toString(),
+                    sdkLanguage = language,
+                    product = productName,
+                    apiVersion = defaultVersion,
+                    apiName = apiName
+                )
+            )
 
             sdkInfoButton.addActionListener {
                 sdkInfoPanel(sdkInfoButton, headPanel, sdkDetail)
+                TelemetryService.getInstance().record(
+                    TelemetryData(
+                        "webview",
+                        "alibabacloud.webview.codesample.button.sdkinfo",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        sdkLanguage = language,
+                        product = productName,
+                        apiVersion = defaultVersion,
+                        apiName = apiName
+                    )
+                )
             }
 
-            val installButton = sdkSampleButton(I18nUtils.getMsg("code.sample.install.method.button")) { installUrl }
-            val codeButton = sdkSampleButton(I18nUtils.getMsg("code.sample.view.source.button")) { codeUrl }
+            val installButton = sdkSampleButton(
+                I18nUtils.getMsg("code.sample.install.method.button"),
+                "button.install",
+                language,
+                productName,
+                defaultVersion,
+                apiName
+            ) { installUrl }
+            val codeButton = sdkSampleButton(
+                I18nUtils.getMsg("code.sample.view.source.button"),
+                "button.viewSource",
+                language,
+                productName,
+                defaultVersion,
+                apiName
+            ) { codeUrl }
 
             val openFileButton = JButton(I18nUtils.getMsg("open.in.ide")).apply {
                 addActionListener {
                     val document = editor!!.document
                     val content = document.getText(TextRange(0, document.textLength))
-                    val fileName = if (content.contains("package demo;")) {
-                        "$apiName.java"
-                    } else if (content.contains("package com.aliyun.sample;")) {
-                        "Sample.java"
-                    } else if (content.contains("'use strict';")) {
-                        "client.js"
-                    } else if (content.contains("export default class Client {")) {
-                        "client.ts"
-                    } else if (content.contains("package main")) {
-                        "client.go"
-                    } else if (content.contains("namespace AlibabaCloud\\SDK\\Sample;")) {
-                        "Sample.php"
-                    } else if (content.contains("def __init__")) {
-                        "Sample.py"
-                    } else if (content.contains("using System;")) {
-                        "Sample.cs"
-                    } else {
-                        "Sample.txt"
+                    val (fileName, sdkLang) = when {
+                        content.contains("package demo;") -> "$apiName.java" to "java-async"
+                        content.contains("package com.aliyun.sample;") -> "Sample.java" to "java"
+                        content.contains("'use strict';") -> "client.js" to "nodejs"
+                        content.contains("export default class Client {") -> "client.ts" to "typescript"
+                        content.contains("package main") -> "client.go" to "go"
+                        content.contains("namespace AlibabaCloud\\SDK\\Sample;") -> "Sample.php" to "php"
+                        content.contains("def __init__") -> "Sample.py" to "python"
+                        content.contains("using System;") -> "Sample.cs" to ".net"
+                        else -> "Sample.txt" to "unknown"
                     }
+
                     createAndFile(content, fileName)
+                    TelemetryService.getInstance().record(
+                        TelemetryData(
+                            "webview",
+                            "alibabacloud.webview.codesample.openInIde",
+                            if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                            System.currentTimeMillis().toString(),
+                            sdkLanguage = sdkLang,
+                            product = productName,
+                            apiVersion = defaultVersion,
+                            apiName = apiName
+                        )
+                    )
                 }
             }
 
@@ -218,6 +263,18 @@ class SdkSample {
                     scrollPane.setViewportView(editor?.component)
                     sdkPanel.revalidate()
                     sdkPanel.repaint()
+                    TelemetryService.getInstance().record(
+                        TelemetryData(
+                            "webview",
+                            "alibabacloud.webview.codesample",
+                            if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                            System.currentTimeMillis().toString(),
+                            sdkLanguage = lang,
+                            product = productName,
+                            apiVersion = defaultVersion,
+                            apiName = apiName
+                        )
+                    )
                 }
             }
 
@@ -260,7 +317,8 @@ class SdkSample {
             val commandTitle = I18nUtils.getMsg("code.sample.sdk.package.install.command")
             val commandValue = sdkDetail.sdkInstallationCommand
 
-            val supplement = "<span style='color: gray; font-size: smaller;'>${I18nUtils.getMsg("code.sample.sdk.package.supplement")}</span>"
+            val supplement =
+                "<span style='color: gray; font-size: smaller;'>${I18nUtils.getMsg("code.sample.sdk.package.supplement")}</span>"
 
             val contentHtml =
                 """
@@ -351,7 +409,15 @@ class SdkSample {
             }
         }
 
-        private fun sdkSampleButton(buttonText: String, getButtonUrl: () -> String): JButton {
+        private fun sdkSampleButton(
+            buttonText: String,
+            type: String,
+            language: String,
+            productName: String,
+            defaultVersion: String,
+            apiName: String,
+            getButtonUrl: () -> String
+        ): JButton {
             val button = JButton(buttonText).apply {
                 foreground = JBColor.BLUE
                 addMouseListener(object : MouseAdapter() {
@@ -372,6 +438,19 @@ class SdkSample {
                 addActionListener {
                     val buttonUrl = getButtonUrl()
                     BrowserUtil.browse(URI(buttonUrl))
+                    TelemetryService.getInstance().record(
+                        TelemetryData(
+                            "webview",
+                            "alibabacloud.webview.codesample.$type",
+                            if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                            System.currentTimeMillis().toString(),
+                            sdkLanguage = language,
+                            product = productName,
+                            apiVersion = defaultVersion,
+                            apiName = apiName
+                        )
+                    )
+
                 }
             }
             return button
@@ -404,6 +483,17 @@ class SdkSample {
                     I18nUtils.getMsg("request.timeout"),
                     I18nUtils.getMsg("code.sample.obtain.fail"),
                     NotificationType.WARNING
+                )
+                TelemetryService.getInstance().record(
+                    TelemetryData(
+                        "error",
+                        "alibabacloud.error",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "SdkSample.getDemoSdk",
+                        errorType = "IOException",
+                        errorMessage = e.message
+                    )
                 )
             }
             return demoSdkObject
@@ -466,6 +556,17 @@ class SdkSample {
                     callback(paramsValue, regionId)
                     return@addHandler JBCefJSQuery.Response("ok")
                 } catch (e: JsonSyntaxException) {
+                    TelemetryService.getInstance().record(
+                        TelemetryData(
+                            "error",
+                            "alibabacloud.error",
+                            if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                            System.currentTimeMillis().toString(),
+                            position = "SdkSample.executeSdk",
+                            errorType = "JsonSyntaxException",
+                            errorMessage = e.message
+                        )
+                    )
                     return@addHandler JBCefJSQuery.Response(null, 0, "errorMsg")
                 }
             }

@@ -1,6 +1,9 @@
 package com.alibabacloud.api.service
 
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.models.telemetry.DefaultApplicationInfo
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.aliyun.credentials.Client
 import com.aliyun.tea.*
 import com.aliyun.tea.TeaModel.validateParams
@@ -8,6 +11,8 @@ import com.aliyun.tea.interceptor.InterceptorChain
 import com.aliyun.teautil.Common
 import com.aliyun.teautil.models.RuntimeOptions
 import java.io.InputStream
+import java.util.*
+import kotlin.collections.HashMap
 
 
 class OpenAPIClient(config: Config) {
@@ -352,6 +357,17 @@ class OpenAPIClient(config: Config) {
             } catch (e: Exception) {
                 if (Tea.isRetryable(e)) {
                     _lastException = e
+                    TelemetryService.getInstance().record(
+                        TelemetryData(
+                            "error",
+                            "alibabacloud.error",
+                            if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                            System.currentTimeMillis().toString(),
+                            position = "OpenAPIClient.doRequest.isRetryable",
+                            errorType = "Exception",
+                            errorMessage = e::class.simpleName + e.message
+                        )
+                    )
                     continue
                 }
                 throw e

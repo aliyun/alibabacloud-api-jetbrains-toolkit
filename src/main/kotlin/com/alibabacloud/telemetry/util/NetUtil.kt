@@ -1,12 +1,17 @@
 package com.alibabacloud.telemetry.util
 
+import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import org.apache.commons.lang3.StringUtils
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
 import java.net.NetworkInterface
 import java.net.SocketException
+import java.util.*
 import java.util.regex.Pattern
+import kotlin.collections.ArrayList
 
 
 object NetUtil {
@@ -15,6 +20,7 @@ object NetUtil {
     private val INVALID_MAC = arrayOf("00:00:00:00:00:00", "ff:ff:ff:ff:ff:ff")
     private val UNIX_COMMAND = arrayOf("/sbin/ifconfig -a || /sbin/ip link")
     private val WIN_COMMAND = arrayOf("getmac")
+    private val telemetryService = TelemetryService.getInstance()
 
     val mac: String
         get() {
@@ -61,7 +67,17 @@ object NetUtil {
                 }
                 ""
             } catch (e: Exception) {
-                e.printStackTrace()
+                telemetryService.record(
+                    TelemetryData(
+                        "error",
+                        "alibabacloud.error",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "NetUtil.macFromName",
+                        errorType = "Exception",
+                        errorMessage = e::class.simpleName + e.message
+                    )
+                )
                 ""
             }
         }
@@ -88,6 +104,17 @@ object NetUtil {
                     throw IOException("Command ${command.joinToString { " " }}")
                 }
             } catch (ex: Exception) {
+                telemetryService.record(
+                    TelemetryData(
+                        "error",
+                        "alibabacloud.error",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "NetUtil.commandMacList",
+                        errorType = "Exception",
+                        errorMessage = ex::class.simpleName + ex.message
+                    )
+                )
                 return macList
             }
 
@@ -133,6 +160,17 @@ object NetUtil {
                     }
                 }
             } catch (e: SocketException) {
+                telemetryService.record(
+                    TelemetryData(
+                        "error",
+                        "alibabacloud.error",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "NetUtil.programMacs",
+                        errorType = "Exception",
+                        errorMessage = e::class.simpleName + e.message
+                    )
+                )
                 return macs
             }
             return macs

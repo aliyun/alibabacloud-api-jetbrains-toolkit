@@ -6,6 +6,8 @@ import com.alibabacloud.api.service.completion.util.LookupElementUtil
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.icons.ToolkitIcons
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.google.gson.JsonArray
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertionContext
@@ -49,6 +51,18 @@ class JavaSdkCompletionContributor : SdkCompletionContributor() {
                                 sdkInfo,
                                 "java"
                             )
+                            telemetryService.record(
+                                TelemetryData(
+                                    "code",
+                                    "alibabacloud.code.codeSnippets",
+                                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                    System.currentTimeMillis().toString(),
+                                    sdkLanguage = "java",
+                                    product = apiInfo.productName,
+                                    apiVersion = apiInfo.defaultVersion,
+                                    apiName = apiInfo.apiName
+                                )
+                            )
                         }
                     }
                 }
@@ -70,6 +84,18 @@ class JavaSdkCompletionContributor : SdkCompletionContributor() {
                                 sdkInfo,
                                 "java-async"
                             )
+                            telemetryService.record(
+                                TelemetryData(
+                                    "code",
+                                    "alibabacloud.code.codeSnippets",
+                                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                    System.currentTimeMillis().toString(),
+                                    sdkLanguage = "java-async",
+                                    product = apiInfo.productName,
+                                    apiVersion = apiInfo.defaultVersion,
+                                    apiName = apiInfo.apiName
+                                )
+                            )
                         }
                     }
                 }
@@ -85,6 +111,7 @@ class JavaSdkCompletionContributor : SdkCompletionContributor() {
     ) {
         ApplicationManager.getApplication().executeOnPooledThread {
             val project = context.project
+            val sdkVersion = sdkInfo[2].asString
             val artifactId = if (lang == "java") {
                 "${productName.lowercase().replace("-", "_")}${defaultVersion.replace("-", "")}"
             } else {
@@ -93,7 +120,7 @@ class JavaSdkCompletionContributor : SdkCompletionContributor() {
             val mavenCommand = "<dependency>\n" +
                     "  <groupId>com.aliyun</groupId>\n" +
                     "  <artifactId>$artifactId</artifactId>\n" +
-                    "  <version>${sdkInfo[2].asString}</version>\n" +
+                    "  <version>$sdkVersion</version>\n" +
                     "</dependency>"
 
             val resList = JavaPkgInstallUtil.isMavenDependencyExist(project, mavenCommand)
@@ -104,7 +131,7 @@ class JavaSdkCompletionContributor : SdkCompletionContributor() {
             if (isPomExists && needUpdate) {
                 val content = I18nUtils.getMsg("auto.install.package.update.ask.prefix") + (if (lang == "java-async") " alibabacloud-" else " ") +
                         "${productName.lowercase().replace("-", "_")}${defaultVersion.replace("-", "")} " +
-                        I18nUtils.getMsg("auto.install.package.update.ask.suffix") + " ${sdkInfo[2].asString}?"
+                        I18nUtils.getMsg("auto.install.package.update.ask.suffix") + " $sdkVersion?"
                 notificationService.showNotificationWithActions(
                     project,
                     NotificationGroups.DEPS_NOTIFICATION_GROUP,
@@ -122,6 +149,19 @@ class JavaSdkCompletionContributor : SdkCompletionContributor() {
                                         )
                                     }
                                 })
+                            telemetryService.record(
+                                TelemetryData(
+                                    "code",
+                                    "alibabacloud.code.dependency.auto.import.update",
+                                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                    System.currentTimeMillis().toString(),
+                                    sdkLanguage = lang,
+                                    position = "codeSnippets",
+                                    product = productName,
+                                    apiVersion = defaultVersion,
+                                    sdkVersion = sdkVersion
+                                )
+                            )
                         },
                         I18nUtils.getMsg("dialog.no") to {}
                     )
@@ -146,6 +186,19 @@ class JavaSdkCompletionContributor : SdkCompletionContributor() {
                                         )
                                     }
                                 })
+                            telemetryService.record(
+                                TelemetryData(
+                                    "code",
+                                    "alibabacloud.code.dependency.auto.import",
+                                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                    System.currentTimeMillis().toString(),
+                                    sdkLanguage = lang,
+                                    position = "codeSnippets",
+                                    product = productName,
+                                    apiVersion = defaultVersion,
+                                    sdkVersion = sdkVersion
+                                )
+                            )
                         },
                         I18nUtils.getMsg("dialog.no") to {}
                     )

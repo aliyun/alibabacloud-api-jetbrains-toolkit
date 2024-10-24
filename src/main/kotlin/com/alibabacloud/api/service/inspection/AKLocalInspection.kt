@@ -2,16 +2,20 @@ package com.alibabacloud.api.service.inspection
 
 import com.alibabacloud.api.service.constants.AKRegex
 import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
 import com.alibabacloud.states.ToolkitSettingsState
+import com.alibabacloud.telemetry.TelemetryService
 import com.intellij.codeInspection.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 
 class AKLocalInspection : LocalInspectionTool() {
     private val problemDescription = "Alibaba Cloud: " + I18nUtils.getMsg("inspections.tips")
+    private val telemetryService = TelemetryService.getInstance()
 
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
         if (!ToolkitSettingsState.getInstance().state.isAKInspectionEnabled) {
@@ -97,6 +101,14 @@ class AKLocalInspection : LocalInspectionTool() {
                     )
                 }
             }
+            telemetryService.record(
+                TelemetryData(
+                    "code",
+                    "alibabacloud.code.inspections.ak",
+                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                    System.currentTimeMillis().toString(),
+                )
+            )
         }
     }
 
@@ -131,6 +143,14 @@ class AKLocalInspection : LocalInspectionTool() {
                         AKLocalQuickFix()
                     )
                 }
+                telemetryService.record(
+                    TelemetryData(
+                        "code",
+                        "alibabacloud.code.inspections.ak",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                    )
+                )
             }
         }
     }

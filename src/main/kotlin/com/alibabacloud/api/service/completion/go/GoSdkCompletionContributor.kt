@@ -4,6 +4,8 @@ import com.alibabacloud.api.service.completion.SdkCompletionContributor
 import com.alibabacloud.api.service.completion.util.LookupElementUtil
 import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.icons.ToolkitIcons
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.goide.psi.GoFile
 import com.goide.psi.GoStringLiteral
 import com.google.gson.JsonArray
@@ -33,7 +35,20 @@ class GoSdkCompletionContributor : SdkCompletionContributor() {
                 .withTailText("  ${apiInfo.productName}::${apiInfo.defaultVersion}$description")
                 .withIcon(ToolkitIcons.LOGO_ICON)
                 .withInsertHandler { insertionContext, _ ->
-                    insertHandler(insertionContext, document, request, "go") {}
+                    insertHandler(insertionContext, document, request, "go") {
+                        telemetryService.record(
+                            TelemetryData(
+                                "code",
+                                "alibabacloud.code.codeSnippets",
+                                if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                System.currentTimeMillis().toString(),
+                                sdkLanguage = "go",
+                                product = apiInfo.productName,
+                                apiVersion = apiInfo.defaultVersion,
+                                apiName = apiInfo.apiName
+                            )
+                        )
+                    }
                 }
         )
     }

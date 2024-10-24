@@ -5,6 +5,8 @@ import com.alibabacloud.api.service.completion.util.LookupElementUtil
 import com.alibabacloud.api.service.sdksample.util.AutoInstallPkgUtil
 import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.icons.ToolkitIcons
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.google.gson.JsonArray
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertionContext
@@ -41,6 +43,18 @@ class PythonSdkCompletionContributor : SdkCompletionContributor() {
                     insertHandler(insertionContext, document, request, "python") { sdkInfo ->
                         if (!sdkInfo[0].asString.contains(I18nUtils.getMsg("sdk.not.exist.prefix"))) {
                             checkAndNotifyDependency(insertionContext, apiInfo.productName, apiInfo.defaultVersion, sdkInfo, "python")
+                            telemetryService.record(
+                                TelemetryData(
+                                    "code",
+                                    "alibabacloud.code.codeSnippets",
+                                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                    System.currentTimeMillis().toString(),
+                                    sdkLanguage = "python",
+                                    product = apiInfo.productName,
+                                    apiVersion = apiInfo.defaultVersion,
+                                    apiName = apiInfo.apiName
+                                )
+                            )
                         }
                     }
                 }
@@ -91,7 +105,7 @@ class PythonSdkCompletionContributor : SdkCompletionContributor() {
         sdkInfo: JsonArray,
         lang: String
     ) {
-        AutoInstallPkgUtil.installPyPkg(context.project, productName, defaultVersion, sdkInfo[2].asString)
+        AutoInstallPkgUtil.installPyPkg(context.project, productName, defaultVersion, sdkInfo[2].asString, "codeSnippets")
     }
 
     private fun Char.isPythonIdentifierPart(): Boolean {

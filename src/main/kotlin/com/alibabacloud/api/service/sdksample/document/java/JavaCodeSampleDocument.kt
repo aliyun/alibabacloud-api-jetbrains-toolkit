@@ -1,9 +1,13 @@
 package com.alibabacloud.api.service.sdksample.document.java
 
 import com.alibabacloud.api.service.sdksample.util.GenerateDocUtil
+import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.intellij.lang.documentation.DocumentationProvider
 import com.intellij.lang.java.JavaDocumentationProvider
 import com.intellij.psi.*
+import java.util.*
 import java.util.regex.Pattern
 
 class JavaCodeSampleDocument {
@@ -11,6 +15,17 @@ class JavaCodeSampleDocument {
         private val defaultJavaDocProvider: DocumentationProvider? = try {
             JavaDocumentationProvider()
         } catch (e: NoClassDefFoundError) {
+            TelemetryService.getInstance().record(
+                TelemetryData(
+                    "error",
+                    "alibabacloud.error",
+                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                    System.currentTimeMillis().toString(),
+                    position = "JavaCodeSampleDocument.defaultJavaDocProvider",
+                    errorType = "NoClassDefFoundError",
+                    errorMessage = e.message
+                )
+            )
             null
         }
 
@@ -84,7 +99,7 @@ class JavaCodeSampleDocument {
                 return GenerateDocUtil.generateProductDoc(productVersion)
             }
 
-            return GenerateDocUtil.generateApiDoc(classInfo)
+            return GenerateDocUtil.generateApiDoc(classInfo, "java")
         }
 
         internal fun generateJavaDoc(element: PsiElement): String? {

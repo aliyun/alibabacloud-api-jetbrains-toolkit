@@ -14,9 +14,11 @@ import com.alibabacloud.credentials.util.ConfigFileUtil
 import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.icons.ToolkitIcons
 import com.alibabacloud.models.credentials.ConfigureFile
+import com.alibabacloud.models.telemetry.TelemetryData
 import com.alibabacloud.states.ToolkitSettingsState
 import com.alibabacloud.telemetry.ExperienceQuestionnaire
 import com.alibabacloud.telemetry.TelemetryDialog
+import com.alibabacloud.telemetry.TelemetryService
 import com.google.gson.JsonArray
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
@@ -54,6 +56,8 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeSelectionModel
 
 class BaseToolWindow : ToolWindowFactory, DumbAware {
+    private val telemetryService = TelemetryService.getInstance()
+
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val contentPanel = JPanel()
         contentPanel.layout = BoxLayout(contentPanel, BoxLayout.Y_AXIS)
@@ -126,7 +130,18 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
             if (cacheTreeFile.exists() && cacheTreeFile.lastModified() + ApiConstants.ONE_DAY.toMillis() > System.currentTimeMillis()) {
                 cacheTree = CacheUtil.readTreeCache(cacheTreeFile)
             }
-        } catch (_: IOException) {
+        } catch (e: IOException) {
+            telemetryService.record(
+                TelemetryData(
+                    "error",
+                    "alibabacloud.error",
+                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                    System.currentTimeMillis().toString(),
+                    position = "BaseToolWindow.createToolWindowContent.readCache",
+                    errorType = "IOException",
+                    errorMessage = e.message
+                )
+            )
         }
 
         if (cacheNameAndVersionMap != null && cacheTree != null) {
@@ -191,6 +206,15 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
             if (selectedProfile == I18nUtils.getMsg("credentials.new.profile")) {
                 collapsibleInputPanel.clearFields()
                 collapsibleInputPanel.expandForAddProfile()
+                telemetryService.record(
+                    TelemetryData(
+                        "explorer",
+                        "alibabacloud.explorer.credential.new",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "toolwindow.combobox"
+                    )
+                )
             } else {
                 config = ConfigureFile.loadConfigureFile()
                 val selected = config!!.profiles.firstOrNull { it.name == selectedProfile }
@@ -202,6 +226,15 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                 if (statusBarWidget is MyStatusBarWidgetFactory.MyStatusBarWidget) {
                     statusBarWidget.updateStatusBar(config)
                 }
+                telemetryService.record(
+                    TelemetryData(
+                        "explorer",
+                        "alibabacloud.explorer.credential.switch",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "toolwindow.combobox"
+                    )
+                )
             }
         }
 
@@ -244,8 +277,20 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                         productName = it.destructured.component2()
                     }
                     val defaultVersion = nameAndVersionMap[productNameCN]?.get(2) ?: ""
-                    val locale = if (I18nUtils.getLocale() == Locale.CHINA) "" else "&lang=EN_US"
+                    val ifCN = I18nUtils.getLocale() == Locale.CHINA
+                    val locale = if (ifCN) "" else "&lang=EN_US"
                     val preferLocale = if (locale == "") "" else "-en"
+                    telemetryService.record(
+                        TelemetryData(
+                            "explorer",
+                            "alibabacloud.explorer.product.click",
+                            if (ifCN) "cn" else "en",
+                            System.currentTimeMillis().toString(),
+                            position = "toolwindow.tree",
+                            product = productName,
+                            apiVersion = defaultVersion
+                        )
+                    )
                     val apiUrl =
                         "https://api.aliyun.com/api/product/apiDir?product=$productName&version=$defaultVersion$locale"
                     val cacheApiDataFile = File(ApiConstants.CACHE_PATH, "$productName-api-list$preferLocale")
@@ -256,7 +301,18 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                         try {
                             cacheApiData = CacheUtil.readApiListCache(cacheApiDataFile)
                             apiData = cacheApiData
-                        } catch (_: IOException) {
+                        } catch (e: IOException) {
+                            telemetryService.record(
+                                TelemetryData(
+                                    "error",
+                                    "alibabacloud.error",
+                                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                    System.currentTimeMillis().toString(),
+                                    position = "BaseToolWindow.productListener.readApiListCache",
+                                    errorType = "IOException",
+                                    errorMessage = e.message
+                                )
+                            )
                         }
                     }
                     if (apiData == null) {
@@ -274,13 +330,24 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                                     "",
                                     NotificationType.ERROR
                                 )
+                                telemetryService.record(
+                                    TelemetryData(
+                                        "error",
+                                        "alibabacloud.error",
+                                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                        System.currentTimeMillis().toString(),
+                                        position = "BaseToolWindow.productListener.writeApiListCache",
+                                        errorType = "IOException",
+                                        errorMessage = e.message
+                                    )
+                                )
                             }
                         }
                     }
 
                     val toolWindow = registerToolWindow(project)
                     val contentManager = toolWindow.contentManager
-                    val (selectionApi, apiTree) = openWebToolWindow(productName, apiData, toolWindow)
+                    val (selectionApi, apiTree) = openWebToolWindow(productName, defaultVersion, apiData, toolWindow)
 
                     selectionApi.addTreeSelectionListener {
                         val selectedApi = apiTree.lastSelectedPathComponent as? DefaultMutableTreeNode
@@ -360,6 +427,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
 
     private fun openWebToolWindow(
         productName: String,
+        defaultVersion: String,
         apiData: JsonArray,
         toolWindow: ToolWindow,
     ): Pair<TreeSelectionModel, Tree> {
@@ -370,7 +438,7 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         val content: Content?
         val tree: Tree
         val panel = JPanel(BorderLayout())
-        tree = ApiExplorer.explorerTree(apiData, panel)
+        tree = ApiExplorer.explorerTree(apiData, panel, productName, defaultVersion)
         val scrollPane = FormatUtil.getScrollPane(panel)
 
         content = toolWindow.contentManager.factory.createContent(scrollPane, "$productName-${I18nUtils.getMsg("toolwindow.api.overview")}", false)
@@ -390,6 +458,15 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         override fun actionPerformed(e: AnActionEvent) {
             collapsibleInputPanel.clearFields()
             collapsibleInputPanel.expandForAddProfile()
+            TelemetryService.getInstance().record(
+                TelemetryData(
+                    "explorer",
+                    "alibabacloud.explorer.credential.new",
+                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                    System.currentTimeMillis().toString(),
+                    position = "toolwindow.menu"
+                )
+            )
         }
     }
 
@@ -415,6 +492,14 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
         override fun actionPerformed(e: AnActionEvent) {
             Util.refreshProductPanel(project, contentPanel, searchField)
             DataService.refreshMeta(project)
+            TelemetryService.getInstance().record(
+                TelemetryData(
+                    "explorer",
+                    "alibabacloud.explorer.restart",
+                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                    System.currentTimeMillis().toString(),
+                )
+            )
         }
 
         override fun getActionUpdateThread(): ActionUpdateThread {
@@ -524,6 +609,17 @@ class BaseToolWindow : ToolWindowFactory, DumbAware {
                     defaultVersion,
                     project,
                     false,
+                )
+                TelemetryService.getInstance().record(
+                    TelemetryData(
+                        "webview",
+                        "alibabacloud.webview.doc.refresh",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        product = productName,
+                        apiVersion = defaultVersion,
+                        apiName = apiName
+                    )
                 )
             }
         }

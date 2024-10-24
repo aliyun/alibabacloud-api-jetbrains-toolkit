@@ -1,8 +1,11 @@
 package com.alibabacloud.ui
 
 import com.alibabacloud.credentials.util.ConfigFileUtil
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.icons.ToolkitIcons
 import com.alibabacloud.models.credentials.ConfigureFile
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.wm.CustomStatusBarWidget
@@ -13,6 +16,7 @@ import com.intellij.openapi.wm.impl.status.TextPanel.WithIconAndArrows
 import com.intellij.ui.ClickListener
 import com.intellij.vcsUtil.showAbove
 import java.awt.event.MouseEvent
+import java.util.*
 import javax.swing.JComponent
 
 class MyStatusBarWidgetFactory : StatusBarWidgetFactory {
@@ -88,6 +92,15 @@ class MyStatusBarWidgetFactory : StatusBarWidgetFactory {
                 .setRenderer(CustomListCellRenderer())
                 .createPopup()
             listPopup.showAbove(this)
+            TelemetryService.getInstance().record(
+                TelemetryData(
+                    "explorer",
+                    "alibabacloud.explorer.credential.switch",
+                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                    System.currentTimeMillis().toString(),
+                    position = "statusbar"
+                )
+            )
         }
     }
 }

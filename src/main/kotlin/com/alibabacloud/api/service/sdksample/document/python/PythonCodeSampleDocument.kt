@@ -1,9 +1,13 @@
 package com.alibabacloud.api.service.sdksample.document.python
 
 import com.alibabacloud.api.service.sdksample.util.GenerateDocUtil
+import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.intellij.lang.documentation.DocumentationProvider
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.documentation.PythonDocumentationProvider
+import java.util.*
 import java.util.regex.Pattern
 
 class PythonCodeSampleDocument {
@@ -11,6 +15,17 @@ class PythonCodeSampleDocument {
         private val defaultPyDocProvider: DocumentationProvider? = try {
             PythonDocumentationProvider()
         } catch (e: NoClassDefFoundError) {
+            TelemetryService.getInstance().record(
+                TelemetryData(
+                    "error",
+                    "alibabacloud.error",
+                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                    System.currentTimeMillis().toString(),
+                    position = "PythonCodeSampleDocument.defaultPyDocProvider",
+                    errorType = "NoClassDefFoundError",
+                    errorMessage = e.message
+                )
+            )
             null
         }
 
@@ -30,7 +45,7 @@ class PythonCodeSampleDocument {
                 return GenerateDocUtil.generateProductDoc(classInfo)
             }
 
-            return GenerateDocUtil.generateApiDoc(classInfo)
+            return GenerateDocUtil.generateApiDoc(classInfo, "python")
         }
 
         // 从原始文档中匹配出全限定名

@@ -132,7 +132,18 @@ class ApiPage {
                         sdkInfoData
                     )
                     executeQuestionnaire(project, browser)
-                } catch (_: IOException) {
+                } catch (e: IOException) {
+                    TelemetryService.getInstance().record(
+                        TelemetryData(
+                            "error",
+                            "alibabacloud.error",
+                            if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                            System.currentTimeMillis().toString(),
+                            position = "ApiPage.showApiDetail.readCache/execute",
+                            errorType = "IOException",
+                            errorMessage = e.message
+                        )
+                    )
                 }
 
                 apiPanel.removeAll()
@@ -288,6 +299,17 @@ class ApiPage {
                                 "",
                                 NotificationType.ERROR
                             )
+                            TelemetryService.getInstance().record(
+                                TelemetryData(
+                                    "error",
+                                    "alibabacloud.error",
+                                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                    System.currentTimeMillis().toString(),
+                                    position = "ApiPage.showApiDetail.clean/writeCache",
+                                    errorType = "IOException",
+                                    errorMessage = e.message
+                                )
+                            )
                         }
                     }
 
@@ -419,6 +441,17 @@ class ApiPage {
                         "",
                         NotificationType.ERROR
                     )
+                    TelemetryService.getInstance().record(
+                        TelemetryData(
+                            "error",
+                            "alibabacloud.error",
+                            if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                            System.currentTimeMillis().toString(),
+                            position = "ApiPage.getApiDocData.clean/writeCache",
+                            errorType = "IOException",
+                            errorMessage = e.message
+                        )
+                    )
                 }
 
             } catch (e: IOException) {
@@ -429,6 +462,17 @@ class ApiPage {
                     I18nUtils.getMsg("api.data.fetch.fail"),
                     I18nUtils.getMsg("network.check"),
                     NotificationType.ERROR
+                )
+                TelemetryService.getInstance().record(
+                    TelemetryData(
+                        "error",
+                        "alibabacloud.error",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "ApiPage.getApiDocData",
+                        errorType = "IOException",
+                        errorMessage = e.message
+                    )
                 )
             }
             return apiMetaData
@@ -517,6 +561,17 @@ class ApiPage {
                     I18nUtils.getMsg("network.check"),
                     NotificationType.ERROR
                 )
+                TelemetryService.getInstance().record(
+                    TelemetryData(
+                        "error",
+                        "alibabacloud.error",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "ApiPage.getEndpointList",
+                        errorType = "IOException",
+                        errorMessage = e.message
+                    )
+                )
             }
             return endpointList
         }
@@ -540,8 +595,8 @@ class ApiPage {
             bodyParams.addProperty(ApiConstants.SDK_MAKE_CODE_BODY_SDK_TYPE, "dara")
             bodyParams.add(ApiConstants.SDK_MAKE_CODE_BODY_PARAMS, JsonObject())
 
-            ApiDebug.executeDebug(browser, apiDocData, apiName, endpointList, project)
-            ApiDebug.executeOpenDebugResult(browser, project)
+            ApiDebug.executeDebug(browser, apiDocData, apiName, endpointList, project, productName, defaultVersion)
+            ApiDebug.executeOpenDebugResult(browser, project, apiName, productName, defaultVersion)
             SdkSample.executeSdk(browser) { paramsValue, regionId ->
                 var endpoint = String()
                 if (endpointList.size() > 0) {
@@ -593,10 +648,32 @@ class ApiPage {
                             BrowserUtil.browse(URI(url))
                         } catch (e: Exception) {
                             returnLink = url
+                            TelemetryService.getInstance().record(
+                                TelemetryData(
+                                    "error",
+                                    "alibabacloud.error",
+                                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                    System.currentTimeMillis().toString(),
+                                    position = "ApiPage.executeOpenLink.browse",
+                                    errorType = "Exception",
+                                    errorMessage = e::class.simpleName + e.message
+                                )
+                            )
                         }
                     }
                     return@addHandler JBCefJSQuery.Response("ok")
                 } catch (e: JsonSyntaxException) {
+                    TelemetryService.getInstance().record(
+                        TelemetryData(
+                            "error",
+                            "alibabacloud.error",
+                            if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                            System.currentTimeMillis().toString(),
+                            position = "ApiPage.executeOpenLink",
+                            errorType = "JsonSyntaxException",
+                            errorMessage = e.message
+                        )
+                    )
                     return@addHandler JBCefJSQuery.Response(null, 0, "errorMsg")
                 }
             }
