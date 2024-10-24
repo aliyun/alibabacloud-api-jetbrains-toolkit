@@ -1,6 +1,7 @@
 package com.alibabacloud.settings
 
 import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
 import com.alibabacloud.states.ToolkitSettingsState
 import com.alibabacloud.telemetry.ExperienceQuestionnaire
 import com.alibabacloud.telemetry.TelemetryService
@@ -9,6 +10,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.panel
+import java.util.*
 import javax.swing.JComponent
 
 class ToolkitSettingsConfigurable : SearchableConfigurable {
@@ -19,11 +21,42 @@ class ToolkitSettingsConfigurable : SearchableConfigurable {
 
     private fun saveBaseSettings() {
         val settingsState = ToolkitSettingsState.getInstance()
+        val telemetryService = TelemetryService.getInstance()
         settingsState.isAutoUpdateEnabled = enableToolkitAutoUpdate.isSelected
         settingsState.isCompletionEnabled = enableCompletion.isSelected
         settingsState.isAKInspectionEnabled = enableAKInspection.isSelected
         settingsState.isTelemetryEnabled = enableTelemetry.isSelected
-        TelemetryService.getInstance().setTelemetryEnabled(enableTelemetry.isSelected)
+        telemetryService.setTelemetryEnabled(enableTelemetry.isSelected)
+        telemetryService.record(
+            TelemetryData(
+                "settings",
+                "alibabacloud.settings",
+                if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                System.currentTimeMillis().toString(),
+                title = "autoUpdatePlugin",
+                settingsStatus = if (enableToolkitAutoUpdate.isSelected) "1" else "0"
+            )
+        )
+        telemetryService.record(
+            TelemetryData(
+                "settings",
+                "alibabacloud.settings",
+                if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                System.currentTimeMillis().toString(),
+                title = "autoCodeSnippets",
+                settingsStatus = if (enableCompletion.isSelected) "1" else "0"
+            )
+        )
+        telemetryService.record(
+            TelemetryData(
+                "settings",
+                "alibabacloud.settings",
+                if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                System.currentTimeMillis().toString(),
+                title = "autoAKInspections",
+                settingsStatus = if (enableAKInspection.isSelected) "1" else "0"
+            )
+        )
     }
 
 

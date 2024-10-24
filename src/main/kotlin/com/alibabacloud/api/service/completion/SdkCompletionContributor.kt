@@ -5,7 +5,9 @@ import com.alibabacloud.api.service.constants.CompletionConstants
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
 import com.alibabacloud.states.ToolkitSettingsState
+import com.alibabacloud.telemetry.TelemetryService
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
@@ -33,6 +35,7 @@ import java.util.*
 
 abstract class SdkCompletionContributor : CompletionContributor() {
     internal var notificationService: NormalNotification = NormalNotification
+    internal var telemetryService: TelemetryService = TelemetryService.getInstance()
 
     internal abstract fun addElements(
         result: CompletionResultSet,
@@ -225,6 +228,17 @@ abstract class SdkCompletionContributor : CompletionContributor() {
                 I18nUtils.getMsg("code.sample.generate.fail"),
                 I18nUtils.getMsg("network.check"),
                 NotificationType.WARNING
+            )
+            telemetryService.record(
+                TelemetryData(
+                    "error",
+                    "alibabacloud.error",
+                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                    System.currentTimeMillis().toString(),
+                    position = "SdkCompletionContributor.getDemoSdk",
+                    errorType = "IOException",
+                    errorMessage = e.message
+                )
             )
         }
         val sdkInfo = JsonArray()

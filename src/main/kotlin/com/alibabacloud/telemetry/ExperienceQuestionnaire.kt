@@ -4,6 +4,7 @@ import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.constants.PropertiesConstants
 import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
 import com.google.gson.JsonSyntaxException
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.PropertiesComponent
@@ -20,6 +21,7 @@ import org.cef.network.CefRequest
 import java.net.URI
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
+import java.util.*
 
 class ExperienceQuestionnaire(private val project: Project) {
     companion object {
@@ -80,6 +82,17 @@ class ExperienceQuestionnaire(private val project: Project) {
                 callback(arg)
                 return@addHandler JBCefJSQuery.Response("ok")
             } catch (e: JsonSyntaxException) {
+                TelemetryService.getInstance().record(
+                    TelemetryData(
+                        "error",
+                        "alibabacloud.error",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "ExperienceQuestionnaire.executeQuestionnaire",
+                        errorType = "JsonSyntaxException",
+                        errorMessage = e.message
+                    )
+                )
                 return@addHandler JBCefJSQuery.Response(null, 0, "errorMsg")
             }
         }

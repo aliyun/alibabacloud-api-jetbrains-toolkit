@@ -5,6 +5,8 @@ import com.alibabacloud.api.service.completion.CompletionIndexPersistentComponen
 import com.alibabacloud.api.service.completion.DataService
 import com.alibabacloud.api.service.util.RequestUtil
 import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
@@ -49,6 +51,17 @@ class GenerateDocUtil {
                     }
                 }
             } catch (e: IOException) {
+                TelemetryService.getInstance().record(
+                    TelemetryData(
+                        "error",
+                        "alibabacloud.error",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "GenerateDocUtil.hasApiSamples",
+                        errorType = "IOException",
+                        errorMessage = e.message
+                    )
+                )
                 return false
             }
             return data.size() > 0
@@ -64,7 +77,7 @@ class GenerateDocUtil {
             return null
         }
 
-        internal fun generateApiDoc(keyInfo: String?): String? {
+        internal fun generateApiDoc(keyInfo: String?, lang: String): String? {
             val index = getIndex()
             if (index.isNotEmpty()) {
                 val matchingKey = findMatchingKey(keyInfo, index)
@@ -74,6 +87,18 @@ class GenerateDocUtil {
                     val product = apiInfo[1]
                     val version = apiInfo[2]
                     val desc = if (I18nUtils.getLocale() == Locale.CHINA) "<br><br>&nbsp;&nbsp;&nbsp;${index[matchingKey]}" else ""
+                    TelemetryService.getInstance().record(
+                        TelemetryData(
+                            "code",
+                            "alibabacloud.code.documentation.sdk.sample",
+                            if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                            System.currentTimeMillis().toString(),
+                            sdkLanguage = lang,
+                            product = product,
+                            apiVersion = version,
+                            apiName = apiName
+                        )
+                    )
                     return if (hasApiSamples(product, version, apiName)) {
                         "&nbsp;&nbsp;\uD83D\uDCA1 <a href=https://api.aliyun.com/api/${product}/${version}/${apiName}?tab=CodeSample>${I18nUtils.getMsg("content.see.more")}「${apiName}」${I18nUtils.getMsg("code.sample.related")}</a>$desc"
                     } else {

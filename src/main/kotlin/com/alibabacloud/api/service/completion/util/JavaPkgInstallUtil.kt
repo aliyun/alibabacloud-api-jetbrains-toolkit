@@ -3,6 +3,8 @@ package com.alibabacloud.api.service.completion.util
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -14,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.IOException
+import java.util.*
 
 class JavaPkgInstallUtil {
     companion object {
@@ -131,6 +134,17 @@ class JavaPkgInstallUtil {
                             }
                             onFailure()
                         }
+                        TelemetryService.getInstance().record(
+                            TelemetryData(
+                                "error",
+                                "alibabacloud.error",
+                                if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                System.currentTimeMillis().toString(),
+                                position = "JavaPkgInstallUtil.insertDependencyInPom",
+                                errorType = "IOException",
+                                errorMessage = e.message
+                            )
+                        )
                     }
                 }
             }
@@ -177,6 +191,17 @@ class JavaPkgInstallUtil {
                             }
                             onFailure()
                         }
+                        TelemetryService.getInstance().record(
+                            TelemetryData(
+                                "error",
+                                "alibabacloud.error",
+                                if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                System.currentTimeMillis().toString(),
+                                position = "JavaPkgInstallUtil.updateDependencyInPom",
+                                errorType = "IOException",
+                                errorMessage = e.message
+                            )
+                        )
                     }
                 }
             }

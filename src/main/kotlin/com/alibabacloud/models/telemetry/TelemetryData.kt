@@ -12,6 +12,7 @@ data class TelemetryData(
     val result: String? = null,
     val position: String? = null,
     val sdkLanguage: String? = null,
+    val sdkVersion: String? = null,
     val dialogType: String? = null,
     val title: String? = null,
     val content: String? = null,

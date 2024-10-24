@@ -1,6 +1,8 @@
 package com.alibabacloud.api.service.notification
 
 import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -8,6 +10,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import java.util.*
 
 object NormalNotification {
     fun showMessage(project: Project?, group: String, title: String, content: String, type: NotificationType) {
@@ -19,6 +22,17 @@ object NormalNotification {
                     type
                 ).notify(project)
         }
+        TelemetryService.getInstance().record(
+            TelemetryData(
+                "dialog",
+                "alibabacloud.dialog",
+                if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                System.currentTimeMillis().toString(),
+                title = title,
+                content = content,
+                dialogType = type.toString().lowercase()
+            )
+        )
     }
 
     fun showNotificationWithActions(
@@ -38,11 +52,22 @@ object NormalNotification {
                     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                         action.invoke()
                         notification.expire()
+                        TelemetryService.getInstance().record(
+                            TelemetryData(
+                                "dialog",
+                                "alibabacloud.dialog",
+                                if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                System.currentTimeMillis().toString(),
+                                title = title,
+                                content = content,
+                                dialogType = type.toString().lowercase(),
+                                dialogOption = actionText
+                            )
+                        )
                     }
                 }
                 notification.addAction(notificationAction)
             }
-
             notification.notify(project)
         }
     }
@@ -142,6 +167,18 @@ object NormalNotification {
                 override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                     restartAction.invoke()
                     notification.expire()
+                    TelemetryService.getInstance().record(
+                        TelemetryData(
+                            "dialog",
+                            "alibabacloud.dialog",
+                            if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                            System.currentTimeMillis().toString(),
+                            title = title,
+                            content = content,
+                            dialogType = type.toString().lowercase(),
+                            dialogOption = "restart now"
+                        )
+                    )
                 }
             }
 
@@ -149,6 +186,18 @@ object NormalNotification {
                 override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                     restartLaterAction.invoke()
                     notification.expire()
+                    TelemetryService.getInstance().record(
+                        TelemetryData(
+                            "dialog",
+                            "alibabacloud.dialog",
+                            if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                            System.currentTimeMillis().toString(),
+                            title = title,
+                            content = content,
+                            dialogType = type.toString().lowercase(),
+                            dialogOption = "restart later"
+                        )
+                    )
                 }
             }
 
@@ -156,6 +205,18 @@ object NormalNotification {
                 override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                     updateSettingsAction.invoke()
                     notification.expire()
+                    TelemetryService.getInstance().record(
+                        TelemetryData(
+                            "dialog",
+                            "alibabacloud.dialog",
+                            if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                            System.currentTimeMillis().toString(),
+                            title = title,
+                            content = content,
+                            dialogType = type.toString().lowercase(),
+                            dialogOption = "manage settings"
+                        )
+                    )
                 }
             }
 

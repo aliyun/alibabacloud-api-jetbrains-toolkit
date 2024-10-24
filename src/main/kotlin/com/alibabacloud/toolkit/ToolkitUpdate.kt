@@ -3,8 +3,10 @@ package com.alibabacloud.toolkit
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
 import com.alibabacloud.settings.ToolkitSettingsConfigurable
 import com.alibabacloud.states.ToolkitSettingsState
+import com.alibabacloud.telemetry.TelemetryService
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.notification.NotificationType
@@ -20,8 +22,11 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.*
 
 class ToolkitUpdate : ProjectActivity {
+    private val telemetryService = TelemetryService.getInstance()
+
     @VisibleForTesting
     override suspend fun execute(project: Project) {
         val enabled = ToolkitSettingsState.getInstance().isAutoUpdateEnabled
@@ -75,6 +80,17 @@ class ToolkitUpdate : ProjectActivity {
                 I18nUtils.getMsg("plugin.update.fail"),
                 NotificationType.INFORMATION,
             )
+            telemetryService.record(
+                TelemetryData(
+                    "error",
+                    "alibabacloud.error",
+                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                    System.currentTimeMillis().toString(),
+                    position = "ToolkitUpdate.checkAndUpdate",
+                    errorType = "Exception",
+                    errorMessage = e::class.simpleName + e.message
+                )
+            )
             return
         } catch (e: Error) {
             NormalNotification.showMessage(
@@ -83,6 +99,17 @@ class ToolkitUpdate : ProjectActivity {
                 "Alibaba Cloud Developer Toolkit",
                 I18nUtils.getMsg("plugin.update.fail"),
                 NotificationType.INFORMATION,
+            )
+            telemetryService.record(
+                TelemetryData(
+                    "error",
+                    "alibabacloud.error",
+                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                    System.currentTimeMillis().toString(),
+                    position = "ToolkitUpdate.checkAndUpdate",
+                    errorType = "Error",
+                    errorMessage = e::class.simpleName + e.message
+                )
             )
             return
         }

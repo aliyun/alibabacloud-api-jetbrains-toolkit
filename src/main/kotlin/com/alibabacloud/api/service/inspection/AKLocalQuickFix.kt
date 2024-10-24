@@ -1,6 +1,8 @@
 package com.alibabacloud.api.service.inspection
 
 import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.ide.BrowserUtil
@@ -9,6 +11,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import java.util.*
 
 class AKLocalQuickFix : LocalQuickFix {
     companion object {
@@ -39,6 +42,15 @@ class AKLocalQuickFix : LocalQuickFix {
         document?.let {
             BrowserUtil.browse(docLink ?: credentialsLink["java"]!!)
         }
+        TelemetryService.getInstance().record(
+            TelemetryData(
+                "code",
+                "alibabacloud.code.quickfix.ak.inspections",
+                if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                System.currentTimeMillis().toString(),
+                sdkLanguage = psiElement.language.id.lowercase()
+            )
+        )
     }
 
     private fun getDocument(project: Project, psiElement: PsiElement): Document? {

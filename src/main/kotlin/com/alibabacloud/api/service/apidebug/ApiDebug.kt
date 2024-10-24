@@ -7,6 +7,8 @@ import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.models.credentials.ConfigureFile
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.aliyun.teautil.models.TeaUtilException
 import com.google.gson.Gson
 import com.google.gson.JsonArray
@@ -27,6 +29,7 @@ import org.cef.browser.CefFrame
 import org.cef.handler.CefLoadHandler
 import org.cef.handler.CefLoadHandlerAdapter
 import org.cef.network.CefRequest
+import java.util.*
 
 class ApiDebug {
     companion object {
@@ -36,6 +39,8 @@ class ApiDebug {
             apiName: String,
             endpointList: JsonArray,
             project: Project,
+            productName: String,
+            defaultVersion: String
         ) {
             val query = JBCefJSQuery.create(browser as JBCefBrowserBase)
 
@@ -56,6 +61,18 @@ class ApiDebug {
                             I18nUtils.getMsg("api.debug.need.profile.detail"),
                             NotificationType.WARNING
                         )
+                        TelemetryService.getInstance().record(
+                            TelemetryData(
+                                "webview",
+                                "alibabacloud.webview.debug",
+                                if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                System.currentTimeMillis().toString(),
+                                ifLogin = "0",
+                                product = productName,
+                                apiVersion = defaultVersion,
+                                apiName = apiName
+                            )
+                        )
                     } else {
                         debugHtml = getDebugResponse(
                             paramsValue,
@@ -69,6 +86,19 @@ class ApiDebug {
                         ).replace("\\\"", "")
                             .replace("\\n", "\\\n")
                             .replace("\\r", "\\\r")
+                        TelemetryService.getInstance().record(
+                            TelemetryData(
+                                "webview",
+                                "alibabacloud.webview.debug",
+                                if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                System.currentTimeMillis().toString(),
+                                ifLogin = "1",
+                                result = debugHtml,
+                                product = productName,
+                                apiVersion = defaultVersion,
+                                apiName = apiName
+                            )
+                        )
                     }
 
                     browser.cefBrowser.executeJavaScript(
@@ -84,6 +114,17 @@ class ApiDebug {
                         I18nUtils.getMsg("api.debug.param.format.error"),
                         I18nUtils.getMsg("format.check"),
                         NotificationType.ERROR
+                    )
+                    TelemetryService.getInstance().record(
+                        TelemetryData(
+                            "error",
+                            "alibabacloud.error",
+                            if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                            System.currentTimeMillis().toString(),
+                            position = "ApiDebug.executeDebug.json.error",
+                            errorType = "JsonSyntaxException",
+                            errorMessage = e.message
+                        )
                     )
                     return@addHandler JBCefJSQuery.Response(null, 0, "errorMsg")
                 }
@@ -141,7 +182,10 @@ class ApiDebug {
 
         fun executeOpenDebugResult(
             browser: JBCefBrowser,
-            project: Project
+            project: Project,
+            apiName: String,
+            productName: String,
+            defaultVersion: String
         ) {
             val query = JBCefJSQuery.create(browser as JBCefBrowserBase)
 
@@ -159,8 +203,31 @@ class ApiDebug {
                             fileEditorManager.openTextEditor(descriptor, true)
                         }
                     }
+                    TelemetryService.getInstance().record(
+                        TelemetryData(
+                            "webview",
+                            "alibabacloud.webview.debug.openInIde",
+                            if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                            System.currentTimeMillis().toString(),
+                            result = code,
+                            product = productName,
+                            apiVersion = defaultVersion,
+                            apiName = apiName
+                        )
+                    )
                     return@addHandler JBCefJSQuery.Response("ok")
                 } catch (e: Exception) {
+                    TelemetryService.getInstance().record(
+                        TelemetryData(
+                            "error",
+                            "alibabacloud.error",
+                            if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                            System.currentTimeMillis().toString(),
+                            position = "ApiDebug.executeOpenDebugResult",
+                            errorType = "Exception",
+                            errorMessage = e::class.simpleName + e.message
+                        )
+                    )
                     return@addHandler JBCefJSQuery.Response(null, 0, "errorMsg")
                 }
             }
@@ -467,6 +534,17 @@ class ApiDebug {
                     message,
                     NotificationType.ERROR
                 )
+                TelemetryService.getInstance().record(
+                    TelemetryData(
+                        "error",
+                        "alibabacloud.error",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "ApiDebug.getDebugResponse.doRequest",
+                        errorType = "TeaUnretryableException",
+                        errorMessage = teaUnretryableException.message
+                    )
+                )
             } catch (teaUtilException: TeaUtilException) {
                 NormalNotification.showMessage(
                     project,
@@ -474,6 +552,17 @@ class ApiDebug {
                     I18nUtils.getMsg("api.debug.error"),
                     I18nUtils.getMsg("api.debug.param.format.error"),
                     NotificationType.ERROR
+                )
+                TelemetryService.getInstance().record(
+                    TelemetryData(
+                        "error",
+                        "alibabacloud.error",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "ApiDebug.getDebugResponse.teaUtil",
+                        errorType = "TeaUtilException",
+                        errorMessage = teaUtilException.message
+                    )
                 )
             }
             response["cost"] = duration

@@ -4,6 +4,7 @@ import com.alibabacloud.api.service.OkHttpClientProvider
 import com.alibabacloud.api.service.util.RequestUtil
 import com.alibabacloud.models.telemetry.DefaultApplicationInfo
 import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.states.ToolkitSettingsState
 import com.alibabacloud.telemetry.constants.TelemetryConstants
 import com.google.gson.Gson
 import com.google.gson.JsonObject
@@ -44,7 +45,7 @@ class DefaultBatchDataTelemetry(
     private val executor: ScheduledExecutorService = createExecutor(),
 ) : BatchDataTelemetry {
     private val log: Logger = Logger.getInstance(DefaultBatchDataTelemetry::class.java)
-    private val isTelemetryEnabled: AtomicBoolean = AtomicBoolean(false)
+    private val isTelemetryEnabled: AtomicBoolean = AtomicBoolean(ToolkitSettingsState.getInstance().state.isTelemetryEnabled)
     private val isShuttingDown: AtomicBoolean = AtomicBoolean(false)
     val telemetryDataQueue: LinkedBlockingDeque<TelemetryData> = LinkedBlockingDeque(maxQueueSize)
         @TestOnly get

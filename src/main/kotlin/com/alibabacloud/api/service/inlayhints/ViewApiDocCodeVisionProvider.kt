@@ -1,8 +1,11 @@
 package com.alibabacloud.api.service.inlayhints
 
 import com.alibabacloud.api.service.SearchHelper
+import com.alibabacloud.i18n.I18nUtils
 import com.alibabacloud.models.api.ApiInfo
 import com.alibabacloud.models.api.ShortApiInfo
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
@@ -16,6 +19,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
 import java.awt.event.MouseEvent
+import java.util.*
+import kotlin.collections.ArrayList
 
 abstract class ViewApiDocCodeVisionProvider : DaemonBoundCodeVisionProvider {
     override val id: String
@@ -97,6 +102,18 @@ abstract class ViewApiDocCodeVisionProvider : DaemonBoundCodeVisionProvider {
     ) : Function2<MouseEvent, Editor, Unit> {
         override fun invoke(event: MouseEvent, editor: Editor) {
             SearchHelper.navigateToApiInfo(project, productName, version, apiName)
+            TelemetryService.getInstance().record(
+                TelemetryData(
+                    "webview",
+                    "alibabacloud.webview.doc",
+                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                    System.currentTimeMillis().toString(),
+                    position = "editor",
+                    product = productName,
+                    apiVersion = version,
+                    apiName = apiName
+                )
+            )
         }
     }
 }

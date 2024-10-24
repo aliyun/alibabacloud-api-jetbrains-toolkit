@@ -132,7 +132,7 @@ class BatchDataTelemetryTest {
         every { mockTokenCall.execute() } returns mockTokenResponse
         every { mockTokenResponse.isSuccessful } returns true
         every { mockTokenResponse.body } returns mockTokenResponseBody
-        every { mockTokenResponseBody.string() } returns """{"success":true, "token": "test", expireTime: "1729147952000"}"""
+        every { mockTokenResponseBody.string() } returns """{"success":true, "token": "test", expireTime: "2076820351000"}"""
         every { mockTokenResponse.close() } returns Unit
 
         every { mockReportCall.execute() } returns mockReportResponse

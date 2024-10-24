@@ -1,17 +1,32 @@
 package com.alibabacloud.api.service.sdksample.document.go
 
 import com.alibabacloud.api.service.sdksample.util.GenerateDocUtil
+import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.goide.documentation.GoDocumentationProvider
 import com.goide.psi.impl.GoImportSpecImpl
 import com.goide.psi.impl.GoTypeSpecImpl
 import com.intellij.lang.documentation.DocumentationProvider
 import com.intellij.psi.PsiElement
+import java.util.*
 
 class GoCodeSampleDocument {
     companion object {
         private val defaultGoDocProvider: DocumentationProvider? = try {
             GoDocumentationProvider()
         } catch (e: NoClassDefFoundError) {
+            TelemetryService.getInstance().record(
+                TelemetryData(
+                    "error",
+                    "alibabacloud.error",
+                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                    System.currentTimeMillis().toString(),
+                    position = "GoCodeSampleDocument.defaultGoDocProvider",
+                    errorType = "NoClassDefFoundError",
+                    errorMessage = e.message
+                )
+            )
             null
         }
 
@@ -23,7 +38,7 @@ class GoCodeSampleDocument {
                 return GenerateDocUtil.generateProductDoc(classInfo)
             }
 
-            return GenerateDocUtil.generateApiDoc(classInfo)
+            return GenerateDocUtil.generateApiDoc(classInfo, "go")
         }
 
         private fun getQualifiedGoName(element: PsiElement, originDoc: String?): String? {

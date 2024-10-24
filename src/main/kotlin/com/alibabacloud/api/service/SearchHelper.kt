@@ -6,6 +6,8 @@ import com.alibabacloud.api.service.completion.UnLoadNotificationState
 import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.util.FormatUtil
 import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.alibabacloud.ui.BaseToolWindow
 import com.alibabacloud.ui.SearchListCellRenderer
 import com.intellij.notification.NotificationType
@@ -41,6 +43,8 @@ class SearchHelper {
             nameAndVersionMap: MutableMap<String, List<String>>?,
             tree: Tree,
             searchField: SearchTextField,
+            productName: String? = null,
+            defaultVersion: String? = null
         ) {
             val searchResultsModel = DefaultListModel<String>()
             val searchResultsList = JBList(searchResultsModel).apply {
@@ -52,7 +56,7 @@ class SearchHelper {
                             if (it.clickCount == 1) {
                                 val selectedValue = selectedValue as String
                                 if (nameAndVersionMap == null) {
-                                    navigateToApi(tree, selectedValue)
+                                    navigateToApi(tree, selectedValue, productName, defaultVersion)
                                 } else {
                                     navigateToProduct(tree, selectedValue)
                                 }
@@ -134,6 +138,18 @@ class SearchHelper {
                             if (it.clickCount == 1) {
                                 val selectedValue = (selectedValue as String).split("::")
                                 navigateToApiInfo(project, selectedValue[2], selectedValue[3], selectedValue[0])
+                                TelemetryService.getInstance().record(
+                                    TelemetryData(
+                                        "explorer",
+                                        "alibabacloud.explorer.api.search",
+                                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                        System.currentTimeMillis().toString(),
+                                        position = "toolwindow.search.global",
+                                        product = selectedValue[2],
+                                        apiVersion = selectedValue[3],
+                                        apiName = selectedValue[0]
+                                    )
+                                )
                                 popup?.cancel()
                             }
                         }
@@ -244,7 +260,7 @@ class SearchHelper {
             }
         }
 
-        fun navigateToApi(tree: Tree, selectedResult: String) {
+        fun navigateToApi(tree: Tree, selectedResult: String, productName: String?, defaultVersion: String?) {
             val pattern = """(.*)::(.*)::(.*)""".toRegex()
             val matchResult = pattern.matchEntire(selectedResult)
 
@@ -254,11 +270,25 @@ class SearchHelper {
                 val root = tree.model.root as DefaultMutableTreeNode
                 var currentNode: DefaultMutableTreeNode? = root
 
-                for (ancestorName in ancestorNames) {
-                    currentNode = currentNode?.let { FormatUtil.findNode(it, ancestorName) }
-                    if (currentNode == null) break
+                if (ancestors.isNotEmpty()) {
+                    for (ancestorName in ancestorNames) {
+                        currentNode = currentNode?.let { FormatUtil.findNode(it, ancestorName) }
+                        if (currentNode == null) break
+                    }
                 }
                 expandPath(currentNode, apiName, apiDescription, tree)
+                TelemetryService.getInstance().record(
+                    TelemetryData(
+                        "explorer",
+                        "alibabacloud.explorer.api.search",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "toolwindow.search.local",
+                        product = productName,
+                        apiVersion = defaultVersion,
+                        apiName = apiName
+                    )
+                )
             }
         }
 
@@ -270,8 +300,7 @@ class SearchHelper {
                     .joinToString(" / ") { it.userObject.toString() }
 
                 val nameAndDescription = node.userObject.toString().split("  ")
-                val nodeText =
-                    if (ancestors.isNotEmpty()) "${nameAndDescription[0]}::${nameAndDescription[1]}::$ancestors" else node.userObject.toString()
+                val nodeText = "${nameAndDescription[0]}::${nameAndDescription[1]}::$ancestors"
                 leafNodes.add(nodeText)
             } else {
                 for (i in 0 until root.childCount) {
@@ -285,10 +314,21 @@ class SearchHelper {
             val matchResult = pattern.find(selectedResult)
 
             if (matchResult != null) {
-                val (code, name, _, group) = matchResult.destructured
+                val (code, name, version, group) = matchResult.destructured
                 val root = tree.model.root as DefaultMutableTreeNode
                 val categoryNode = root.let { FormatUtil.findNode(it, group) }
                 expandPath(categoryNode, name, code, tree)
+                TelemetryService.getInstance().record(
+                    TelemetryData(
+                        "explorer",
+                        "alibabacloud.explorer.product.search",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "toolwindow.search",
+                        product = code,
+                        apiVersion = version
+                    )
+                )
             }
         }
 

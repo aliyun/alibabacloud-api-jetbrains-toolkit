@@ -8,6 +8,8 @@ import com.alibabacloud.api.service.constants.NotificationGroups
 import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.util.RequestUtil
 import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.intellij.notification.NotificationType
@@ -16,6 +18,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import java.io.IOException
+import java.util.*
 
 class AutoInstallPkgUtil {
     companion object {
@@ -36,6 +39,17 @@ class AutoInstallPkgUtil {
                     I18nUtils.getMsg("auto.install.package.fail"),
                     I18nUtils.getMsg("network.check"),
                     NotificationType.ERROR
+                )
+                TelemetryService.getInstance().record(
+                    TelemetryData(
+                        "error",
+                        "alibabacloud.error",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "AutoInstallPkgUtil.getLastSdkInfo",
+                        errorType = "IOException",
+                        errorMessage = e.message
+                    )
                 )
             }
             return null
@@ -74,7 +88,13 @@ class AutoInstallPkgUtil {
 
         }
 
-        fun installPyPkg(project: Project, productName: String, defaultVersion: String, sdkVersion: String?) {
+        fun installPyPkg(
+            project: Project,
+            productName: String,
+            defaultVersion: String,
+            sdkVersion: String?,
+            position: String
+        ) {
             val sdk = ProjectStructureUtil.getEditingSdk(project)
             val pkgName = "alibabacloud-${productName.lowercase()}${defaultVersion.replace("-", "")}"
 
@@ -100,6 +120,19 @@ class AutoInstallPkgUtil {
                                         PythonPkgInstallUtil.pyPackageInstall(project, sdk, pkgName, sdkVersion)
                                     }
                                 })
+                            TelemetryService.getInstance().record(
+                                TelemetryData(
+                                    "code",
+                                    if (!isPyPkgExists[1]) "alibabacloud.code.dependency.auto.import" else "alibabacloud.code.dependency.auto.import.update",
+                                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                    System.currentTimeMillis().toString(),
+                                    position = position,
+                                    sdkLanguage = "python",
+                                    product = productName,
+                                    apiVersion = defaultVersion,
+                                    sdkVersion = sdkVersion
+                                )
+                            )
                         },
                         I18nUtils.getMsg("dialog.no") to {}
                     )
@@ -107,7 +140,14 @@ class AutoInstallPkgUtil {
             }
         }
 
-        private fun installMavenPkg(project: Project, mavenCommand: String?, lang: String) {
+        private fun installMavenPkg(
+            project: Project,
+            mavenCommand: String?,
+            lang: String,
+            productName: String,
+            defaultVersion: String,
+            sdkVersion: String?
+        ) {
             val resList = JavaPkgInstallUtil.isMavenDependencyExist(project, mavenCommand)
             val isDependencyExists = resList[0]
             val isPomExists = resList[1]
@@ -116,7 +156,7 @@ class AutoInstallPkgUtil {
                 val commandInfo = JavaPkgInstallUtil.parseMavenCommand(mavenCommand)
                 val version = commandInfo[0]
                 val artifactId = commandInfo[2]
-                val content = I18nUtils.getMsg("auto.install.package.update.ask.prefix")  + " $artifactId " +
+                val content = I18nUtils.getMsg("auto.install.package.update.ask.prefix") + " $artifactId " +
                         I18nUtils.getMsg("auto.install.package.update.ask.suffix") + " $version?"
                 NormalNotification.showNotificationWithActions(
                     project,
@@ -135,6 +175,19 @@ class AutoInstallPkgUtil {
                                         )
                                     }
                                 })
+                            TelemetryService.getInstance().record(
+                                TelemetryData(
+                                    "code",
+                                    "alibabacloud.code.dependency.auto.import.update",
+                                    if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                    System.currentTimeMillis().toString(),
+                                    sdkLanguage = lang,
+                                    position = "codeSample",
+                                    product = productName,
+                                    apiVersion = defaultVersion,
+                                    sdkVersion = sdkVersion
+                                )
+                            )
                         },
                         I18nUtils.getMsg("dialog.no") to {}
                     )
@@ -143,6 +196,19 @@ class AutoInstallPkgUtil {
                 JavaPkgInstallUtil.importMavenDeps(
                     project,
                     mavenCommand,
+                )
+                TelemetryService.getInstance().record(
+                    TelemetryData(
+                        "code",
+                        "alibabacloud.code.dependency.auto.import",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        sdkLanguage = lang,
+                        position = "codeSample",
+                        product = productName,
+                        apiVersion = defaultVersion,
+                        sdkVersion = sdkVersion
+                    )
                 )
             } else if (!isPomExists) {
                 NormalNotification.showMessage(
@@ -183,18 +249,18 @@ class AutoInstallPkgUtil {
                 "java" -> {
                     val sdkVersion = lastSdkInfo?.get("java-tea")?.asJsonObject?.get("last_version")?.asString
                     val mavenCommand = makeMavenCommand(productName, defaultVersion, sdkVersion).first
-                    installMavenPkg(project, mavenCommand, lang)
+                    installMavenPkg(project, mavenCommand, lang, productName, defaultVersion, sdkVersion)
                 }
 
                 "java-async" -> {
                     val sdkVersion = lastSdkInfo?.get("java-async-tea")?.asJsonObject?.get("last_version")?.asString
                     val mavenCommand = makeMavenCommand(productName, defaultVersion, sdkVersion).first
-                    installMavenPkg(project, mavenCommand, lang)
+                    installMavenPkg(project, mavenCommand, lang, productName, defaultVersion, sdkVersion)
                 }
 
                 "python" -> {
                     val sdkVersion = lastSdkInfo?.get("python-tea")?.asJsonObject?.get("last_version")?.asString
-                    installPyPkg(project, productName, defaultVersion, sdkVersion)
+                    installPyPkg(project, productName, defaultVersion, sdkVersion, "codeSample")
                 }
 
                 else -> {

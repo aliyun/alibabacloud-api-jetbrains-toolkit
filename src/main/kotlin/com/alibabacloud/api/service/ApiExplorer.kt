@@ -6,6 +6,8 @@ import com.alibabacloud.api.service.notification.NormalNotification
 import com.alibabacloud.api.service.util.CacheUtil
 import com.alibabacloud.api.service.util.RequestUtil
 import com.alibabacloud.i18n.I18nUtils
+import com.alibabacloud.models.telemetry.TelemetryData
+import com.alibabacloud.telemetry.TelemetryService
 import com.alibabacloud.ui.CustomTreeCellRenderer
 import com.google.gson.Gson
 import com.google.gson.JsonArray
@@ -26,7 +28,7 @@ import javax.swing.tree.DefaultTreeModel
 
 class ApiExplorer {
     companion object {
-        fun explorerTree(data: JsonArray, panel: JPanel): Tree {
+        fun explorerTree(data: JsonArray, panel: JPanel, productName: String? = null, defaultVersion: String? = null): Tree {
             val searchField = SearchTextField()
             searchField.textEditor.emptyText.text = I18nUtils.getMsg("toolwindow.search.api")
             searchField.maximumSize = Dimension(Integer.MAX_VALUE, 50)
@@ -44,7 +46,7 @@ class ApiExplorer {
             tree.expandRow(0)
             tree.isRootVisible = false
             panel.add(tree, BorderLayout.CENTER)
-            SearchHelper.search(null, tree, searchField)
+            SearchHelper.search(null, tree, searchField, productName, defaultVersion)
             return tree
         }
 
@@ -137,6 +139,17 @@ class ApiExplorer {
                                     "",
                                     NotificationType.ERROR
                                 )
+                                TelemetryService.getInstance().record(
+                                    TelemetryData(
+                                        "error",
+                                        "alibabacloud.error",
+                                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                                        System.currentTimeMillis().toString(),
+                                        position = "ApiExplorer.apiDocContentTree.deleteCache",
+                                        errorType = "IOException",
+                                        errorMessage = e.message
+                                    )
+                                )
                             }
                         }
                     } else {
@@ -149,13 +162,24 @@ class ApiExplorer {
                         )
                     }
                 }
-            } catch (_: IOException) {
+            } catch (e: IOException) {
                 NormalNotification.showMessage(
                     project,
                     NotificationGroups.NETWORK_NOTIFICATION_GROUP,
                     I18nUtils.getMsg("product.list.fetch.fail"),
                     I18nUtils.getMsg("network.check"),
                     NotificationType.ERROR
+                )
+                TelemetryService.getInstance().record(
+                    TelemetryData(
+                        "error",
+                        "alibabacloud.error",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "ApiExplorer.apiDocContentTree",
+                        errorType = "IOException",
+                        errorMessage = e.message
+                    )
                 )
             }
 
@@ -243,13 +267,24 @@ class ApiExplorer {
                         )
                     }
                 }
-            } catch (_: IOException) {
+            } catch (e: IOException) {
                 NormalNotification.showMessage(
                     project,
                     NotificationGroups.NETWORK_NOTIFICATION_GROUP,
                     I18nUtils.getMsg("api.list.fetch.fail"),
                     I18nUtils.getMsg("network.check"),
                     NotificationType.ERROR
+                )
+                TelemetryService.getInstance().record(
+                    TelemetryData(
+                        "error",
+                        "alibabacloud.error",
+                        if (I18nUtils.getLocale() == Locale.CHINA) "cn" else "en",
+                        System.currentTimeMillis().toString(),
+                        position = "ApiExplorer.getApiListRequest",
+                        errorType = "IOException",
+                        errorMessage = e.message
+                    )
                 )
             }
             return data
